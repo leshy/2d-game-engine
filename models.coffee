@@ -12,6 +12,7 @@ exports.Point = Point = class Point
     left:  -> @modifier(0,-1)
     right: -> @modifier(0,1)
     stuff: -> @host.stuff(@)
+    getIndex: -> if not @index then @index = @host.getIndex(@) else @index
     replaceStuff: @
 
 
@@ -26,21 +27,28 @@ exports.Field = Field = Backbone.Model.extend4000
         @getIndex = decorators.decorate(pointDecorator,@getIndex)
         @stuff = decorators.decorate(pointDecorator,@stuff)
         @setPoint = decorators.decorate(pointDecorator,@setPoint)
+        @delPoint = decorators.decorate(pointDecorator,@delPoint)
+        @movePoint = decorators.decorate(pointDecorator,@movePoint)
+
+    getPoint: (coords) -> new Point(coords, @)
         
-    getIndex: (point) ->
-        point.x + (point.y * @get ('width'))
+    getIndex: (point) -> point.x + (point.y * @get ('width'))
         
     getIndexRev: (i) -> width = @get('width'); [ i % width, Math.floor(i / width) ]
 
-    stuff: (point) -> @points[@getIndex point]
+    stuff: (point) -> @points[point.getIndex()]
     
-    getPoint: (coords) -> new Point(coords, @)
+    delPoint: (point) -> 
+         if stuff = @points[index = point.getIndex()]
+            this.trigger('del', point, stuff)
+            delete @points[index]
     
     setPoint: (point,newstuff) ->
         index = @getIndex point
-        if oldstuff = @points[index] then this.trigger('replace', point, oldstuff, newstuff)
-        @points[index] = newstuff
-        this.trigger('set', point, newstuff)
+        if oldstuff = @points[index] then @delPoint(point)
+        if newstuff
+            @points[index] = newstuff
+            this.trigger('set', point, newstuff)
         point
 
     each: (callback) -> _.times @get('width') * @get('height'), (i) => callback @getPoint(@getIndexRev(i))

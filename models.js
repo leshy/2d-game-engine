@@ -30,6 +30,13 @@
     Point.prototype.stuff = function() {
       return this.host.stuff(this);
     };
+    Point.prototype.getIndex = function() {
+      if (!this.index) {
+        return this.index = this.host.getIndex(this);
+      } else {
+        return this.index;
+      }
+    };
     Point.prototype.replaceStuff = Point;
     return Point;
   })();
@@ -47,7 +54,12 @@
       }, this);
       this.getIndex = decorators.decorate(pointDecorator, this.getIndex);
       this.stuff = decorators.decorate(pointDecorator, this.stuff);
-      return this.setPoint = decorators.decorate(pointDecorator, this.setPoint);
+      this.setPoint = decorators.decorate(pointDecorator, this.setPoint);
+      this.delPoint = decorators.decorate(pointDecorator, this.delPoint);
+      return this.movePoint = decorators.decorate(pointDecorator, this.movePoint);
+    },
+    getPoint: function(coords) {
+      return new Point(coords, this);
     },
     getIndex: function(point) {
       return point.x + (point.y * this.get('width'));
@@ -58,19 +70,25 @@
       return [i % width, Math.floor(i / width)];
     },
     stuff: function(point) {
-      return this.points[this.getIndex(point)];
+      return this.points[point.getIndex()];
     },
-    getPoint: function(coords) {
-      return new Point(coords, this);
+    delPoint: function(point) {
+      var index, stuff;
+      if (stuff = this.points[index = point.getIndex()]) {
+        this.trigger('del', point, stuff);
+        return delete this.points[index];
+      }
     },
     setPoint: function(point, newstuff) {
       var index, oldstuff;
       index = this.getIndex(point);
       if (oldstuff = this.points[index]) {
-        this.trigger('replace', point, oldstuff, newstuff);
+        this.delPoint(point);
       }
-      this.points[index] = newstuff;
-      this.trigger('set', point, newstuff);
+      if (newstuff) {
+        this.points[index] = newstuff;
+        this.trigger('set', point, newstuff);
+      }
       return point;
     },
     each: function(callback) {
