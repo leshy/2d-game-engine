@@ -27,6 +27,8 @@ exports.Point = Point = class Point
         if state.constructor is String then state = new @host.state[state]
         if @empty() then @host.push(@)
         if not @has(state) then @states[state.name] = state else throw "state " + state.name + " already exists at this point"
+        state.point = @
+        if state.start then state.start()
         @
 
     empty: -> helpers.isEmpty @states
@@ -37,16 +39,17 @@ exports.Point = Point = class Point
 
     # make sure to somehow delete a point from a field if all the states are removed from it..
     remove: (removestates...) ->
-        toremove = helpers.todict(removestates)
-        @states = helpers.hashfilter @states, (val,name) -> if toremove[name] then return undefined else return val
-        
+        toremove = helpers.todict removestates
+        kickedout = []
+        @states = helpers.hashfilter @states, (val,name) -> if toremove[name] then kickedout.push val; return undefined else return val
+        _.map kickedout, (state) => @host.trigger 'del',@,state
         # remove yourself from the field if you are empty
         if @empty() then @host.remove(@)
         
-    removeall: -> @remove _.keys(@states)
+    removeall: -> @remove.apply(@,_.keys(@states))
 
     #getIndex: -> if not @index then @index = @host.getIndex(@) else @index
-    collide: (thing) -> thing.get('name')    
+    collide: (thing) -> thing.get('name')
     
 exports.Field = Field = Backbone.Model.extend4000
     initialize: ->
@@ -72,9 +75,8 @@ exports.Field = Field = Backbone.Model.extend4000
         
     getIndexRev: (i) -> width = @get('width'); [ i % width, Math.floor(i / width) ]
 
-    stuff: (point) -> @points[point.getIndex()]
-    
-    each: (callback) -> _.times @get('width') * @get('height'), (i) => callback @getPoint(@getIndexRev(i))
+    each: (callback) -> _.times @get('width') * @get('height'), (i) => callback @point(@getIndexRev(i))
+
     eachFull: (callback) ->
         _.map @points, (point,index) => callback @getPoint(@getindexRev(index))
 
@@ -89,9 +91,8 @@ exports.Field = Field = Backbone.Model.extend4000
 # in
 
 exports.State = State = Backbone.Model.extend4000
-    initialize : ->
-        @when 'point', (point) => @set game: point.host
-
+    #initialize : ->
+        #@when 'point', (point) => @set game: point.host
 
     place: (states...) -> @point.push.apply(@point,states)
 
@@ -99,21 +100,17 @@ exports.State = State = Backbone.Model.extend4000
 
     move: (where) -> @point.move(@, where)
 
-    remove: -> @point.remove(@)
-    
-                        
-    in: (n,callback) -> @game.triggerOnce('tick_' + @game.tick + n, => callback())
-    
-        
-    remove: -> @point.remove()
+    remove: -> @point.remove @name
 
+    in: (n,callback) -> @point.host.onOnce 'tick_' + (@point.host.tick + n), => callback()
+    
 exports.Game = Game = comm.MsgNode.extend4000 Field,
     initialize: ->
         @controls = {}
         @state = {}
-        @tickspeed = 100
+        @tickspeed = 500
         
-        @tickn = 0
+        @tick = 0
 
         @subscribe { ctrl: { k: true, s: true }}, (msg,reply) =>
             console.log(msg.json())
@@ -122,14 +119,13 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
         @on 'set', (point,state) ->
             state.set point: point
 
-    dotick: (n) ->
+    dotick: () ->
         @tick++
         @trigger('tick_' + @tick)
 
-    tickloop: (n) ->
+    tickloop: () ->
         @dotick()
-        # fix this line
-        #@timeout = setTimeout(=> @tickloop(), @tickspeed) 
+        @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
     start: ->
         @tickloop()

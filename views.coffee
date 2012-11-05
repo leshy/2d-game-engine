@@ -19,11 +19,11 @@ exports.GameView = BackboneB.View.extend
             @drawpoint(point)
 
     drawpoint: (point) ->
-        stuff = point.stuff()
-        if not stuff? then return
-        @repr.setPoint point, @getrepr(point,stuff)
+        if point.empty() then return
+        @repr.point(point.coords()).push @getrepr(point)
 
-    getrepr: (point,stuff) ->
+    getrepr: (point) ->
+        stuff = 1
         c = @coords(point)
         reprs = { 1: 'red', 2: 'blue', 3: 'green', 4: 'orange' }
         @paper.rect(c[0] + 3, c[1] + 3, @size - 3, @size - 3, 0 ).attr( 'opacity': 1.0, 'stroke-width': 1, stroke: reprs[stuff] )

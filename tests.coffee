@@ -49,5 +49,8 @@ exports.field =
         point1.removeall()
         test.equals _.keys(@game.points).length, 0
         test.done()
+        
+
+
 
         
