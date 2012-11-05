@@ -30,21 +30,25 @@
     Point.prototype.right = function() {
       return this.modifier(0, 1);
     };
-    Point.prototype.push = decorators.decorate(decorators.multiArg, function(state) {
+    Point.prototype.push = function(state) {
+      if (state.constructor === String) {
+        state = new this.host.state[state];
+      }
       if (this.empty()) {
         this.host.push(this);
       }
       if (!this.has(state)) {
-        return this.states[state.name] = state;
+        this.states[state.name] = state;
       } else {
         throw "state " + state.name + " already exists at this point";
       }
-    });
+      return this;
+    };
     Point.prototype.empty = function() {
       return helpers.isEmpty(this.states);
     };
     Point.prototype.has = function(statename) {
-      if (statename.constructor === !String) {
+      if (statename.constructor !== String) {
         statename = statename.name;
       }
       return Boolean(this.states[statename]);
@@ -78,15 +82,17 @@
         var args, fun;
         fun = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
         if (args[0].constructor !== Point) {
-          args[0] = this.getPoint(args[0]);
+          args[0] = this.point(args[0]);
         }
         return fun.apply(this, args);
       }, this);
-      this.getIndex = decorators.decorate(pointDecorator, this.getIndex);
-      return this.point = decorators.decorate(pointDecorator, this.point);
+      return this.getIndex = decorators.decorate(pointDecorator, this.getIndex);
     },
     point: function(point) {
       var ret;
+      if (point.constructor === Array) {
+        point = new Point(point, this);
+      }
       if (ret = this.points[this.getIndex(point)]) {
         return ret;
       } else {
@@ -97,7 +103,7 @@
       return delete this.points[getIndex(point)];
     },
     push: function(point) {
-      return this.points[getIndex(point)] = point;
+      return this.points[this.getIndex(point)] = point;
     },
     getIndex: function(point) {
       return point.x + (point.y * this.get('width'));

@@ -1,29 +1,44 @@
 (function() {
-  var game;
-  game = require('./models');
+  var _;
+  _ = require('underscore');
   exports.field = {
-    getIndex: function(test) {
-      var f;
-      f = new game.Field({
+    setUp: function(callback) {
+      var game;
+      game = require('./models');
+      this.game = new game.Game({
         width: 25,
         height: 25
       });
-      return test.done();
+      this.game.defineState('state1', {});
+      this.game.defineState('state2', {});
+      this.game.defineState('state3', {});
+      return callback();
     },
     setget: function(test) {
-      var f, point1, point2;
-      f = new game.Field({
-        width: 25,
-        height: 25
-      });
-      point1 = f.setPoint([3, 4], 'hi');
-      point2 = f.setPoint([8, 9], 'hi2');
-      test.equals(f.stuff([3, 4]), 'hi');
-      test.equals(point1.stuff(), 'hi');
-      test.equals(point2.stuff(), 'hi2');
-      test.equals(f.stuff([8, 9]), 'hi2');
-      test.equals(f.stuff([8, 10]), void 0);
+      var point1, point2;
+      point1 = this.game.point([3, 4]).push('state1');
+      point2 = this.game.point([3, 4]).push(new this.game.state.state2());
+      test.deepEqual(_.keys(this.game.point([3, 4]).states), ['state1', 'state2']);
       return test.done();
+    },
+    has: function(test) {
+      var point1;
+      point1 = this.game.point([3, 4]).push('state1');
+      test.equals(point1.has('state1'), true);
+      test.equals(point1.has('state2'), false);
+      test.equals(point1.has(new this.game.state.state1()), true);
+      test.equals(point1.has(new this.game.state.state2()), false);
+      return test.done();
+    },
+    duplicate: function(test) {
+      var point1;
+      point1 = this.game.point([3, 4]).push('state1').push('state2');
+      test.deepEqual(_.keys(this.game.point([3, 4]).states), ['state1', 'state2']);
+      try {
+        return point1.push('state1');
+      } catch (err) {
+        return test.done();
+      }
     }
   };
 }).call(this);

@@ -17,19 +17,20 @@ exports.Point = Point = class Point
     left:  -> @modifier(0,-1)
     right: -> @modifier(0,1)
 
-    push: decorators.decorate( decorators.multiArg, (state) ->
+    push: (state) ->
         # commented out for the speed.. makes sure that another point isn't already in its place,
         # and if it is it takes and uses its states dict...
         # 
         #if not anotherpoint = @host.point(@).empty() then @states = anotherpoint.states
-
+        if state.constructor is String then state = new @host.state[state]
         if @empty() then @host.push(@)
-        if not @has(state) then @states[state.name] = state else throw "state " + state.name + " already exists at this point" )
+        if not @has(state) then @states[state.name] = state else throw "state " + state.name + " already exists at this point"
+        @
 
     empty: -> helpers.isEmpty @states
 
     has: (statename) ->
-        if statename.constructor is not String then statename = statename.name
+        if statename.constructor != String then statename = statename.name
         return Boolean(@states[statename])
 
     # make sure to somehow delete a point from a field if all the states are removed from it..
@@ -50,18 +51,20 @@ exports.Field = Field = Backbone.Model.extend4000
         @points = {}
 
         pointDecorator = (fun,args...) =>
-            if args[0].constructor != Point then args[0] = @getPoint(args[0])
+            if args[0].constructor != Point then args[0] = @point(args[0])
             fun.apply(@,args)
 
         @getIndex = decorators.decorate(pointDecorator,@getIndex)
-        @point = decorators.decorate(pointDecorator,@point)
+        #@point = decorators.decorate(pointDecorator,@point)
         
     # decorator takes care of everything with this one..
-    point: (point) -> if ret = @points[@getIndex(point) ] then ret else point
+    point: (point) ->
+        if point.constructor is Array then point = new Point(point,@)
+        if ret = @points[@getIndex(point) ] then ret else point
 
     remove: (point) -> delete @points[getIndex(point)]
 
-    push: (point) -> @points[getIndex(point)] = point
+    push: (point) -> @points[@getIndex(point)] = point
             
     getIndex: (point) -> point.x + (point.y * @get ('width'))
         
