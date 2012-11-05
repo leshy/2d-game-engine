@@ -1,8 +1,8 @@
 _ = require 'underscore'
-
+game = require './models'
 exports.field =
     setUp: (callback) ->
-        game = require './models'
+
         @game = new game.Game {width:25,height:25}
         @game.defineState 'state1', {}
         @game.defineState 'state2', {}
@@ -31,4 +31,9 @@ exports.field =
         catch err
             test.done()
         
-
+    directionmodifiers: (test) ->
+        point1 = @game.point([3,4]).push('state1')
+        point2 = @game.point([2,4]).push('state2')
+        test.equals point1.down().has('state2'), true
+        test.equals point2.direction(new game.Direction().up()).has('state1'), true
+        test.done()

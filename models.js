@@ -13,22 +13,25 @@
       this.states = {};
     }
     Point.prototype.modifier = function(coords) {
-      return this.host.point(this.x + x, this.y + y);
+      return this.host.point([this.x + coords[0], this.y + coords[1]]);
     };
     Point.prototype.direction = function(direction) {
       return this.modifier.apply(this, direction.coords());
     };
     Point.prototype.up = function() {
-      return this.modifier(1, 0);
+      return this.modifier([1, 0]);
     };
     Point.prototype.down = function() {
-      return this.modifier(-1, 0);
+      return this.modifier([-1, 0]);
     };
     Point.prototype.left = function() {
-      return this.modifier(0, -1);
+      return this.modifier([0, -1]);
     };
     Point.prototype.right = function() {
-      return this.modifier(0, 1);
+      return this.modifier([0, 1]);
+    };
+    Point.prototype.coords = function() {
+      return [this.x, this.y];
     };
     Point.prototype.push = function(state) {
       if (state.constructor === String) {
@@ -212,17 +215,17 @@
     Direction.prototype.reverse = function() {
       return this.x *= -1 || (this.y *= -1);
     };
-    Direction.prototype.left = function() {
-      return this.set(-1, 0);
-    };
-    Direction.prototype.right = function() {
-      return this.set(1, 0);
+    Direction.prototype.up = function() {
+      return this.set([1, 0]);
     };
     Direction.prototype.down = function() {
-      return this.set(0, -1);
+      return this.set([-1, 0]);
     };
-    Direction.prototype.up = function() {
-      return this.set(0, 1);
+    Direction.prototype.left = function() {
+      return this.set([0, -1]);
+    };
+    Direction.prototype.right = function() {
+      return this.set([0, 1]);
     };
     Direction.prototype.coords = function() {
       return [this.x, this.y];
@@ -230,20 +233,20 @@
     Direction.prototype.set = function(x, y) {
       this.x = x;
       this.y = y;
-      return true;
+      return this;
     };
     Direction.prototype.string = function() {
-      if (this.x === -1) {
-        return 'left';
-      }
       if (this.x === 1) {
-        return 'right';
+        return 'up';
       }
-      if (this.y === -1) {
+      if (this.x === -1) {
         return 'down';
       }
+      if (this.y === -1) {
+        return 'left';
+      }
       if (this.y === 1) {
-        return 'up';
+        return 'right';
       }
       if (!this.x && !this.y) {
         return 'stop';

@@ -8,14 +8,16 @@ decorators = require 'decorators'
 exports.Point = Point = class Point
     constructor: ([@x,@y],@host) -> @states = {}
     
-    modifier: (coords) -> @host.point(@x + x, @y + y)
+    modifier: (coords) -> @host.point [@x + coords[0], @y + coords[1]]
 
     direction: (direction) -> @modifier.apply @, direction.coords()
         
-    up:    -> @modifier(1,0)
-    down:  -> @modifier(-1,0)
-    left:  -> @modifier(0,-1)
-    right: -> @modifier(0,1)
+    up:    -> @modifier [1,0]
+    down:  -> @modifier [-1,0]
+    left:  -> @modifier [0,-1]
+    right: -> @modifier [0,1]
+
+    coords: -> [@x,@y]
 
     push: (state) ->
         # commented out for the speed.. makes sure that another point isn't already in its place,
@@ -143,21 +145,21 @@ exports.Direction = Direction = class Direction
     constructor: (@x,@y) -> true
 
     reverse: -> @x *= -1 or @y *= -1
-
-    left:  -> @set -1,  0
-    right: -> @set  1,  0
-    down:  -> @set  0, -1
-    up:    -> @set  0,  1
+        
+    up:    -> @set [1,0]
+    down:  -> @set [-1,0]
+    left:  -> @set [0,-1]
+    right: -> @set [0,1]
 
     coords: -> [ @x, @y ]
 
-    set: (@x,@y) ->  true
+    set: (@x,@y) -> @
 
     string: -> 
-        if @x is -1 then return 'left'
-        if @x is 1 then return 'right'
-        if @y is -1 then return 'down'
-        if @y is 1 then return 'up'
+        if @x is 1 then return 'up'
+        if @x is -1 then return 'down'
+        if @y is -1 then return 'left'
+        if @y is 1 then return 'right'
         if not @x and not @y  then return 'stop'
 
 

@@ -1,10 +1,9 @@
 (function() {
-  var _;
+  var game, _;
   _ = require('underscore');
+  game = require('./models');
   exports.field = {
     setUp: function(callback) {
-      var game;
-      game = require('./models');
       this.game = new game.Game({
         width: 25,
         height: 25
@@ -39,6 +38,14 @@
       } catch (err) {
         return test.done();
       }
+    },
+    directionmodifiers: function(test) {
+      var point1, point2;
+      point1 = this.game.point([3, 4]).push('state1');
+      point2 = this.game.point([2, 4]).push('state2');
+      test.equals(point1.down().has('state2'), true);
+      test.equals(point2.direction(new game.Direction().up()).has('state1'), true);
+      return test.done();
     }
   };
 }).call(this);
