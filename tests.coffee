@@ -2,7 +2,6 @@ _ = require 'underscore'
 game = require './models'
 exports.field =
     setUp: (callback) ->
-
         @game = new game.Game {width:25,height:25}
         @game.defineState 'state1', {}
         @game.defineState 'state2', {}
@@ -37,3 +36,18 @@ exports.field =
         test.equals point1.down().has('state2'), true
         test.equals point2.direction(new game.Direction().up()).has('state1'), true
         test.done()
+
+    remove: (test) ->
+        point1 = @game.point([3,4])
+        test.equals _.keys(@game.points).length, 0
+        point1.push 'state1'
+        test.equals _.keys(@game.points).length, 1
+        point1.push 'state2'
+        test.equals _.keys(@game.points).length, 1
+        point1.remove 'state1'        
+        test.equals _.keys(@game.points).length, 1
+        point1.removeall()
+        test.equals _.keys(@game.points).length, 0
+        test.done()
+
+        

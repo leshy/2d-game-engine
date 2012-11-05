@@ -38,7 +38,7 @@ exports.Point = Point = class Point
     # make sure to somehow delete a point from a field if all the states are removed from it..
     remove: (removestates...) ->
         toremove = helpers.todict(removestates)
-        @states = helpers.hashfilter @states (val,name) -> if toremove[name] then return undefined else return val
+        @states = helpers.hashfilter @states, (val,name) -> if toremove[name] then return undefined else return val
         
         # remove yourself from the field if you are empty
         if @empty() then @host.remove(@)
@@ -64,7 +64,7 @@ exports.Field = Field = Backbone.Model.extend4000
         if point.constructor is Array then point = new Point(point,@)
         if ret = @points[@getIndex(point) ] then ret else point
 
-    remove: (point) -> delete @points[getIndex(point)]
+    remove: (point) -> delete @points[@getIndex(point)]
 
     push: (point) -> @points[@getIndex(point)] = point
             

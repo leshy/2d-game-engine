@@ -46,6 +46,20 @@
       test.equals(point1.down().has('state2'), true);
       test.equals(point2.direction(new game.Direction().up()).has('state1'), true);
       return test.done();
+    },
+    remove: function(test) {
+      var point1;
+      point1 = this.game.point([3, 4]);
+      test.equals(_.keys(this.game.points).length, 0);
+      point1.push('state1');
+      test.equals(_.keys(this.game.points).length, 1);
+      point1.push('state2');
+      test.equals(_.keys(this.game.points).length, 1);
+      point1.remove('state1');
+      test.equals(_.keys(this.game.points).length, 1);
+      point1.removeall();
+      test.equals(_.keys(this.game.points).length, 0);
+      return test.done();
     }
   };
 }).call(this);

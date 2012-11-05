@@ -60,11 +60,11 @@
       var removestates, toremove;
       removestates = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       toremove = helpers.todict(removestates);
-      this.states = helpers.hashfilter(this.states(function(val, name) {
+      this.states = helpers.hashfilter(this.states, function(val, name) {
         if (toremove[name]) {} else {
           return val;
         }
-      }));
+      });
       if (this.empty()) {
         return this.host.remove(this);
       }
@@ -103,7 +103,7 @@
       }
     },
     remove: function(point) {
-      return delete this.points[getIndex(point)];
+      return delete this.points[this.getIndex(point)];
     },
     push: function(point) {
       return this.points[this.getIndex(point)] = point;
