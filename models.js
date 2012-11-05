@@ -30,6 +30,19 @@
     Point.prototype.right = function() {
       return this.modifier(0, 1);
     };
+    Point.prototype.push = decorators.decorate(decorators.multiArg, function(state) {
+      if (this.empty()) {
+        this.host.push(this);
+      }
+      if (!this.has(state)) {
+        return this.states[state.name] = state;
+      } else {
+        throw "state " + state.name + " already exists at this point";
+      }
+    });
+    Point.prototype.empty = function() {
+      return helpers.isEmpty(this.states);
+    };
     Point.prototype.has = function(statename) {
       if (statename.constructor === !String) {
         statename = statename.name;
@@ -40,22 +53,17 @@
       var removestates, toremove;
       removestates = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       toremove = helpers.todict(removestates);
-      return this.states = helpers.hashfilter(this.states(function(val, name) {
+      this.states = helpers.hashfilter(this.states(function(val, name) {
         if (toremove[name]) {} else {
           return val;
         }
       }));
+      if (this.empty()) {
+        return this.host.remove(this);
+      }
     };
     Point.prototype.removeall = function() {
-      return this.host.delPoint(this);
-    };
-    Point.prototype.move = function(state, direction) {};
-    Point.prototype.getIndex = function() {
-      if (!this.index) {
-        return this.index = this.host.getIndex(this);
-      } else {
-        return this.index;
-      }
+      return this.remove(_.keys(this.states));
     };
     Point.prototype.collide = function(thing) {
       return thing.get('name');
@@ -74,9 +82,23 @@
         }
         return fun.apply(this, args);
       }, this);
-      return this.getIndex = decorators.decorate(pointDecorator, this.getIndex);
+      this.getIndex = decorators.decorate(pointDecorator, this.getIndex);
+      return this.point = decorators.decorate(pointDecorator, this.point);
     },
-    point: function(point) {},
+    point: function(point) {
+      var ret;
+      if (ret = this.points[this.getIndex(point)]) {
+        return ret;
+      } else {
+        return point;
+      }
+    },
+    remove: function(point) {
+      return delete this.points[getIndex(point)];
+    },
+    push: function(point) {
+      return this.points[getIndex(point)] = point;
+    },
     getIndex: function(point) {
       return point.x + (point.y * this.get('width'));
     },
@@ -152,6 +174,13 @@
           point: point
         });
       });
+    },
+    dotick: function(n) {
+      this.tick++;
+      return this.trigger('tick_' + this.tick);
+    },
+    tickloop: function(n) {
+      return this.dotick();
     },
     start: function() {
       return this.tickloop();

@@ -5,19 +5,28 @@ helpers = require 'helpers'
 decorators = require 'decorators'
 
 
-
 exports.Point = Point = class Point
     constructor: ([@x,@y],@host) -> @states = {}
     
-    modifier: (coords) -> @host.point(@x + x, @y + y)    
+    modifier: (coords) -> @host.point(@x + x, @y + y)
+
     direction: (direction) -> @modifier.apply @, direction.coords()
-    
+        
     up:    -> @modifier(1,0)
     down:  -> @modifier(-1,0)
     left:  -> @modifier(0,-1)
     right: -> @modifier(0,1)
 
-#    push: decorators.decorate decorators.multiArg, (state) -> if not @has(state) then @states[state.name] = state else throw "state " + state.name + " already exists at this point"
+    push: decorators.decorate( decorators.multiArg, (state) ->
+        # commented out for the speed.. makes sure that another point isn't already in its place,
+        # and if it is it takes and uses its states dict...
+        # 
+        #if not anotherpoint = @host.point(@).empty() then @states = anotherpoint.states
+
+        if @empty() then @host.push(@)
+        if not @has(state) then @states[state.name] = state else throw "state " + state.name + " already exists at this point" )
+
+    empty: -> helpers.isEmpty @states
 
     has: (statename) ->
         if statename.constructor is not String then statename = statename.name
@@ -27,14 +36,13 @@ exports.Point = Point = class Point
     remove: (removestates...) ->
         toremove = helpers.todict(removestates)
         @states = helpers.hashfilter @states (val,name) -> if toremove[name] then return undefined else return val
-
-    removeall: -> @host.delPoint(@)
-
-
         
-    move: (state,direction) ->
+        # remove yourself from the field if you are empty
+        if @empty() then @host.remove(@)
+        
+    removeall: -> @remove _.keys(@states)
 
-    getIndex: -> if not @index then @index = @host.getIndex(@) else @index
+    #getIndex: -> if not @index then @index = @host.getIndex(@) else @index
     collide: (thing) -> thing.get('name')    
     
 exports.Field = Field = Backbone.Model.extend4000
@@ -46,12 +54,15 @@ exports.Field = Field = Backbone.Model.extend4000
             fun.apply(@,args)
 
         @getIndex = decorators.decorate(pointDecorator,@getIndex)
-        #@point = decorators.decorate(pointDecorator,@point)
+        @point = decorators.decorate(pointDecorator,@point)
         
     # decorator takes care of everything with this one..
-    point: (point) ->
-        
-        
+    point: (point) -> if ret = @points[@getIndex(point) ] then ret else point
+
+    remove: (point) -> delete @points[getIndex(point)]
+
+    push: (point) -> @points[getIndex(point)] = point
+            
     getIndex: (point) -> point.x + (point.y * @get ('width'))
         
     getIndexRev: (i) -> width = @get('width'); [ i % width, Math.floor(i / width) ]
@@ -107,7 +118,7 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
             state.set point: point
 
     dotick: (n) ->
-        @tick ++
+        @tick++
         @trigger('tick_' + @tick)
 
     tickloop: (n) ->
