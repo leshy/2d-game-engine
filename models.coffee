@@ -29,13 +29,16 @@ exports.Point = Point = class Point
         if not @has(state) then @states[state.name] = state else throw "state " + state.name + " already exists at this point"
         state.point = @
         if state.start then state.start()
+        @host.trigger 'set', @, state
         @
 
     empty: -> helpers.isEmpty @states
 
+    each: (callback) -> _.each(@states,callback)
+
     has: (statename) ->
         if statename.constructor != String then statename = statename.name
-        return Boolean(@states[statename])
+        return @states[statename]
 
     # make sure to somehow delete a point from a field if all the states are removed from it..
     remove: (removestates...) ->
@@ -96,7 +99,7 @@ exports.State = State = Backbone.Model.extend4000
 
     place: (states...) -> @point.push.apply(@point,states)
 
-    replace: (states...) -> @point.push.apply
+    replace: (state) -> @remove(); @point.push(state)
 
     move: (where) -> @point.move(@, where)
 
@@ -108,16 +111,13 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
     initialize: ->
         @controls = {}
         @state = {}
-        @tickspeed = 500
+        @tickspeed = 50
         
         @tick = 0
 
         @subscribe { ctrl: { k: true, s: true }}, (msg,reply) =>
             console.log(msg.json())
             reply.end()
-
-        @on 'set', (point,state) ->
-            state.set point: point
 
     dotick: () ->
         @tick++

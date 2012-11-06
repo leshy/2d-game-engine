@@ -16,10 +16,10 @@ exports.field =
 
     has: (test) ->
         point1 = @game.point([3,4]).push('state1')
-        test.equals point1.has('state1'), true
-        test.equals point1.has('state2'), false
-        test.equals point1.has(new @game.state.state1()), true
-        test.equals point1.has(new @game.state.state2()), false
+        test.equals Boolean(point1.has('state1')), true
+        test.equals Boolean(point1.has('state2')), false
+        test.equals Boolean(point1.has(new @game.state.state1())), true
+        test.equals Boolean(point1.has(new @game.state.state2())), false
         test.done()
     
     duplicate: (test) ->
@@ -33,8 +33,8 @@ exports.field =
     directionmodifiers: (test) ->
         point1 = @game.point([3,4]).push('state1')
         point2 = @game.point([2,4]).push('state2')
-        test.equals point1.down().has('state2'), true
-        test.equals point2.direction(new game.Direction().up()).has('state1'), true
+        test.equals Boolean(point1.down().has('state2')), true
+        test.equals Boolean(point2.direction(new game.Direction().up()).has('state1')), true
         test.done()
 
     remove: (test) ->
