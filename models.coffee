@@ -10,7 +10,7 @@ exports.Point = Point = class Point
     
     modifier: (coords) -> @host.point [@x + coords[0], @y + coords[1]]
 
-    direction: (direction) -> @modifier.apply @, direction.coords()
+    direction: (direction) -> @modifier direction.coords()
         
     up:    -> @modifier [1,0]
     down:  -> @modifier [-1,0]
@@ -24,7 +24,7 @@ exports.Point = Point = class Point
         # and if it is it takes and uses its states dict...
         # 
         #if not anotherpoint = @host.point(@).empty() then @states = anotherpoint.states
-        if state.constructor is String then state = new @host.state[state]
+        if state.constructor == String then state = new @host.state[state]
         if @empty() then @host.push(@)
         if not @has(state) then @states[state.name] = state else throw "state " + state.name + " already exists at this point"
         state.point = @
@@ -48,8 +48,15 @@ exports.Point = Point = class Point
         _.map kickedout, (state) => @host.trigger 'del',@,state
         # remove yourself from the field if you are empty
         if @empty() then @host.remove(@)
+        kickedout
         
     removeall: -> @remove.apply(@,_.keys(@states))
+
+    move: (state,where) ->
+        #console.log("MOVE",state,where)
+        @remove(state.name)
+        where = @modifier(where.coords())
+        where.push(state)
 
     #getIndex: -> if not @index then @index = @host.getIndex(@) else @index
     collide: (thing) -> thing.get('name')
@@ -73,7 +80,7 @@ exports.Field = Field = Backbone.Model.extend4000
     remove: (point) -> delete @points[@getIndex(point)]
 
     push: (point) -> @points[@getIndex(point)] = point
-            
+    
     getIndex: (point) -> point.x + (point.y * @get ('width'))
         
     getIndexRev: (i) -> width = @get('width'); [ i % width, Math.floor(i / width) ]
@@ -107,6 +114,8 @@ exports.State = State = Backbone.Model.extend4000
 
     in: (n,callback) -> @point.host.onOnce 'tick_' + (@point.host.tick + n), => callback()
     
+    cancel: (callback) -> @point.host.off null, callback
+    
 exports.Game = Game = comm.MsgNode.extend4000 Field,
     initialize: ->
         @controls = {}
@@ -115,9 +124,9 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
         
         @tick = 0
 
-        @subscribe { ctrl: { k: true, s: true }}, (msg,reply) =>
-            console.log(msg.json())
-            reply.end()
+        #@subscribe { ctrl: { k: true, s: true }}, (msg,reply) =>
+            #console.log(msg.json())
+        #    reply.end()
 
     dotick: () ->
         @tick++
@@ -142,10 +151,10 @@ exports.Direction = Direction = class Direction
 
     reverse: -> @x *= -1 or @y *= -1
         
-    up:    -> @set [1,0]
-    down:  -> @set [-1,0]
-    left:  -> @set [0,-1]
-    right: -> @set [0,1]
+    up:    -> @set 0,-1
+    down:  -> @set 0,1
+    left:  -> @set -1,0
+    right: -> @set 1,0
 
     coords: -> [ @x, @y ]
 
