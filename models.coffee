@@ -12,10 +12,10 @@ exports.Point = Point = class Point
 
     direction: (direction) -> @modifier direction.coords()
         
-    up:    -> @modifier [1,0]
-    down:  -> @modifier [-1,0]
-    left:  -> @modifier [0,-1]
-    right: -> @modifier [0,1]
+    up:    -> @modifier [0,-1]
+    down:  -> @modifier [0,1]
+    left:  -> @modifier [-1,0]
+    right: -> @modifier [1,0]
 
     coords: -> [@x,@y]
 

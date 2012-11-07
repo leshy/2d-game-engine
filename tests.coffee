@@ -32,7 +32,7 @@ exports.field =
         
     directionmodifiers: (test) ->
         point1 = @game.point([3,4]).push('state1')
-        point2 = @game.point([2,4]).push('state2')
+        point2 = @game.point([3,5]).push('state2')
         test.equals Boolean(point1.down().has('state2')), true
         test.equals Boolean(point2.direction(new game.Direction().up()).has('state1')), true
         test.done()
