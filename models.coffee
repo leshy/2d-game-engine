@@ -3,7 +3,9 @@ comm = require 'comm/clientside'
 _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
-
+#
+# has should take multiple args
+# 
 exports.Point = Point = class Point
     constructor: ([@x,@y],@host) -> @states = {}
     
