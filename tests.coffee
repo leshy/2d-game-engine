@@ -25,10 +25,10 @@ exports.field =
     duplicate: (test) ->
         point1 = @game.point([3,4]).push('state1').push('state2')
         test.deepEqual _.keys(@game.point([3,4]).states), [ 'state1', 'state2' ]
-        try
-            point1.push('state1')
-        catch err
-            test.done()
+        test.equals point1.has('state1').constructor, @game.state.state1
+        point1.push('state1')
+        test.equals point1.has('state1').constructor, Array
+        test.done()
         
     directionmodifiers: (test) ->
         point1 = @game.point([3,4]).push('state1')
@@ -44,7 +44,7 @@ exports.field =
         test.equals _.keys(@game.points).length, 1
         point1.push 'state2'
         test.equals _.keys(@game.points).length, 1
-        point1.remove 'state1'        
+        point1.remove 'state1' 
         test.equals _.keys(@game.points).length, 1
         point1.removeall()
         test.equals _.keys(@game.points).length, 0

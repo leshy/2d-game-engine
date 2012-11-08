@@ -4,7 +4,6 @@ _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
 
-
 exports.Point = Point = class Point
     constructor: ([@x,@y],@host) -> @states = {}
     
@@ -26,7 +25,12 @@ exports.Point = Point = class Point
         #if not anotherpoint = @host.point(@).empty() then @states = anotherpoint.states
         if state.constructor == String then state = new @host.state[state]
         if @empty() then @host.push(@)
-        if not @has(state) then @states[state.name] = state else throw "state " + state.name + " already exists at this point"
+            
+        if not @has(state) then @states[state.name] = state
+        else
+            if @states[state.name].constructor != Array then @states[state.name] = [@states[state.name]]
+            @states[state.name].push(state)
+            
         state.point = @
         if state.start then state.start()
         @host.trigger 'set', @, state
@@ -41,10 +45,20 @@ exports.Point = Point = class Point
         return @states[statename]
 
     # make sure to somehow delete a point from a field if all the states are removed from it..
-    remove: (removestates...) ->
-        toremove = helpers.todict removestates
+    remove: (state) ->
         kickedout = []
-        @states = helpers.hashfilter @states, (val,name) -> if toremove[name] then kickedout.push val; return undefined else return val
+        @states = helpers.hashfilter @states, (val,name) ->
+            res = []
+            helpers.maybeiterate val, (val) ->
+                if name != state and val != state then res.push(val) else kickedout.push(val)
+                    
+            if not res.length
+                return undefined
+            else if res.length is 1
+                return res[0]
+            else
+                return res
+                
         _.map kickedout, (state) => @host.trigger 'del',@,state
         # remove yourself from the field if you are empty
         if @empty() then @host.remove(@)
@@ -110,7 +124,7 @@ exports.State = State = Backbone.Model.extend4000
 
     move: (where) -> @point.move(@, where)
 
-    remove: -> @point.remove @name
+    remove: -> @point.remove @
 
     in: (n,callback) -> @point.host.onOnce 'tick_' + (@point.host.tick + n), => callback()
     
