@@ -1,35 +1,76 @@
-BackboneB = require 'backbone-browserify'
 helpers = require 'helpers'
-raphael = require 'raphael-browserify'
+Backbone = require 'backbone4000'
+validator = require 'validator2-extras'; v = validator.v
 
-exports.GameView = BackboneB.View.extend
-    initialize: ->
-        @paper = raphael @el, "100%", "100%"
-        @size = Math.floor(@paper.canvas.clientHeight /  @model.get('height') ) - 2
-        @spacing = 0
-        @model.on 'change:data', @redraw.bind(@)
-        @initdraw()
-        @redraw()
+Game = require 'models.coffee'
+
+Sprite = exports.Sprite = Backbone.Model.extend4000(
+    validator.MakeAccessors
+        once: v().Default(true).Boolean()
+        loop: v().Default(true).Boolean()
+        frames: v().Default(0).Number()
+        speed: v().Number()
+        path: v().String()
+    defaults:
+        loop: true
+        frames: 0
+        speed: 1
+    initialize: -> true
+    bla: -> true
+)
+
+
+PointView = Backbone.Model.extend4000
+    initialize: -> true
         
-    initdraw: ->
-        @repr = new ViewField { width: @model.get('width'), height: @model.get('height') }
-        @model.each (point) =>
-            c = @coords(point)
-            @paper.rect(c[0], c[1], @size, @size, 0 ).attr( 'opacity': 0.4, 'stroke-width': 1, stroke: 'black' )
-            @drawpoint(point)
 
+SpriteView = PointView.extend4000()
+
+DirectionSpriteView = PointView.extend4000
+    initialize: -> true
+        
+        
+
+View = exports.View = Backbone.Model.extend4000
+    initialize: ->
+        @model = @get 'model'
+        @repr = new Game.Field { width: @model.get('width'), height: @model.get('height') }
+
+        @model.on 'set', (point,state) => @pointadd point, state
+        @model.on 'del', (point,state) => @repr.point(point.coords()).remove(state.name)
+        @repr.on  'del', (point,raphaelobject) => raphaelobject.remove()
+        @repr.on  'set', (point,painter) => painter.paint point # something like this..
+
+        @model.each (point) => @drawpoint(point) # draw an initial model
+
+    # looks at states at a particular point and finds painters for those states.
+    # figures out a correct painter order and applies eliminations..
+    # spits out an array of painters
+    # point > [ painter, painter, ... ]
+    getpainters: (point) ->
+        _applyEliminations = (painters) ->
+            _.map painters (name, painter) ->
+                helpers.maybeiterate painter.eliminates (todelete) ->
+                    if (todelete) then delete painters[todelete]
+                        
+        _applyOrder = (painters) ->
+            order = _.values painters
+            order.sort (painter) -> return painter.zindex
+
+        painters = {}
+        point.each (state) => painters[state.name] = @painter[state.name]
+        
+        _applyEliminations(painters)
+        _applyOrder(painters)
+
+    # finds appropriate painter order for a point, and paints them onto canvas
+    # point > [ painter instance, painter instance ]
     drawpoint: (point) ->
-        if point.empty() then return
-        @repr.point(point.coords()).push @getrepr(point)
+        reprpoint = @repr.point point.coords()
+        _.map @getpainters(point), (painter) => reprpoint.push(painter.visual)
 
-    getrepr: (point) ->
-        stuff = 1
-        c = @coords(point)
-        reprs = { 1: 'red', 2: 'blue', 3: 'green', 4: 'orange' }
-        @paper.rect(c[0] + 3, c[1] + 3, @size - 3, @size - 3, 0 ).attr( 'opacity': 1.0, 'stroke-width': 1, stroke: reprs[stuff] )
-    
-    coords: (point) -> [ 5 + ( point.x * ( @size + @spacing )), 5 + ( point.y * ( @size + @spacing )) ]
-
-    redraw: -> true
-        #@paper.clear()
-        #@paper.circle(320, 240, 60).animate({fill: "#223fa3", stroke: "#000", "stroke-width": 80, "stroke-opacity": 0.5}, 2000)
+    definePainter: (name, options) ->
+        if options.visual then options.visual.set statename: name
+        @painter[name] = options
+        
+MakeSprite = exports.MakeSprite = (frames) -> new Sprite().frames(frames)

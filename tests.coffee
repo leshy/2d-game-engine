@@ -1,5 +1,5 @@
 _ = require 'underscore'
-game = require './models'
+game = require './index'
 exports.field =
     setUp: (callback) ->
         @game = new game.Game {width:25,height:25}
@@ -49,8 +49,15 @@ exports.field =
         point1.removeall()
         test.equals _.keys(@game.points).length, 0
         test.done()
-        
 
 
+exports.sprite =
+    setUp: (callback) ->
+        @sprite = new game.Sprite()
+        callback()
 
-        
+    accessors: (test) ->
+        @sprite.loop()
+        test.equals @sprite.get('loop'), true
+        test.done()
+

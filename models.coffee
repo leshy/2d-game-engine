@@ -3,9 +3,7 @@ comm = require 'comm/clientside'
 _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
-#
-# has should take multiple args
-# 
+
 exports.Point = Point = class Point
     constructor: ([@x,@y],@host) -> @states = {}
     
@@ -17,7 +15,7 @@ exports.Point = Point = class Point
     down:  -> @modifier [0,1]
     left:  -> @modifier [-1,0]
     right: -> @modifier [1,0]
-
+    
     coords: -> [@x,@y]
 
     push: (state) ->
@@ -42,9 +40,18 @@ exports.Point = Point = class Point
 
     each: (callback) -> _.each(@states,callback)
 
-    has: (statename) ->
-        if statename.constructor != String then statename = statename.name
-        return @states[statename]
+    # maybe I should have an iterator mixin that builds those functions from each function..
+    map: (callback) -> _.map(@states,callback) 
+    filter: (callback) -> _.map(@states,callback)
+
+    has: (statenames...) ->
+        res = []
+        _.map statenames, (statename) =>
+            if statename.constructor != String then statename = statename.name
+            if state = @states[statename] then res.push(state)
+
+        if res.length is 0 then return undefined else if res.length is 1 then return res[0] else return res
+        
 
     # make sure to somehow delete a point from a field if all the states are removed from it..
     remove: (state) ->
@@ -152,8 +159,7 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
         @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
-    start: ->
-        @tickloop()
+    start: -> @tickloop()
 
     stop: -> clearTimeout(@timeout)
 
