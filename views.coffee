@@ -1,36 +1,10 @@
 helpers = require 'helpers'
 Backbone = require 'backbone4000'
 validator = require 'validator2-extras'; v = validator.v
-
 Game = require 'models.coffee'
 
-Sprite = exports.Sprite = Backbone.Model.extend4000(
-    validator.MakeAccessors
-        once: v().Default(true).Boolean()
-        loop: v().Default(true).Boolean()
-        frames: v().Default(0).Number()
-        speed: v().Number()
-        path: v().String()
-    defaults:
-        loop: true
-        frames: 0
-        speed: 1
-    initialize: -> true
-    bla: -> true
-)
 
-
-PointView = Backbone.Model.extend4000
-    initialize: -> true
-        
-
-SpriteView = PointView.extend4000()
-
-DirectionSpriteView = PointView.extend4000
-    initialize: -> true
-        
-        
-
+# painter is a per state view
 View = exports.View = Backbone.Model.extend4000
     initialize: ->
         @model = @get 'model'
@@ -57,11 +31,16 @@ View = exports.View = Backbone.Model.extend4000
             order = _.values painters
             order.sort (painter) -> return painter.zindex
 
-        painters = {}
-        point.each (state) => painters[state.name] = @painter[state.name]
-        
+        #painters = {}
+        #point.each (state) => painters[state.name] = @painter[state.name]
         _applyEliminations(painters)
         _applyOrder(painters)
+        
+        painters = point.map (state) => @painter(state)
+        _.map painters, (painter) -> painter.draw() # should care about eliminations and ordering
+
+    painter: (state) ->
+        new @painters[state.name] state: state
 
     # finds appropriate painter order for a point, and paints them onto canvas
     # point > [ painter instance, painter instance ]
@@ -71,6 +50,5 @@ View = exports.View = Backbone.Model.extend4000
 
     definePainter: (name, options) ->
         if options.visual then options.visual.set statename: name
-        @painter[name] = options
-        
-MakeSprite = exports.MakeSprite = (frames) -> new Sprite().frames(frames)
+        @painters[name] = options
+

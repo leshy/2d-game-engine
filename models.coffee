@@ -18,7 +18,7 @@ exports.Point = Point = class Point
     
     coords: -> [@x,@y]
 
-    push: (state) ->
+    push: (state,silent) ->
         # commented out for the speed.. makes sure that another point isn't already in its place,
         # and if it is it takes and uses its states dict...
         # 
@@ -33,7 +33,7 @@ exports.Point = Point = class Point
             
         state.point = @
         if state.start then state.start()
-        @host.trigger 'set', @, state
+        if not silent then @host.trigger 'set', @, state
         @
 
     empty: -> helpers.isEmpty @states
@@ -51,10 +51,9 @@ exports.Point = Point = class Point
             if state = @states[statename] then res.push(state)
 
         if res.length is 0 then return undefined else if res.length is 1 then return res[0] else return res
-        
 
     # make sure to somehow delete a point from a field if all the states are removed from it..
-    remove: (state) ->
+    remove: (state,silent) ->
         kickedout = []
         @states = helpers.hashfilter @states, (val,name) ->
             res = []
@@ -68,7 +67,7 @@ exports.Point = Point = class Point
             else
                 return res
                 
-        _.map kickedout, (state) => @host.trigger 'del',@,state
+        if not silent then _.map kickedout, (state) => @host.trigger 'del',@,state
         # remove yourself from the field if you are empty
         if @empty() then @host.remove(@)
         kickedout
@@ -76,10 +75,9 @@ exports.Point = Point = class Point
     removeall: -> @remove.apply(@,_.keys(@states))
 
     move: (state,where) ->
-        #console.log("MOVE",state,where)
-        @remove(state.name)
+        @remove(state.name,true)
         where = @modifier(where.coords())
-        where.push(state)
+        where.push(state,true)
 
     #getIndex: -> if not @index then @index = @host.getIndex(@) else @index
     collide: (thing) -> thing.get('name')
@@ -124,9 +122,6 @@ exports.Field = Field = Backbone.Model.extend4000
 # in
 
 exports.State = State = Backbone.Model.extend4000
-    #initialize : ->
-        #@when 'point', (point) => @set game: point.host
-
     place: (states...) -> @point.push.apply(@point,states)
 
     replace: (state) -> @remove(); @point.push(state)
@@ -138,6 +133,9 @@ exports.State = State = Backbone.Model.extend4000
     in: (n,callback) -> @point.host.onOnce 'tick_' + (@point.host.tick + n), => callback()
     
     cancel: (callback) -> @point.host.off null, callback
+
+
+
     
 exports.Game = Game = comm.MsgNode.extend4000 Field,
     initialize: ->
