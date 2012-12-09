@@ -117,10 +117,8 @@ exports.Field = Field = Backbone.Model.extend4000
 # remove
 # move (direction or point)
 # collide
-
 # on
 # in
-
 exports.State = State = Backbone.Model.extend4000
     place: (states...) -> @point.push.apply(@point,states)
 
@@ -133,8 +131,6 @@ exports.State = State = Backbone.Model.extend4000
     in: (n,callback) -> @point.host.onOnce 'tick_' + (@point.host.tick + n), => callback()
     
     cancel: (callback) -> @point.host.off null, callback
-
-
 
     
 exports.Game = Game = comm.MsgNode.extend4000 Field,

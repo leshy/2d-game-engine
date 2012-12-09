@@ -1,7 +1,7 @@
 helpers = require 'helpers'
 Backbone = require 'backbone4000'
 validator = require 'validator2-extras'; v = validator.v
-Game = require 'models.coffee'
+Game = require './models'
 
 
 # painter is a per state view
@@ -48,7 +48,13 @@ View = exports.View = Backbone.Model.extend4000
         reprpoint = @repr.point point.coords()
         _.map @getpainters(point), (painter) => reprpoint.push(painter.visual)
 
-    definePainter: (name, options) ->
-        if options.visual then options.visual.set statename: name
-        @painters[name] = options
+    # painters should be called like the states, that's how the view looks them up
+    definePainter: (definitions...) ->
+        # just a small sintax sugar first argument is optionally a name for the painter
+        if _.first(definitions).constructor == String
+            _.last(definitions).name = name = definitions.shift()
+        else
+            name = _.last(definitions).name # or figure out the name from the last definition
+            
+        @painters[name] = Backbone.Model.extend4000.apply Backbone.Model, definitions
 
