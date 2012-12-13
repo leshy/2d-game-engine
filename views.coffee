@@ -4,25 +4,70 @@ validator = require 'validator2-extras'; v = validator.v
 Models = require './models'
 _ = require 'underscore'
 
-# painter is a per state view
-View = exports.View = Backbone.Model.extend4000
+
+# painter subclass should implement Draw(coords) Move(coords) and Remove() methods
+Painter = exports.Painter = Backbone.Model.extend4000
+    initialize: ->
+        @when 'view', (view) => @view = view
+                
+        @when 'state', (state) =>
+            @state = state
+            state.on 'move', => @draw()
+            state.on 'remove', => @remove()
+            
+    draw: (coords,size) -> throw 'not implemented'
+    
+    remove: -> throw 'not implemented'
+    
+    move: -> throw 'not implemented'
+
+
+# very simmilar to game model, maybe should share the superclass with it
+GameView = exports.GameView = Backbone.Model.extend4000 Field,
     initialize: ->
         @model = @get 'model'
-        @repr = new Models.Field { width: @model.get('width'), height: @model.get('height') }
         
         @model.on 'set', (point,state) => @pointadd point, state
-        @model.on 'del', (point,state) => @repr.point(point.coords()).remove(state.name)
+        @model.on 'del', (point,state) => @point(point).remove(state.name)
         @repr.on  'del', (point,raphaelobject) => raphaelobject.remove()
         @repr.on  'set', (point,painter) => painter.draw()
 
-        if not @painters then @painters = {}
+        @painters = {}
 
-        #@model.each (point) => @drawpoint(point) # draw an initial model
+    # painters should be called like the states, that's how the view looks them up
+    definePainter: (definitions...) ->
+        # just a small sintax sugar first argument is optionally a name for the painter
+        if _.first(definitions).constructor == String
+            definitions.push { name: definitions.shift() }
+        else name = _.last(definitions).name # or figure out the name from the last definition
+        
+        @painters[name] = Backbone.Model.extend4000.apply Backbone.Model, definitions
+    
+exports.PointView = class PointView extends Models.point
+    constructor: (gameview,point) ->
+        @gameview = gameview
+        @point = point
+        
+        # redraw a point when world view has changed
+        gameview.on 'pan' => @draw()
+        gameview.on 'zoom' => @draw()
+        
+        # redraw a point when states in it have changed
+        point.on 'add' => @draw()
+        point.on 'del' => @draw()
+        point.on 'move' => @draw()
 
+    draw: -> _.map @getpainters, (painter) -> painter.draw()
+
+    # fetches a painter for a state at this point, or instantiates a new one
+    painter: (state) ->
+        if painter = @has(state.name) then return painter
+        return new @gameview.painters[state.name] state: state, view: @
+        
     # looks at states at a particular point and finds painters for those states.
     # figures out a correct painter order and applies eliminations..
     # spits out an array of painters
-    # point > [ painter, painter, ... ]
+    # point > [ painter, painter, ... ]            
     getpainters: (point) ->
         _applyEliminations = (painters) ->
             _.map painters, (name, painter) ->
@@ -37,34 +82,5 @@ View = exports.View = Backbone.Model.extend4000
         #point.each (state) => painters[state.name] = @painter[state.name]
         _applyEliminations(painters)
         _applyOrder(painters)
-
-        painters = point.map (state) => @painter(state)
-
-        #console.log("painters",painters)
         
-        #_.map painters, (painter) -> painter.draw() # should care about eliminations and ordering
-        painters
-
-    painter: (state) ->
-        #console.log "WILL INIT",state.name,@painters[state.name]
-        x = new @painters[state.name] state: state, view: @
-        #console.log("PAINER",state.name)
-        x
-        
-    # finds appropriate painter order for a point, and paints them onto canvas
-    # point > [ painter instance, painter instance ]
-    drawpoint: (point) ->
-        reprpoint = @repr.point point.coords()
-        _.map @getpainters(point), (painter) => reprpoint.push(painter)
-
-    # painters should be called like the states, that's how the view looks them up
-    definePainter: (definitions...) ->
-        # just a small sintax sugar first argument is optionally a name for the painter
-        if _.first(definitions).constructor == String
-            _.last(definitions).name = name = definitions.shift()
-        else
-            name = _.last(definitions).name # or figure out the name from the last definition
-
-        console.log('definepainter',name)            
-        @painters[name] = Backbone.Model.extend4000.apply Backbone.Model, definitions
-
+        point.map (state) => @push(@painter(state))

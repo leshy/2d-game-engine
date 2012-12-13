@@ -4,13 +4,13 @@ _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
 
-exports.Point = Point = class Point
-    constructor: ([@x,@y],@host) -> @states = {}
+exports.Point = class Point
+    constructor: ([@x,@y],@host) -> @states = []
     
     modifier: (coords) -> @host.point [@x + coords[0], @y + coords[1]]
 
     direction: (direction) -> @modifier direction.coords()
-        
+    
     up:    -> @modifier [0,-1]
     down:  -> @modifier [0,1]
     left:  -> @modifier [-1,0]
@@ -34,7 +34,8 @@ exports.Point = Point = class Point
         state.point = @
         if state.start then state.start()
         if not silent then @host.trigger 'set', @, state
-        @
+
+        state
 
     empty: -> helpers.isEmpty @states
 
@@ -42,6 +43,7 @@ exports.Point = Point = class Point
 
     # maybe I should have an iterator mixin that builds those functions from each function..
     map: (callback) -> _.map(@states,callback) 
+
     filter: (callback) -> _.map(@states,callback)
 
     has: (statenames...) ->
@@ -75,9 +77,10 @@ exports.Point = Point = class Point
     removeall: -> @remove.apply(@,_.keys(@states))
 
     move: (state,where) ->
-        @remove(state.name,true)
+        @remove(state.name)
         where = @modifier(where.coords())
-        where.push(state,true)
+        where.push(state)
+        #where.trigger 'move', state
 
     #getIndex: -> if not @index then @index = @host.getIndex(@) else @index
     collide: (thing) -> thing.get('name')
@@ -96,7 +99,9 @@ exports.Field = Field = Backbone.Model.extend4000
     # decorator takes care of everything with this one..
     point: (point) ->
         if point.constructor is Array then point = new Point(point,@)
-        if ret = @points[@getIndex(point) ] then ret else point
+        if ret = @points[@getIndex(point) ] then ret
+        else
+            if point.host is @ then point else new Point point.coords(),@
 
     remove: (point) -> delete @points[@getIndex(point)]
 
@@ -121,13 +126,13 @@ exports.Field = Field = Backbone.Model.extend4000
 # in
 exports.State = State = Backbone.Model.extend4000
     place: (states...) -> @point.push.apply(@point,states)
-
+    
     replace: (state) -> @remove(); @point.push(state)
-
+    
     move: (where) -> @point.move(@, where)
-
-    remove: -> @point.remove @
-
+    
+    remove: -> @point.remove @; @trigger 'remove'
+    
     in: (n,callback) -> @point.host.onOnce 'tick_' + (@point.host.tick + n), => callback()
     
     cancel: (callback) -> @point.host.off null, callback
@@ -157,10 +162,13 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
 
     stop: -> clearTimeout(@timeout)
 
-    defineState: (name, definition...) ->
-        definition.push { name: name }
-        @state[name] = State.extend4000.apply(State,definition)
-
+    defineState: (definitions...) ->
+        # just a small sintax sugar first argument is optionally a name for the painter
+        if _.first(definitions).constructor == String
+            definitions.push { name: definitions.shift() }
+        else name = _.last(definitions).name # or figure out the name from the last definition
+        
+        @state[name] = State.extend4000.apply(State,definitions)
 
 exports.Direction = Direction = class Direction
     constructor: (@x,@y) -> true
