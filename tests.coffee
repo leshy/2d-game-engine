@@ -16,8 +16,8 @@ exports.field =
 
     has: (test) ->
         point1 = @game.point([3,4]).push('state1')
-        test.equals Boolean(point1.has('state1')), true
-        test.equals Boolean(point1.has('state2')), false
+        test.equals Boolean(point1.has('state1')), true, 'state1 is missing!'
+        test.equals Boolean(point1.has('state2')), false, 'state2 has been found but it should be missing'
         test.equals Boolean(point1.has(new @game.state.state1())), true
         test.equals Boolean(point1.has(new @game.state.state2())), false
         test.done()
@@ -50,14 +50,28 @@ exports.field =
         test.equals _.keys(@game.points).length, 0
         test.done()
 
-
-exports.sprite =
+exports.Point =
     setUp: (callback) ->
-        @sprite = new game.Sprite()
+        @game = new game.Game width: 25, height: 25
+        @game.defineState 'Wall', { tags: { 'nogo': true } }        
+        @point = @game.point [0, 0]
         callback()
-
-    accessors: (test) ->
-        @sprite.loop()
-        test.equals @sprite.get('loop'), true
+        
+    test1: (test) ->
+        @point.push new @game.state.Wall()
+        @point.push 'Wall'
         test.done()
+    
+
+
+
+#exports.sprite =
+#    setUp: (callback) ->
+#        @sprite = new game.Sprite()
+#        callback()
+#    accessors: (test) ->
+#        @sprite.loop()
+#        test.equals @sprite.get('loop'), true
+#       test.done()
+
 

@@ -4,86 +4,114 @@ _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
 
-exports.Point = class Point
-    constructor: ([@x,@y],@host) -> @states = []
-    
-    modifier: (coords) -> @host.point [@x + coords[0], @y + coords[1]]
+# place - create a new state in current point
+# replace - replace the state with some other state
+# remove - remove the state
+# move (direction or point) - move the state to some other point
+# in (x, callback) - trigger a callback after x number of ticks
+# cancel (?) - cancel a tick callback SOMEHOW
+# 
+# tag operations
+# 
+# has(tags...)
+# tagadd(tags...)
+# tagdel(tags...)
+# each(callback) - iterate through tags
 
+exports.State = State = Backbone.Model.extend4000
+    initialize: ->
+        @when 'point', (point) =>
+            @point = point
+            @id = point.game.nextid()
+            if @start then @start()
+            
+
+    place: (states...) -> @point.push.apply(@point,states)
+    
+    replace: (state) -> @remove(); @point.push(state)
+    
+    move: (where) -> @point.move(@, where)
+    
+    remove: -> @point.remove @; @trigger 'remove'
+    
+    in: (n,callback) -> @point.host.onOnce 'tick_' + (@point.host.tick + n), => callback()
+    
+    cancel: (callback) -> @point.host.off null, callback
+    
+    each: (callback) ->
+        callback(@name)
+        if @
+        
+    has: (tag) -> true
+    
+    tagdel: (tag) ->
+        @trigger 'tagdel', tag
+    
+    tagadd: (tag) -> true
+        @trigger 'tagadd', tag
+
+
+# has (tags...) - check if point has all of those tags
+# hasor (tags...) - check if point has any of those tags
+# direction(direction) - return another point in this direction
+# 
+
+exports.Point = Point = Backbone.Collection.extend4000
+    initialize: ([@x,@y],@game) ->        
+
+        @on 'add' (state) =>
+            _.map state.tags(), (tag) => @_tagadd tag
+
+        @on 'remove' (state) =>
+            _.map state.tags(), (tag) => @_tagdel tag
+
+        # states can dinamically change their tags
+        @on 'tagadd' (tag) => @_tagadd tag
+        @on 'tagdel' (tag) => @_tagdel tag
+
+        @on 'reset' (options) =>
+            _.map options.previousModels, (state) => @trigger 'remove', state
+            
+    _tagadd: (tag) ->
+        if not @tags[tag] then @tags[tag] = 1 else @tags[tag] ++        
+
+    _tagdel: (tag) ->
+        @tags[tag] --
+        if @tags[tag] is 0 then delete @tags[tag]
+
+    # operations for finding other points
+    modifier: (coords) -> @game.point [@x + coords[0], @y + coords[1]]
+    
     direction: (direction) -> @modifier direction.coords()
     
     up:    -> @modifier [0,-1]
     down:  -> @modifier [0,1]
     left:  -> @modifier [-1,0]
     right: -> @modifier [1,0]
-    
+
+    # general point operations            
     coords: -> [@x,@y]
 
-    push: (state,silent) ->
-        # commented out for the speed.. makes sure that another point isn't already in its place,
-        # and if it is it takes and uses its states dict...
-        # 
-        #if not anotherpoint = @host.point(@).empty() then @states = anotherpoint.states
-        if state.constructor == String then state = new @host.state[state]
-        if @empty() then @host.push(@)
-            
-        if not @has(state) then @states[state.name] = state
-        else
-            if @states[state.name].constructor != Array then @states[state.name] = [@states[state.name]]
-            @states[state.name].push(state)
-            
+    push: (state) ->
         state.point = @
-        if state.start then state.start()
-        if not silent then @host.trigger 'set', @, state
+        if state.constructor == String then state = new @game.state[state]
+        Backbone.Collection.prototype.push.apply @, state
+            
+    empty: -> helpers.isEmpty @models
+    
+    tagmap: (callback) _.map @tags, (n,tag) -> callback(tag)
+    
+    has: (tags...) -> _.find _.keys(@tags), (tag) -> not tag in tags
 
-        state
-
-    empty: -> helpers.isEmpty @states
-
-    each: (callback) -> _.each(@states,callback)
-
-    # maybe I should have an iterator mixin that builds those functions from each function..
-    map: (callback) -> _.map(@states,callback) 
-
-    filter: (callback) -> _.map(@states,callback)
-
-    has: (statenames...) ->
-        res = []
-        _.map statenames, (statename) =>
-            if statename.constructor != String then statename = statename.name
-            if state = @states[statename] then res.push(state)
-
-        if res.length is 0 then return undefined else if res.length is 1 then return res[0] else return res
-
-    # make sure to somehow delete a point from a field if all the states are removed from it..
-    remove: (state,silent) ->
-        kickedout = []
-        @states = helpers.hashfilter @states, (val,name) ->
-            res = []
-            helpers.maybeiterate val, (val) ->
-                if name != state and val != state then res.push(val) else kickedout.push(val)
-                    
-            if not res.length
-                return undefined
-            else if res.length is 1
-                return res[0]
-            else
-                return res
-                
-        if not silent then _.map kickedout, (state) => @host.trigger 'del',@,state
-        # remove yourself from the field if you are empty
-        if @empty() then @host.remove(@)
-        kickedout
-        
-    removeall: -> @remove.apply(@,_.keys(@states))
+    hasor: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
 
     move: (state,where) ->
         @remove(state.name)
         where = @modifier(where.coords())
         where.push(state)
-        #where.trigger 'move', state
-
-    #getIndex: -> if not @index then @index = @host.getIndex(@) else @index
-    collide: (thing) -> thing.get('name')
+        where.trigger 'moveto', state
+        @trigger 'movefrom', state
+        
     
 exports.Field = Field = Backbone.Model.extend4000
     initialize: ->
@@ -98,10 +126,10 @@ exports.Field = Field = Backbone.Model.extend4000
         
     # decorator takes care of everything with this one..
     point: (point) ->
-        if point.constructor is Array then point = new Point(point,@)
+        if point.constructor is Array then point = new Point(point, @)
         if ret = @points[@getIndex(point) ] then ret
         else
-            if point.host is @ then point else new Point point.coords(),@
+            if point.game is @ then point else new Point point.coords(), @
 
     remove: (point) -> delete @points[@getIndex(point)]
 
@@ -117,38 +145,20 @@ exports.Field = Field = Backbone.Model.extend4000
         _.map @points, (point,index) => callback @getPoint(@getindexRev(index))
 
 
-# place
-# replace
-# remove
-# move (direction or point)
-# collide
-# on
-# in
-exports.State = State = Backbone.Model.extend4000
-    place: (states...) -> @point.push.apply(@point,states)
-    
-    replace: (state) -> @remove(); @point.push(state)
-    
-    move: (where) -> @point.move(@, where)
-    
-    remove: -> @point.remove @; @trigger 'remove'
-    
-    in: (n,callback) -> @point.host.onOnce 'tick_' + (@point.host.tick + n), => callback()
-    
-    cancel: (callback) -> @point.host.off null, callback
-
     
 exports.Game = Game = comm.MsgNode.extend4000 Field,
     initialize: ->
         @controls = {}
         @state = {}
-        @tickspeed = 50
-        
+        @tickspeed = 50        
         @tick = 0
+        @stateid = 0
 
         #@subscribe { ctrl: { k: true, s: true }}, (msg,reply) =>
             #console.log(msg.json())
         #    reply.end()
+
+    nextid: () -> @stateid ++
 
     dotick: () ->
         @tick++
@@ -163,11 +173,10 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
     stop: -> clearTimeout(@timeout)
 
     defineState: (definitions...) ->
-        # just a small sintax sugar first argument is optionally a name for the painter
+        # just a small sintax sugar, first argument is optionally a name for the painter
         if _.first(definitions).constructor == String
-            definitions.push { name: definitions.shift() }
+            definitions.push { name: name = definitions.shift() }
         else name = _.last(definitions).name # or figure out the name from the last definition
-        
         @state[name] = State.extend4000.apply(State,definitions)
 
 exports.Direction = Direction = class Direction

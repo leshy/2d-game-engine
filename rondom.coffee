@@ -1,3 +1,4 @@
+if not window then window = {}
 $ = require 'jquery-browserify'
 comm = require 'comm/clientside'
 
