@@ -19,8 +19,6 @@ decorators = require 'decorators'
 # each(callback) - iterate through tags
 
 exports.State = State = Backbone.Model.extend4000
-    tags: []
-    
     initialize: ->
         @when 'point', (point) =>
             @point = point
@@ -42,19 +40,18 @@ exports.State = State = Backbone.Model.extend4000
     
     each: (callback) ->
         callback(@name)
-        if @
         
     has: (tag) -> true
 
     # will create a new tags object for this particular state instance.
-    forktags: -> @constructor::tags is @tags then @tags = helpers.clone @tags
+    forktags: -> if @constructor::tags is @tags then @tags = helpers.clone @tags
         
     tagdel: (tag) ->
         @forktags()
         delete @tags[tag]
         @trigger 'tagdel', tag
     
-    tagadd: (tag) -> true
+    tagadd: (tag) ->
         @forktags()
         @tags[tag] = true
         @trigger 'tagadd', tagis
@@ -68,24 +65,24 @@ exports.State = State = Backbone.Model.extend4000
 exports.Point = Point = Backbone.Collection.extend4000
     initialize: ([@x,@y],@game) ->        
 
-        @on 'add' (state) =>
+        @on 'add', (state) =>
             _.map state.tags, (v,tag) => @_tagadd tag
 
-        @on 'remove' (state) =>
+        @on 'remove', (state) =>
             _.map state.tags, (v,tag) => @_tagdel tag
 
         # states can dinamically change their tags
-        @on 'tagadd' (tag) => @_tagadd tag
-        @on 'tagdel' (tag) => @_tagdel tag
+        @on 'tagadd', (tag) => @_tagadd tag
+        @on 'tagdel', (tag) => @_tagdel tag
 
-        @on 'reset' (options) =>
+        @on 'reset', (options) =>
             _.map options.previousModels, (state) => @trigger 'remove', state
             
     _tagadd: (tag) ->
-        if not @tags[tag] then @tags[tag] = 1 else @tags[tag] ++        
+        if not @tags[tag] then @tags[tag] = 1 else @tags[tag]++
 
     _tagdel: (tag) ->
-        @tags[tag] --
+        @tags[tag]--
         if @tags[tag] is 0 then delete @tags[tag]
 
     # operations for finding other points
@@ -108,7 +105,7 @@ exports.Point = Point = Backbone.Collection.extend4000
             
     empty: -> helpers.isEmpty @models
     
-    tagmap: (callback) _.map @tags, (n,tag) -> callback(tag)
+    tagmap: (callback) -> _.map @tags, (n,tag) -> callback(tag)
     
     has: (tags...) -> _.find _.keys(@tags), (tag) -> not tag in tags
 
@@ -163,17 +160,13 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
         @tick = 0
         @stateid = 0
 
-        #@subscribe { ctrl: { k: true, s: true }}, (msg,reply) =>
-            #console.log(msg.json())
-        #    reply.end()
+    nextid: -> @stateid++
 
-    nextid: () -> @stateid ++
-
-    dotick: () ->
+    dotick: ->
         @tick++
         @trigger('tick_' + @tick)
 
-    tickloop: () ->
+    tickloop: ->
         @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
@@ -185,7 +178,7 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
         lastdef = {}
         # just a small sintax sugar, first argument is optionally a name for the painter
         if _.first(definitions).constructor == String
-            lastdef.name = name = definitions.shift() }
+            lastdef.name = name = definitions.shift()
         else name = _.last(definitions).name # or figure out the name from the last definition
 
 
