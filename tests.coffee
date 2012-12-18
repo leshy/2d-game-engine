@@ -60,6 +60,7 @@ exports.Point =
     test1: (test) ->
         @point.push new @game.state.Wall()
         @point.push 'Wall'
+        console.log(@point)
         test.done()
     
 

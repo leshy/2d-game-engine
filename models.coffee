@@ -19,12 +19,14 @@ decorators = require 'decorators'
 # each(callback) - iterate through tags
 
 exports.State = State = Backbone.Model.extend4000
+    tags: []
+    
     initialize: ->
         @when 'point', (point) =>
             @point = point
             @id = point.game.nextid()
             if @start then @start()
-            
+            @tags = helpers.copy @get 'tags'
 
     place: (states...) -> @point.push.apply(@point,states)
     
@@ -43,12 +45,19 @@ exports.State = State = Backbone.Model.extend4000
         if @
         
     has: (tag) -> true
-    
+
+    # will create a new tags object for this particular state instance.
+    forktags: -> @constructor::tags is @tags then @tags = helpers.clone @tags
+        
     tagdel: (tag) ->
+        @forktags()
+        delete @tags[tag]
         @trigger 'tagdel', tag
     
     tagadd: (tag) -> true
-        @trigger 'tagadd', tag
+        @forktags()
+        @tags[tag] = true
+        @trigger 'tagadd', tagis
 
 
 # has (tags...) - check if point has all of those tags
@@ -60,10 +69,10 @@ exports.Point = Point = Backbone.Collection.extend4000
     initialize: ([@x,@y],@game) ->        
 
         @on 'add' (state) =>
-            _.map state.tags(), (tag) => @_tagadd tag
+            _.map state.tags, (v,tag) => @_tagadd tag
 
         @on 'remove' (state) =>
-            _.map state.tags(), (tag) => @_tagdel tag
+            _.map state.tags, (v,tag) => @_tagdel tag
 
         # states can dinamically change their tags
         @on 'tagadd' (tag) => @_tagadd tag
@@ -173,10 +182,21 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
     stop: -> clearTimeout(@timeout)
 
     defineState: (definitions...) ->
+        lastdef = {}
         # just a small sintax sugar, first argument is optionally a name for the painter
         if _.first(definitions).constructor == String
-            definitions.push { name: name = definitions.shift() }
+            lastdef.name = name = definitions.shift() }
         else name = _.last(definitions).name # or figure out the name from the last definition
+
+
+        # this will chew through the tags of definitions and create a propper tags object
+        lastdef.tags = {}
+        _.map definitions, (definition) ->
+            maybeiterate definition.tags, (tag) ->
+                if tag then lastdef.tags[tag] = true
+
+        definitions.push(lastdef)
+        
         @state[name] = State.extend4000.apply(State,definitions)
 
 exports.Direction = Direction = class Direction

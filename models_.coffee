@@ -54,7 +54,7 @@ exports.Point = Point = Backbone.Model.extend4000
             if state = @states[statename] then res.push(state)
 
         if res.length is 0 then return undefined else if res.length is 1 then return res[0] else return res
-
+            
     # make sure to somehow delete a point from a field if all the states are removed from it..
     remove: (state,silent) ->
         kickedout = []
