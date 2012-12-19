@@ -68,7 +68,11 @@ exports.State = State = Tagged.extend4000
 # hasor (tags...) - check if point has any of those tags
 # direction(direction) - return another point in this direction
 # 
-
+# right not local tags dictionary is updated automatically
+# when tags of states change or states are added
+# this could also be done each time that data is requested, or lazily (I could cache)
+# is this relevant/should I benchmark?
+#
 exports.Point = Point = Tagged.extend4000
     initialize: ([@x,@y],@game) ->
         @tags = {}
