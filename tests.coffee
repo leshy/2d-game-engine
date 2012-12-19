@@ -1,5 +1,7 @@
 _ = require 'underscore'
 game = require './index'
+Backbone = require 'backbone4000'
+
 exports.field =
     setUp: (callback) ->
         @game = new game.Game {width:25,height:25}
@@ -53,17 +55,38 @@ exports.field =
 exports.Point =
     setUp: (callback) ->
         @game = new game.Game width: 25, height: 25
-        @game.defineState 'Wall', { tags: { 'nogo': true } }        
-        @point = @game.point [0, 0]
+        wall = @game.defineState 'Wall', { tags: { 'nogo': true } }
+        @point = @game.point [3, 5]
         callback()
         
-    test1: (test) ->
-        @point.push new @game.state.Wall()
-        @point.push 'Wall'
-        console.log(@point)
+    pushing: (test) ->
+        @point.push wall1 = new @game.state.Wall()
+        @point.push wall2 = new @game.state.Wall()
+
+        cnt = 0
+        @point.each (state) => cnt++; test.equals(state.constructor,wall1.constructor)
+        
+        test.equals(cnt,2)
         test.done()
     
+    tag_propagation: (test) ->
+        @point.push wall1 = new @game.state.Wall()
+        @point.push wall2 = new @game.state.Wall()
+        @point.push wall3 = new @game.state.Wall()
 
+        wall1.addtag('testtag')
+
+        test.equals @point.has('testtag'), true
+        test.equals @point.has('testtag2'), false
+
+        test.equals wall1.has('testtag'), true
+        test.equals wall1.has('testtag2'), false
+        test.equals wall2.has('testtag'), false, 'tag change leaked through instances'
+
+        test.equals wall2.tags is wall3.tags, true
+        test.equals wall1.tags isnt wall2.tags, true
+
+        test.done()
 
 
 #exports.sprite =

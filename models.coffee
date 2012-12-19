@@ -4,6 +4,15 @@ _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
 
+#
+# states and points have tags.. here are some tag operations
+#
+Tagged = Backbone.Model.extend4000
+    has: (tags...) -> not _.find(tags, (tag) => not @tags[tag])
+    
+    hasor: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
+
+
 # place - create a new state in current point
 # replace - replace the state with some other state
 # remove - remove the state
@@ -17,8 +26,8 @@ decorators = require 'decorators'
 # tagadd(tags...)
 # tagdel(tags...)
 # each(callback) - iterate through tags
-
-exports.State = State = Backbone.Model.extend4000
+#
+exports.State = State = Tagged.extend4000
     initialize: ->
         @when 'point', (point) =>
             @point = point
@@ -41,20 +50,18 @@ exports.State = State = Backbone.Model.extend4000
     each: (callback) ->
         callback(@name)
         
-    has: (tag) -> true
-
     # will create a new tags object for this particular state instance.
-    forktags: -> if @constructor::tags is @tags then @tags = helpers.clone @tags
+    forktags: -> if @constructor::tags is @tags then @tags = helpers.copy @tags
         
-    tagdel: (tag) ->
+    deltag: (tag) ->
         @forktags()
         delete @tags[tag]
-        @trigger 'tagdel', tag
+        @trigger 'deltag', tag
     
-    tagadd: (tag) ->
+    addtag: (tag) ->
         @forktags()
         @tags[tag] = true
-        @trigger 'tagadd', tagis
+        @trigger 'addtag', tag
 
 
 # has (tags...) - check if point has all of those tags
@@ -62,26 +69,28 @@ exports.State = State = Backbone.Model.extend4000
 # direction(direction) - return another point in this direction
 # 
 
-exports.Point = Point = Backbone.Collection.extend4000
-    initialize: ([@x,@y],@game) ->        
+exports.Point = Point = Tagged.extend4000
+    initialize: ([@x,@y],@game) ->
+        @tags = {}
+        @states = new Backbone.Collection()
+        
+        @states.on 'add', (state) =>
+            _.map state.tags, (v,tag) => @_addtag tag
 
-        @on 'add', (state) =>
-            _.map state.tags, (v,tag) => @_tagadd tag
-
-        @on 'remove', (state) =>
+        @states.on 'remove', (state) =>
             _.map state.tags, (v,tag) => @_tagdel tag
 
         # states can dinamically change their tags
-        @on 'tagadd', (tag) => @_tagadd tag
-        @on 'tagdel', (tag) => @_tagdel tag
+        @states.on 'addtag', (tag) => @_addtag tag
+        @states.on 'deltag', (tag) => @_tagdel tag
 
-        @on 'reset', (options) =>
-            _.map options.previousModels, (state) => @trigger 'remove', state
-            
-    _tagadd: (tag) ->
+        @states.on 'reset', (options) =>
+            _.map options.previousModels, (state) => @states.trigger 'remove', state
+
+    _addtag: (tag) ->
         if not @tags[tag] then @tags[tag] = 1 else @tags[tag]++
 
-    _tagdel: (tag) ->
+    _deltag: (tag) ->
         @tags[tag]--
         if @tags[tag] is 0 then delete @tags[tag]
 
@@ -98,19 +107,19 @@ exports.Point = Point = Backbone.Collection.extend4000
     # general point operations            
     coords: -> [@x,@y]
 
-    push: (state) ->
+    add: (state) ->
         state.point = @
         if state.constructor == String then state = new @game.state[state]
-        Backbone.Collection.prototype.push.apply @, state
-            
+        @states.add(state)
+
+    push: (state) -> @add(state)
+
+    each: (args...) -> @states.each.apply @states,args
+                                    
     empty: -> helpers.isEmpty @models
     
     tagmap: (callback) -> _.map @tags, (n,tag) -> callback(tag)
     
-    has: (tags...) -> _.find _.keys(@tags), (tag) -> not tag in tags
-
-    hasor: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
-
     move: (state,where) ->
         @remove(state.name)
         where = @modifier(where.coords())
@@ -119,6 +128,10 @@ exports.Point = Point = Backbone.Collection.extend4000
         @trigger 'movefrom', state
         
     
+#
+# needs width and height attributes
+# holds bunch of points together
+# 
 exports.Field = Field = Backbone.Model.extend4000
     initialize: ->
         @points = {}
@@ -133,7 +146,7 @@ exports.Field = Field = Backbone.Model.extend4000
     # decorator takes care of everything with this one..
     point: (point) ->
         if point.constructor is Array then point = new Point(point, @)
-        if ret = @points[@getIndex(point) ] then ret
+        if ret = @points[ @getIndex(point) ] then ret
         else
             if point.game is @ then point else new Point point.coords(), @
 
@@ -151,7 +164,10 @@ exports.Field = Field = Backbone.Model.extend4000
         _.map @points, (point,index) => callback @getPoint(@getindexRev(index))
 
 
-    
+#
+# used to define possible states
+# controls ticks and SUCH
+#     
 exports.Game = Game = comm.MsgNode.extend4000 Field,
     initialize: ->
         @controls = {}
@@ -181,15 +197,14 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
             lastdef.name = name = definitions.shift()
         else name = _.last(definitions).name # or figure out the name from the last definition
 
-
         # this will chew through the tags of definitions and create a propper tags object
         lastdef.tags = {}
         _.map definitions, (definition) ->
-            maybeiterate definition.tags, (tag) ->
+            helpers.maybeiterate definition.tags, (v,tag) ->
                 if tag then lastdef.tags[tag] = true
 
         definitions.push(lastdef)
-        
+
         @state[name] = State.extend4000.apply(State,definitions)
 
 exports.Direction = Direction = class Direction
