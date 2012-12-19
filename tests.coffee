@@ -59,7 +59,7 @@ exports.Point =
         @point = @game.point [3, 5]
         callback()
         
-    pushing: (test) ->
+    push: (test) ->
         @point.push wall1 = new @game.state.Wall()
         @point.push wall2 = new @game.state.Wall()
 
@@ -68,7 +68,17 @@ exports.Point =
         
         test.equals(cnt,2)
         test.done()
-    
+
+    push_events: (test) ->
+        cnt = 0
+        @point.states.on 'add', (state) => cnt++; test.equals(state.constructor,wall1.constructor)
+        
+        @point.push wall1 = new @game.state.Wall()
+        @point.push wall2 = new @game.state.Wall()
+        
+        test.equals(cnt,2)
+        test.done()
+            
     tag_propagation: (test) ->
         @point.push wall1 = new @game.state.Wall()
         @point.push wall2 = new @game.state.Wall()
@@ -83,10 +93,20 @@ exports.Point =
         test.equals wall1.has('testtag2'), false
         test.equals wall2.has('testtag'), false, 'tag change leaked through instances'
 
+        test.done()
+
+    tagdict_forking: (test) ->
+        @point.push wall1 = new @game.state.Wall()
+        @point.push wall2 = new @game.state.Wall()
+        @point.push wall3 = new @game.state.Wall()
+
+        wall1.addtag('testtag')
+        
         test.equals wall2.tags is wall3.tags, true
         test.equals wall1.tags isnt wall2.tags, true
 
         test.done()
+
 
 
 #exports.sprite =
