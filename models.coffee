@@ -75,9 +75,11 @@ exports.Point = Point = Tagged.extend4000
         @states = new Backbone.Collection()
         
         @states.on 'add', (state) =>
+            @game.push(@)
             _.map state.tags, (v,tag) => @_addtag tag
 
         @states.on 'remove', (state) =>
+            if not @states.length then @game.remove(@)
             _.map state.tags, (v,tag) => @_tagdel tag
 
         # states can dinamically change their tags
@@ -110,11 +112,13 @@ exports.Point = Point = Tagged.extend4000
     add: (state) ->
         state.point = @
         if state.constructor == String then state = new @game.state[state]
-        @states.add(state)
+        @states.add(state); @
 
     push: (state) -> @add(state)
 
-    each: (args...) -> @states.each.apply @states,args
+    map: (args...) -> @states.map.apply @states, args
+
+    each: (args...) -> @states.each.apply @states, args
                                     
     empty: -> helpers.isEmpty @models
     
@@ -199,6 +203,9 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
 
         # this will chew through the tags of definitions and create a propper tags object
         lastdef.tags = {}
+
+        lastdef.tags[name] = true
+        
         _.map definitions, (definition) ->
             helpers.maybeiterate definition.tags, (v,tag) ->
                 if tag then lastdef.tags[tag] = true

@@ -13,23 +13,22 @@ exports.field =
     setget: (test) ->
         point1 = @game.point([3,4]).push('state1')
         point2 = @game.point([3,4]).push(new @game.state.state2())
-        test.deepEqual _.keys(@game.point([3,4]).states), [ 'state1', 'state2' ]
+        
+        test.deepEqual @game.point([3,4]).map((state) -> state.name), [ 'state1', 'state2' ]
         test.done()
 
     has: (test) ->
         point1 = @game.point([3,4]).push('state1')
-        test.equals Boolean(point1.has('state1')), true, 'state1 is missing!'
-        test.equals Boolean(point1.has('state2')), false, 'state2 has been found but it should be missing'
-        test.equals Boolean(point1.has(new @game.state.state1())), true
-        test.equals Boolean(point1.has(new @game.state.state2())), false
+        test.equals point1.has('state1'), true, 'state1 is missing!'
+        test.equals point1.has('state2'), false, 'state2 has been found but it should be missing'
         test.done()
     
     duplicate: (test) ->
         point1 = @game.point([3,4]).push('state1').push('state2')
-        test.deepEqual _.keys(@game.point([3,4]).states), [ 'state1', 'state2' ]
-        test.equals point1.has('state1').constructor, @game.state.state1
+        test.deepEqual @game.point([3,4]).map((state) -> state.name), [ 'state1', 'state2' ]
+        #test.equals point1.has('state1').constructor, @game.state.state1
         point1.push('state1')
-        test.equals point1.has('state1').constructor, Array
+        #test.equals point1.has('state1').constructor, Array
         test.done()
         
     directionmodifiers: (test) ->
@@ -88,7 +87,6 @@ exports.Point =
 
         test.equals @point.has('testtag'), true
         test.equals @point.has('testtag2'), false
-
         test.equals wall1.has('testtag'), true
         test.equals wall1.has('testtag2'), false
         test.equals wall2.has('testtag'), false, 'tag change leaked through instances'
