@@ -2,7 +2,7 @@ _ = require 'underscore'
 game = require './index'
 Backbone = require 'backbone4000'
 
-exports.field =
+exports.Field =
     setUp: (callback) ->
         @game = new game.Game {width:25,height:25}
         @game.defineState 'state1', {}
@@ -105,15 +105,31 @@ exports.Point =
 
         test.done()
 
+exports.View = 
+    setUp: (callback) ->
+        
+        @game = new game.Game {width:25,height:25}
+        
+        @game.defineState 'state1', {}
+        @game.defineState 'state2', {}
+        @game.defineState 'state3', {}
+        @game.defineState 'state4', {}
 
+        @painter = Backbone.Model.extend4000 {}
+        
+        @gameview = new game.View { game: @game }
+        @gameview.definePainter 'state1', game.Painter, { x: 'sprite1' }
+        @gameview.definePainter 'state2', game.Painter, { x: 'sprite2' }
+        @gameview.definePainter 'state3', game.Painter, { x: 'sprite3' }
+        @gameview.definePainter 'unknown', game.Painter, { x: 'unknown' }
+        
+        callback()
 
-#exports.sprite =
-#    setUp: (callback) ->
-#        @sprite = new game.Sprite()
-#        callback()
-#    accessors: (test) ->
-#        @sprite.loop()
-#        test.equals @sprite.get('loop'), true
-#       test.done()
+    test1: (test) ->
 
+        @game.point([2,2]).push 'state1'
 
+        console.log @gameview.pinstances
+        
+        test.done()
+        

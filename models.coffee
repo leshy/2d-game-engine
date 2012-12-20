@@ -8,8 +8,7 @@ decorators = require 'decorators'
 # states and points have tags.. here are some tag operations
 #
 Tagged = Backbone.Model.extend4000
-    has: (tags...) -> not _.find(tags, (tag) => not @tags[tag])
-    
+    has: (tags...) -> not _.find(tags, (tag) => not @tags[tag])    
     hasor: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
 
 
@@ -81,10 +80,12 @@ exports.Point = Point = Tagged.extend4000
         @states.on 'add', (state) =>
             @game.push(@)
             _.map state.tags, (v,tag) => @_addtag tag
+            @game.trigger 'set', @, state
 
         @states.on 'remove', (state) =>
             if not @states.length then @game.remove(@)
             _.map state.tags, (v,tag) => @_tagdel tag
+            @game.trigger 'del', @, state
 
         # states can dinamically change their tags
         @states.on 'addtag', (tag) => @_addtag tag
@@ -134,7 +135,6 @@ exports.Point = Point = Tagged.extend4000
         where.push(state)
         where.trigger 'moveto', state
         @trigger 'movefrom', state
-        
     
 #
 # needs width and height attributes
@@ -218,6 +218,9 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
 
         @state[name] = State.extend4000.apply(State,definitions)
 
+#
+# as close as you can get to a 2D vector in a world of bomberman.
+# 
 exports.Direction = Direction = class Direction
     constructor: (@x,@y) -> true
 
