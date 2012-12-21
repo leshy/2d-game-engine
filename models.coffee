@@ -79,6 +79,7 @@ exports.Point = Point = Tagged.extend4000
         
         @states.on 'add', (state) =>
             @game.push(@)
+            state.point = @
             _.map state.tags, (v,tag) => @_addtag tag
             @game.trigger 'set', @, state
 
@@ -128,6 +129,13 @@ exports.Point = Point = Tagged.extend4000
     empty: -> helpers.isEmpty @models
     
     tagmap: (callback) -> _.map @tags, (n,tag) -> callback(tag)
+
+    remove: (state) -> @states.remove(state)
+
+    removeall: -> @states.reset()
+
+    reset: -> @states.reset()
+            
     
     move: (state,where) ->
         @remove(state.name)

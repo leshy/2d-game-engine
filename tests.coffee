@@ -119,17 +119,20 @@ exports.View =
         
         @gameview = new game.View { game: @game }
         @gameview.definePainter 'state1', game.Painter, { x: 'sprite1' }
-        @gameview.definePainter 'state2', game.Painter, { x: 'sprite2' }
+        @gameview.definePainter 'state2', game.Painter, { x: 'sprite2', eliminates: 'state1' }
         @gameview.definePainter 'state3', game.Painter, { x: 'sprite3' }
         @gameview.definePainter 'unknown', game.Painter, { x: 'unknown' }
         
         callback()
 
     test1: (test) ->
-
+        
         @game.point([2,2]).push 'state1'
-
+        @game.point([2,2]).push 'state2'
+        
         console.log @gameview.pinstances
         
         test.done()
-        
+
+
+

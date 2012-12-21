@@ -17,7 +17,7 @@ Painter = exports.Painter = Backbone.Model.extend4000
             #state.on 'move', => @draw()
             #state.on 'remove', => @remove()
             
-    draw: (coords,size) -> console.log 'not implemented'
+    draw: (coords,size) -> console.log 'draw', @state.point.coords(), @state.name
     
     remove: -> throw 'not implemented'
     
@@ -31,9 +31,19 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         @painters = {}
         @pinstances = {} # per stateview instance dict
         
-        @game.on 'set', (point,state) => @drawPoint point
-        @game.on 'del', (point,state) => @drawPoint point
 
+        _start = =>
+            # game should hook only on create to create new point view
+            # and point views should deal with their own state changes and deletions/garbage collection
+            @game.on 'set', (point,state) => @drawPoint point
+            @game.on 'del', (point,state) => @drawPoint point
+
+            @game.each (point) => @drawPoint point
+
+        # stupid trick for start to be called after initialize function for other subclasses is completed
+        # need some kind of better extend4000 function that takes those things into account.. 
+        _.defer _start
+        
 
     # painters should be called like the states, that's how the view looks them up
     definePainter: (definitions...) ->
@@ -41,14 +51,14 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         if _.first(definitions).constructor == String
             definitions.push { name: name = definitions.shift() }
         else name = _.last(definitions).name # or figure out the name from the last definition
-        
+
         @painters[name] = Backbone.Model.extend4000.apply Backbone.Model, definitions
 
     getPainter: (state) ->
         if painter = @pinstances[state.id] then return painter
         painterclass = @painters[state.name]
         if not painterclass then painterclass = @painters['unknown']
-        
+        #console.log('painter for',state.name,'is',painterclass)
         return painterclass.extend4000 state: state, gameview: @
             
     drawPoint: (point) ->
@@ -81,18 +91,12 @@ exports.PointView = PointView = Models.Point.extend4000
     # spits out an array of painters
     # point > [ painter, painter, ... ]
     #
-
-    draw: (point) ->
+    draw: (point) ->   
         _applyEliminations = (painters) ->
-            dict = helpers.makedict painters, 'name'
+            dict = helpers.makedict painters, (painter) -> helpers.objorclass painter, 'name'
             _.map painters, (painter) ->
-                if painter.constructor is Function
-                    eliminations = painter::eliminations
-                else
-                    eliminations = painter.eliminations
-                    
-                if eliminations then eliminations.each (name) -> delete dict[name]
-        
+                if eliminates = helpers.objorclass painter, 'eliminates'
+                    helpers.maybeiterate eliminates, (name) -> delete dict[name]
             helpers.makelist dict
         
         _applyOrder = (painters) ->
@@ -101,51 +105,12 @@ exports.PointView = PointView = Models.Point.extend4000
         
         _instantiate = (painters) ->
             _.map painters, (painter) -> if painter.constructor is Function then new painter() else painter
-
-        
-
         
         painters = @point.map (state) => @gameview.getPainter(state)
         painters = _applyEliminations(painters)
         painters = _applyOrder(painters)
         painters = _instantiate(painters)
-        _.map painters, (painter) -> painter.draw(@)
-        
-    draw_: (point) ->
-        _applyEliminations = (painters) ->
-            _.map painters, (name, painter) ->
-                helpers.maybeiterate painter.eliminates, (todelete) ->
-                    if (todelete) then delete painters[todelete]
 
-        _applyOrder = (painters) ->
-            order = _.values painters
-            order.sort (painter) -> return painter.zindex        
-        
-        painters = {}
-    
-        # prepare potential painters for each state
-        @point.each (state) =>
-            console.log('drawing state ' + state.name + ' ' + state.get('id'))
-            if painter = @gameview.has(state) then return painters[state.name] = painter
-            if painter = @gameview.painters[state.name] then return painters[state.name] = painter
-
-        # remove painters that we won't need (delete representations)
-        @each (painter) -> if not painters[painter.name] then @remove(painter)
-
-        # special painters (shadows, and such)
-        painters = _.extend painters, @specialPainters()
-
-        # eliminations
-        _applyEliminations(painters)
-
-        # propper z indexing
-        painters = _applyOrder(painters)
-        
-        # instantiate the ones that haven't been instantiated,
-        # and draw them in a correct order
-        #painters = _.map painters, (painter) ->
-        #    if painter.constructor == Function then painter = new painter state: state, view: @
-        #    @push(painter) 
-        #    painter.draw()
-
+        # remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
+        _.map painters, (painter) => painter.draw(@point)
 
