@@ -30,9 +30,6 @@ GameView = exports.GameView = View.GameView.extend4000
     translate: (coords) ->
         return _.map coords, (a) => a * @size
 
-
-
-
 # generic raphael painter, it just translates in game abstract coordinates to raphael coordinates
 RaphaelPainter = View.Painter.extend4000
     draw: (point) ->
@@ -40,18 +37,35 @@ RaphaelPainter = View.Painter.extend4000
 
 
 
-
-Sprite = exports.Sprite = {}
-
 Image = exports.Image = RaphaelPainter.extend4000
     render: decorate( coordsDecorator, (coords) ->
         if @rendering then @move(coords)
             
         else @rendering = @gameview.paper.image(src='pic/' + @name + '.png', coords[0], coords[1], @gameview.size, @gameview.size))
     
-    move: decorate( coordsDecorator, (coords) -> console.log('move called',coords); @rendering.attr { x: coords[0], y: coords[1] })
+    move: (coords) ->
+        console.log('move!',coords,@state.name)
+        #@coords = @gameview.translate point.coords()
+        @rendering.attr { x: coords[0], y: coords[1] }
     
     remove: -> @rendering.remove()
+
+Sprite = exports.Sprite = Image.extend4000
+    initialize: ->
+        @frame_pics = []
+        _.times @frames, (frame) =>
+            @frame_pics.push 'pic/' + @name + frame + ".png"
+        @frame = 0
+        console.log("SPRITE INIT", @name, @frame_pics)
+        setInterval @tick.bind(@), 500
+        #@gameview.on 'tick', => @tick()
+        
+    tick: ->
+        console.log('tick!',@frame)
+        if not @rendering then return
+        @frame++
+        if @frame > @frame_pics.length - 1 then @frame = 0
+        @rendering.attr src: @frame_pics[@frame]
 
 Color = exports.Color = RaphaelPainter.extend4000
     render: decorate coordsDecorator, (coords) -> @rendering = @gameview.paper.rect(coords[0], coords[1], @gameview.size, @gameview.size).attr( 'opacity': .7, 'stroke-width': 1, stroke: @color, fill: @color)

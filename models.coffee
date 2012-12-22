@@ -25,14 +25,15 @@ Tagged = Backbone.Model.extend4000
 # tagadd(tags...)
 # tagdel(tags...)
 # each(callback) - iterate through tags
-#
+
 exports.State = State = Tagged.extend4000
     initialize: ->
         @when 'point', (point) =>
             @point = point
-            @id = point.game.nextid()
-            if @start then @start()
-            @tags = helpers.copy @get 'tags'
+            if not @id
+                @id = point.game.nextid()
+                console.log("new state",@id, @name)
+                if @start then @start()
 
     place: (states...) -> @point.push.apply(@point,states)
     
@@ -40,11 +41,11 @@ exports.State = State = Tagged.extend4000
     
     move: (where) -> @point.move(@, where)
     
-    remove: -> @point.remove @; @trigger 'remove'
+    remove: -> @point.remove @; @trigger 'del'
     
-    in: (n,callback) -> @point.host.onOnce 'tick_' + (@point.host.tick + n), => callback()
+    in: (n,callback) -> @point.game.onOnce 'tick_' + (@point.game.tick + n), => callback()
     
-    cancel: (callback) -> @point.host.off null, callback
+    cancel: (callback) -> @point.game.off null, callback
     
     each: (callback) ->
         callback(@name)
@@ -71,7 +72,7 @@ exports.State = State = Tagged.extend4000
 # when tags of states change or states are added
 # this could also be done each time that data is requested, or lazily (I could cache)
 # is this relevant/should I benchmark?
-#
+
 exports.Point = Point = Tagged.extend4000
     initialize: ([@x,@y],@game) ->
         @tags = {}
@@ -79,21 +80,19 @@ exports.Point = Point = Tagged.extend4000
         
         @states.on 'add', (state) =>
             @game.push(@)
-            state.point = @
+            state.set point: @
             _.map state.tags, (v,tag) => @_addtag tag
             @game.trigger 'set', @, state
 
         @states.on 'remove', (state) =>
             if not @states.length then @game.remove(@)
-            _.map state.tags, (v,tag) => @_tagdel tag
+            _.map state.tags, (v,tag) => @_deltag tag
+            @trigger 'del', state
             @game.trigger 'del', @, state
 
         # states can dinamically change their tags
         @states.on 'addtag', (tag) => @_addtag tag
-        @states.on 'deltag', (tag) => @_tagdel tag
-
-        @states.on 'reset', (options) =>
-            _.map options.previousModels, (state) => @states.trigger 'remove', state
+        @states.on 'deltag', (tag) => @_deltag tag
 
     _addtag: (tag) ->
         if not @tags[tag] then @tags[tag] = 1 else @tags[tag]++
@@ -106,7 +105,9 @@ exports.Point = Point = Tagged.extend4000
     modifier: (coords) -> @game.point [@x + coords[0], @y + coords[1]]
     
     direction: (direction) -> @modifier direction.coords()
-    
+
+    getOne: (tag,callback) -> @states.find (state) -> state.tags[tag]
+
     up:    -> @modifier [0,-1]
     down:  -> @modifier [0,1]
     left:  -> @modifier [-1,0]
@@ -120,6 +121,9 @@ exports.Point = Point = Tagged.extend4000
         if state.constructor == String then state = new @game.state[state]
         @states.add(state); @
 
+    dir: -> @states.map (state) -> state.name
+    dirtags: -> _.keys @tags
+
     push: (state) -> @add(state)
 
     map: (args...) -> @states.map.apply @states, args
@@ -132,13 +136,10 @@ exports.Point = Point = Tagged.extend4000
 
     remove: (state) -> @states.remove(state)
 
-    removeall: -> @states.reset()
-
-    reset: -> @states.reset()
-            
+    removeall: -> @states.map (state) => @states.remove state
     
     move: (state,where) ->
-        @remove(state.name)
+        @remove(state)
         where = @modifier(where.coords())
         where.push(state)
         where.trigger 'moveto', state
@@ -202,7 +203,9 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
         @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
-    start: -> @tickloop()
+    start: ->
+        @each (point) => point.each (state) => if state.start then state.start()
+        @tickloop()
 
     stop: -> clearTimeout(@timeout)
 
@@ -219,7 +222,7 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
         lastdef.tags[name] = true
         
         _.map definitions, (definition) ->
-            helpers.maybeiterate definition.tags, (v,tag) ->
+            helpers.maybeiterate definition.tags, (tag,v) ->
                 if tag then lastdef.tags[tag] = true
 
         definitions.push(lastdef)

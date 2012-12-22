@@ -8,15 +8,10 @@ _ = require 'underscore'
 Painter = exports.Painter = Backbone.Model.extend4000
     initialize: ->
         @when 'gameview', (gameview) => @gameview = gameview
-                
-        @when 'state', (state) =>
-            @state = state
-            @gameview.pinstances[state.id] = @
+        @gameview.pinstances[@state.id] = @
 
-            # nope, state is drawn and removed by a point view
-            #state.on 'move', => @draw()
-            #state.on 'remove', => @remove()
-            
+        @state.on 'del', => @remove()
+
     draw: (coords,size) -> console.log 'draw', @state.point.coords(), @state.name
     
     remove: -> throw 'not implemented'
@@ -29,8 +24,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         @game = @get 'game'
 
         @painters = {}
-        @pinstances = {} # per stateview instance dict
-        
+        @pinstances = {} # per stateview instance dict        
 
         _start = =>
             # game should hook only on create to create new point view
@@ -43,7 +37,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         # stupid trick for start to be called after initialize function for other subclasses is completed
         # need some kind of better extend4000 function that takes those things into account.. 
         _.defer _start
-        
+    
 
     # painters should be called like the states, that's how the view looks them up
     definePainter: (definitions...) ->
@@ -58,7 +52,6 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         if painter = @pinstances[state.id] then return painter
         painterclass = @painters[state.name]
         if not painterclass then painterclass = @painters['unknown']
-        #console.log('painter for',state.name,'is',painterclass)
         return painterclass.extend4000 state: state, gameview: @
             
     drawPoint: (point) ->
@@ -69,15 +62,14 @@ exports.PointView = PointView = Models.Point.extend4000
     initialize: (gameview,point) ->
         @gameview = gameview
         @point = point
-        
         # redraw a point when world view has changed
-        gameview.on 'pan', => @draw()
-        gameview.on 'zoom', => @draw()
+        #gameview.on 'pan', => @draw()
+        #gameview.on 'zoom', => @draw()
         
         # redraw a point when states in it have changed
-        point.on 'add', => @draw()
-        point.on 'del', => @draw()
-        point.on 'move', => @draw()
+        #point.on 'add', (state) => console.log 'ADD', point.coords(), state.name; @draw()
+        #point.on 'del', (state) => console.log 'DEL', point.coords(), state.name; @draw()
+        #point.on 'move', (state) => console.log 'MOVE', point.coords(), state.name; @draw()
 
     specialPainters: -> {} # override me
 
