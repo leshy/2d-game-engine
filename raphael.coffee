@@ -38,17 +38,26 @@ RaphaelPainter = View.Painter.extend4000
 
 
 Image = exports.Image = RaphaelPainter.extend4000
-    render: decorate( coordsDecorator, (coords) ->
-        if @rendering then @move(coords)
-            
-        else @rendering = @gameview.paper.image(src='pic/' + @name + '.png', coords[0], coords[1], @gameview.size, @gameview.size))
+    render: (coords) ->
+
+        # is this the first time this state has been rendered?
+        if not @rendering
+            @rendering = @gameview.paper.image(src='pic/' + @name + '.png', coords[0], coords[1], @gameview.size, @gameview.size);
+            return
+
+        # do we need to move our rendering? 
+        if @rendering.attrs.x != coords[0] or @rendering.attrs.y != coords[1] then @move(coords)
+
+        # bring us to front..
+        @rendering.toFront()
     
     move: (coords) ->
-        console.log('move!',coords,@state.name)
+        #console.log('move',coords,@state.name,@rendering.attrs.x, @rendering.attrs.y)
         #@coords = @gameview.translate point.coords()
         @rendering.attr { x: coords[0], y: coords[1] }
     
     remove: -> @rendering.remove()
+    
 
 Sprite = exports.Sprite = Image.extend4000
     initialize: ->
@@ -56,12 +65,14 @@ Sprite = exports.Sprite = Image.extend4000
         _.times @frames, (frame) =>
             @frame_pics.push 'pic/' + @name + frame + ".png"
         @frame = 0
-        console.log("SPRITE INIT", @name, @frame_pics)
-        setInterval @tick.bind(@), 500
-        #@gameview.on 'tick', => @tick()
-        
+        @listenTo @gameview,'tick', => @tick()
+
+    remove: ->
+        @stopListening()
+        Image.prototype.remove.call @
+
+    
     tick: ->
-        console.log('tick!',@frame)
         if not @rendering then return
         @frame++
         if @frame > @frame_pics.length - 1 then @frame = 0
@@ -79,7 +90,6 @@ Meta = exports.Meta = RaphaelPainter.extend4000
 # should somehow use metapainter for this..
 Direction = exports.Direction = Meta.extend4000
     initialize: ->
-        console.log('dierectasf')
         @when 'state', (state) => state.on 'change:direction', (direction) => @directionchange(direction)    
     render: -> @rendering = @directionRepr()
     move: -> @rendering.move()

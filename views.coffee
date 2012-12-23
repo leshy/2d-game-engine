@@ -34,10 +34,14 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
 
             @game.each (point) => @drawPoint point
 
+            setInterval @tick.bind(@), 250
+
         # stupid trick for start to be called after initialize function for other subclasses is completed
         # need some kind of better extend4000 function that takes those things into account.. 
         _.defer _start
-    
+
+    tick: ->  @trigger 'tick'
+
 
     # painters should be called like the states, that's how the view looks them up
     definePainter: (definitions...) ->
@@ -92,16 +96,18 @@ exports.PointView = PointView = Models.Point.extend4000
             helpers.makelist dict
         
         _applyOrder = (painters) ->
-            painters.sort (painter) ->
-                if painter.constructor == Function then painter::zindex else painter.zindex
+            painters.sort (painter) -> helpers.objorclass painter, 'zindex'
         
         _instantiate = (painters) ->
             _.map painters, (painter) -> if painter.constructor is Function then new painter() else painter
-        
+
         painters = @point.map (state) => @gameview.getPainter(state)
+        #painters = @specialPainters(painters) # empty doesn't have to be a specific state..
         painters = _applyEliminations(painters)
         painters = _applyOrder(painters)
         painters = _instantiate(painters)
+
+        #console.log JSON.stringify(_.map painters, (painter) -> [ helpers.objorclass(painter, 'zindex'), helpers.objorclass(painter, 'state').name ])
 
         # remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
         _.map painters, (painter) => painter.draw(@point)
