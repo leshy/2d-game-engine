@@ -35,21 +35,20 @@ RaphaelPainter = View.Painter.extend4000
     draw: (point) ->
         @render @gameview.translate(point.coords())
 
-
-
 Image = exports.Image = RaphaelPainter.extend4000
     render: (coords) ->
-
         # is this the first time this state has been rendered?
         if not @rendering
-            @rendering = @gameview.paper.image(src='pic/' + @name + '.png', coords[0], coords[1], @gameview.size, @gameview.size);
+            @rendering = @gameview.paper.image(src=@getpic(), coords[0], coords[1], @gameview.size, @gameview.size); @rendering.toFront();
+            if @rotation then @rendering.rotate @rotation
             return
 
         # do we need to move our rendering? 
         if @rendering.attrs.x != coords[0] or @rendering.attrs.y != coords[1] then @move(coords)
-
         # bring us to front..
         @rendering.toFront()
+
+    getpic: -> 'pic/' + (@pic or @name) + '.png'
     
     move: (coords) ->
         #console.log('move',coords,@state.name,@rendering.attrs.x, @rendering.attrs.y)
@@ -58,7 +57,6 @@ Image = exports.Image = RaphaelPainter.extend4000
     
     remove: -> @rendering.remove()
     
-
 Sprite = exports.Sprite = Image.extend4000
     initialize: ->
         @frame_pics = []
@@ -67,16 +65,19 @@ Sprite = exports.Sprite = Image.extend4000
         @frame = 0
         @listenTo @gameview,'tick', => @tick()
 
+    getpic: -> @frame_pics[@frame]
+
     remove: ->
         @stopListening()
         Image.prototype.remove.call @
-
     
     tick: ->
         if not @rendering then return
+        if @frame > @frame_pics.length - 1
+            if @once then @stopListening(); return
+            @frame = 0
+        @rendering.attr src: @getpic()
         @frame++
-        if @frame > @frame_pics.length - 1 then @frame = 0
-        @rendering.attr src: @frame_pics[@frame]
 
 Color = exports.Color = RaphaelPainter.extend4000
     render: decorate coordsDecorator, (coords) -> @rendering = @gameview.paper.rect(coords[0], coords[1], @gameview.size, @gameview.size).attr( 'opacity': .7, 'stroke-width': 1, stroke: @color, fill: @color)
@@ -84,17 +85,30 @@ Color = exports.Color = RaphaelPainter.extend4000
     remove: -> @rendering.remove()
 
 # matches different states of a model and renders the appropriate painter
-Meta = exports.Meta = RaphaelPainter.extend4000
-    initialize: true
+MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
+    # this is stupid, should be done at definition, not at the instantiation
+    initialize: -> if @inherit then @reprs = helpers.hashmap @reprs, (cls) => cls.extend4000 @inherit
 
+    render: (coords) ->
+        if not @repr
+            cls = @decideRepr()
+            @repr = new cls { gameview: @gameview, state: @state }
+        @repr.render(coords)
+        
+    remove: -> @repr.remove()
+        
+    decideRepr: -> throw 'override me'
+        
 # should somehow use metapainter for this..
-Direction = exports.Direction = Meta.extend4000
-    initialize: ->
-        @when 'state', (state) => state.on 'change:direction', (direction) => @directionchange(direction)    
-    render: -> @rendering = @directionRepr()
-    move: -> @rendering.move()
-    remove: -> @rendering.remove()
+DirectionPainter = exports.DirectionPainter = MetaPainter.extend4000
+    decideRepr: () -> @reprs[@state.get('direction').string()]
+    #initialize: ->
+    #    @when 'state', (state) => state.on 'change:direction', (direction) => @directionchange(direction)    
+    #render: (coords) -> @repr = @directionRepr(); @repr.render coords
+    #move: -> @rendering.move()
+    #remove: -> @rendering.remove()
 
-    directionRepr: () -> return new @[@state.get('direction').string()]( view: @gameview, state: @state )
-    directionchange: (direction) -> if @rendering then @remove(); @draw()
+
+    
+    #directionchange: (direction) -> if @rendering then @remove(); @draw()
 

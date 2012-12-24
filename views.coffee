@@ -7,12 +7,14 @@ _ = require 'underscore'
 # painter subclass should implement Draw(coords) Move(coords) and Remove() methods
 Painter = exports.Painter = Backbone.Model.extend4000
     initialize: ->
-        @when 'gameview', (gameview) => @gameview = gameview
+        
+        if not @gameview then @gameview = @get 'gameview'
+        if not @state then @state = @get 'state'
+            
         @gameview.pinstances[@state.id] = @
-
         @state.on 'del', => @remove()
 
-    draw: (coords,size) -> console.log 'draw', @state.point.coords(), @state.name
+    draw: (coords,size) -> console.log "draw", @state.point.coords(), @state.name
     
     remove: -> throw 'not implemented'
     
@@ -34,7 +36,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
 
             @game.each (point) => @drawPoint point
 
-            setInterval @tick.bind(@), 250
+            setInterval @tick.bind(@), 100
 
         # stupid trick for start to be called after initialize function for other subclasses is completed
         # need some kind of better extend4000 function that takes those things into account.. 
@@ -94,12 +96,12 @@ exports.PointView = PointView = Models.Point.extend4000
                 if eliminates = helpers.objorclass painter, 'eliminates'
                     helpers.maybeiterate eliminates, (name) -> delete dict[name]
             helpers.makelist dict
+
+        _sortf = (painter) -> helpers.objorclass painter, 'zindex'
+            
+        _applyOrder = (painters) -> _.sortBy painters, _sortf
         
-        _applyOrder = (painters) ->
-            painters.sort (painter) -> helpers.objorclass painter, 'zindex'
-        
-        _instantiate = (painters) ->
-            _.map painters, (painter) -> if painter.constructor is Function then new painter() else painter
+        _instantiate = (painters) -> _.map painters, (painter) -> if painter.constructor is Function then new painter() else painter
 
         painters = @point.map (state) => @gameview.getPainter(state)
         #painters = @specialPainters(painters) # empty doesn't have to be a specific state..
@@ -107,7 +109,7 @@ exports.PointView = PointView = Models.Point.extend4000
         painters = _applyOrder(painters)
         painters = _instantiate(painters)
 
-        #console.log JSON.stringify(_.map painters, (painter) -> [ helpers.objorclass(painter, 'zindex'), helpers.objorclass(painter, 'state').name ])
+        #console.log JSON.stringify(_.map painters, (painter) -> [ _sortf(painter), helpers.objorclass(painter, 'state').name ])
 
         # remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
         _.map painters, (painter) => painter.draw(@point)

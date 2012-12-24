@@ -32,7 +32,7 @@ exports.State = State = Tagged.extend4000
             @point = point
             if not @id
                 @id = point.game.nextid()
-                console.log("new state",@id, @name)
+                #console.log("new state",@id, @name)
                 if @start then @start()
 
     place: (states...) -> @point.push.apply(@point,states)
