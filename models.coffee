@@ -253,4 +253,11 @@ exports.Direction = Direction = class Direction
         if @y is 1 then return 'right'
         if not @x and not @y  then return 'stop'
 
+    orientation: -> 
+        if @x is 1 then return 'vertical'
+        if @x is -1 then return 'vertical'
+        if @y is -1 then return 'horizontal'
+        if @y is 1 then return 'horizontal'
+        if not @x and not @y  then return 'stop'
+
 

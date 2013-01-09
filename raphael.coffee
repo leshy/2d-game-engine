@@ -5,8 +5,7 @@ validator = require 'validator2-extras'; v = validator.v
 decorators = require 'decorators'; decorate = decorators.decorate
 
 # painter is made concrete by subclassing abstract painter
-View = require('./views'); 
-
+View = require './views'
 raphael = require 'raphael-browserify'
 
 # will figure out coordinates argument for a painter method, if it didn't receive them already
@@ -61,7 +60,7 @@ Sprite = exports.Sprite = Image.extend4000
     initialize: ->
         @frame_pics = []
         _.times @frames, (frame) =>
-            @frame_pics.push 'pic/' + @name + frame + ".png"
+            @frame_pics.push 'pic/' + (@pic or @name) + frame + ".png"
         @frame = 0
         @listenTo @gameview,'tick', => @tick()
 
@@ -86,9 +85,6 @@ Color = exports.Color = RaphaelPainter.extend4000
 
 # matches different states of a model and renders the appropriate painter
 MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
-    # this is stupid, should be done at definition, not at the instantiation
-    initialize: -> if @inherit then @reprs = helpers.hashmap @reprs, (cls) => cls.extend4000 @inherit
-
     render: (coords) ->
         if not @repr
             cls = @decideRepr()
@@ -99,16 +95,15 @@ MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
         
     decideRepr: -> throw 'override me'
         
-# should somehow use metapainter for this..
 DirectionPainter = exports.DirectionPainter = MetaPainter.extend4000
     decideRepr: () -> @reprs[@state.get('direction').string()]
-    #initialize: ->
-    #    @when 'state', (state) => state.on 'change:direction', (direction) => @directionchange(direction)    
-    #render: (coords) -> @repr = @directionRepr(); @repr.render coords
-    #move: -> @rendering.move()
-    #remove: -> @rendering.remove()
 
+OrtogonalPainter = exports.OrtogonalPainter = MetaPainter.extend4000
+    decideRepr: () -> @reprs[@state.get('direction').orientation()]
 
-    
-    #directionchange: (direction) -> if @rendering then @remove(); @draw()
+#TransformPainter = exports.TransformPainter = Backbone.Model.extend4000
+#    render: (coords) ->
+#        @repr 
+        
+
 

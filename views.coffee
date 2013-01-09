@@ -43,8 +43,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         _.defer _start
 
     tick: ->  @trigger 'tick'
-
-
+        
     # painters should be called like the states, that's how the view looks them up
     definePainter: (definitions...) ->
         # just a small sintax sugar first argument is optionally a name for the painter
@@ -114,3 +113,4 @@ exports.PointView = PointView = Models.Point.extend4000
         # remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
         _.map painters, (painter) => painter.draw(@point)
 
+        
