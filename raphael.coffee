@@ -98,7 +98,7 @@ MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
 DirectionPainter = exports.DirectionPainter = MetaPainter.extend4000
     decideRepr: () -> @reprs[@state.get('direction').string()]
 
-OrtogonalPainter = exports.OrtogonalPainter = MetaPainter.extend4000
+OrientationPainter = exports.OrientationPainter = MetaPainter.extend4000
     decideRepr: () -> @reprs[@state.get('direction').orientation()]
 
 #TransformPainter = exports.TransformPainter = Backbone.Model.extend4000
