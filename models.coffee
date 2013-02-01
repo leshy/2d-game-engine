@@ -148,7 +148,7 @@ exports.Point = Point = Tagged.extend4000
 #
 # needs width and height attributes
 # holds bunch of points together
-# 
+#
 exports.Field = Field = Backbone.Model.extend4000
     initialize: ->
         @points = {}
@@ -176,15 +176,14 @@ exports.Field = Field = Backbone.Model.extend4000
     getIndexRev: (i) -> width = @get('width'); [ i % width, Math.floor(i / width) ]
 
     each: (callback) -> _.times @get('width') * @get('height'), (i) => callback @point(@getIndexRev(i))
-
+    
     eachFull: (callback) ->
         _.map @points, (point,index) => callback @getPoint(@getindexRev(index))
-
 
 #
 # used to define possible states
 # controls ticks and SUCH
-#     
+#
 exports.Game = Game = comm.MsgNode.extend4000 Field,
     initialize: ->
         @controls = {}
@@ -192,6 +191,7 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
         @tickspeed = 50        
         @tick = 0
         @stateid = 0
+        @ended = false
 
     nextid: -> @stateid++
 
@@ -203,10 +203,18 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
         @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
-    start: ->
-        @each (point) => point.each (state) => if state.start then state.start()
+    end: ->
+        @trigger 'end'
+        @ended = true
+    
+    start: (callback) ->
+        if @ended then callback 'This game has already ended'; return
+        #@each (point) => point.each (state) => if state.start then state.start()
         @tickloop()
-
+        @on 'end', =>
+            @stop()
+            helpers.cbc callback
+            
     stop: -> clearTimeout(@timeout)
 
     defineState: (definitions...) ->
