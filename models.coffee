@@ -63,6 +63,7 @@ exports.State = State = Tagged.extend4000
         @tags[tag] = true
         @trigger 'addtag', tag
 
+    render: -> @name
 
 # has (tags...) - check if point has all of those tags
 # hasor (tags...) - check if point has any of those tags
@@ -144,7 +145,9 @@ exports.Point = Point = Tagged.extend4000
         where.push(state)
         where.trigger 'moveto', state
         @trigger 'movefrom', state
-    
+
+    render: -> @states.map (state) -> state.render()
+            
 #
 # needs width and height attributes
 # holds bunch of points together
@@ -175,10 +178,14 @@ exports.Field = Field = Backbone.Model.extend4000
         
     getIndexRev: (i) -> width = @get('width'); [ i % width, Math.floor(i / width) ]
 
+    map: (callback) -> _.map @points, (point,index) => callback @getPoint(@getindexRev(index), index)
+
+    eachFull: (callback) -> @map(callback)
+
     each: (callback) -> _.times @get('width') * @get('height'), (i) => callback @point(@getIndexRev(i))
-    
-    eachFull: (callback) ->
-        _.map @points, (point,index) => callback @getPoint(@getindexRev(index))
+
+    render: (callback) -> helpers.hashmap @points, (point,index) -> point.render()
+        
 
 #
 # used to define possible states

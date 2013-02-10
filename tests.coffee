@@ -1,5 +1,5 @@
 _ = require 'underscore'
-game = require './index'
+game = require './models'
 Backbone = require 'backbone4000'
 
 exports.Field =
@@ -54,7 +54,10 @@ exports.Field =
 exports.Point =
     setUp: (callback) ->
         @game = new game.Game width: 25, height: 25
-        wall = @game.defineState 'Wall', { tags: { 'nogo': true } }
+        @game.defineState 'Wall', { tags: { 'nogo': true } }
+        @game.defineState 'Player1', { tags: { 'p1': true } }
+        @game.defineState 'Bomb', { tags: { 'nogo': true } }
+
         @point = @game.point [3, 5]
         callback()
         
@@ -105,6 +108,16 @@ exports.Point =
 
         test.done()
 
+    render: (test) ->
+        @point.push wall1 = new @game.state.Wall()
+        @point.push wall2 = new @game.state.Wall()
+        @point.push p1 = new @game.state.Player1()
+
+        console.log @point.render()
+
+        test.done()
+
+
 exports.View = 
     setUp: (callback) ->
         
@@ -129,7 +142,8 @@ exports.View =
         
         @game.point([2,2]).push 'state1'
         @game.point([2,2]).push 'state2'
-        
+
+                
         console.log @gameview.pinstances
         
         test.done()
