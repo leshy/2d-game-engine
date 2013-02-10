@@ -6,19 +6,20 @@ decorators = require 'decorators'
 
 #
 # states and points have tags.. here are some tag operations
-#
+# 
 Tagged = Backbone.Model.extend4000
     has: (tags...) -> not _.find(tags, (tag) => not @tags[tag])    
     hasor: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
 
-
-
+#
+# decorator for point functions to be able to receive tags instead of states, and automatically translate those tags to particular states under that point
+# 
 StatesFromTags = (f,args...) ->
     args = _.map args, (arg) => if arg.constructor is String then @find(arg) else arg
     args = _.flatten args
     f.apply @, args
 
-
+#
 # place - create a new state in current point
 # replace - replace the state with some other state
 # remove - remove the state
@@ -29,10 +30,10 @@ StatesFromTags = (f,args...) ->
 # tag operations
 # 
 # has(tags...)
-# tagadd(tags...)
-# tagdel(tags...)
+# addtag(tags...)
+# deltag(tags...)
 # each(callback) - iterate through tags
-
+#
 exports.State = State = Tagged.extend4000
     initialize: ->
         @when 'point', (point) =>
@@ -72,15 +73,16 @@ exports.State = State = Tagged.extend4000
 
     render: -> @name
 
+#
 # has (tags...) - check if point has all of those tags
 # hasor (tags...) - check if point has any of those tags
 # direction(direction) - return another point in this direction
 # 
-# right not local tags dictionary is updated automatically
+# right now local tags dictionary is updated automatically
 # when tags of states change or states are added
 # this could also be done each time that data is requested, or lazily (I could cache)
 # is this relevant/should I benchmark?
-
+#
 exports.Point = Point = Tagged.extend4000
     initialize: ([@x,@y],@game) ->
         @tags = {}
@@ -147,8 +149,7 @@ exports.Point = Point = Tagged.extend4000
 
     remove: decorators.decorate( StatesFromTags, (states...) -> _.map states, (state) => @states.remove(state) )
 
-    removeall: -> true while @states.pop()
-    
+    removeall: -> true while @states.pop()    
     
     move: (state,where) ->
         @remove(state)
@@ -199,9 +200,8 @@ exports.Field = Field = Backbone.Model.extend4000
         
 
 #
-# used to define possible states
-# controls ticks and SUCH
-#
+# used to define possible states, has tickloop controls, field width/height, and this is what main game views hook to
+# 
 exports.Game = Game = comm.MsgNode.extend4000 Field,
     initialize: ->
         @controls = {}
