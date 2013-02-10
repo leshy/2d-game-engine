@@ -12,6 +12,13 @@ Tagged = Backbone.Model.extend4000
     hasor: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
 
 
+
+StatesFromTags = (f,args...) ->
+    args = _.map args, (arg) => if arg.constructor is String then @find(arg) else arg
+    args = _.flatten args
+    f.apply @, args
+
+
 # place - create a new state in current point
 # replace - replace the state with some other state
 # remove - remove the state
@@ -107,7 +114,9 @@ exports.Point = Point = Tagged.extend4000
     
     direction: (direction) -> @modifier direction.coords()
 
-    getOne: (tag,callback) -> @states.find (state) -> state.tags[tag]
+    find: (tag) -> @states.find (state) -> state.tags[tag]
+
+    filter: (tag) -> @states.filter (state) -> state.tags[tag]
 
     up:    -> @modifier [0,-1]
     down:  -> @modifier [0,1]
@@ -123,6 +132,7 @@ exports.Point = Point = Tagged.extend4000
         @states.add(state); @
 
     dir: -> @states.map (state) -> state.name
+    
     dirtags: -> _.keys @tags
 
     push: (state) -> @add(state)
@@ -135,9 +145,10 @@ exports.Point = Point = Tagged.extend4000
     
     tagmap: (callback) -> _.map @tags, (n,tag) -> callback(tag)
 
-    remove: (state) -> @states.remove(state)
+    remove: decorators.decorate( StatesFromTags, (states...) -> _.map states, (state) => @states.remove(state) )
 
-    removeall: -> @states.map (state) => @states.remove state
+    removeall: -> true while @states.pop()
+    
     
     move: (state,where) ->
         @remove(state)

@@ -2,55 +2,6 @@ _ = require 'underscore'
 game = require './models'
 Backbone = require 'backbone4000'
 
-exports.Field =
-    setUp: (callback) ->
-        @game = new game.Game {width:25,height:25}
-        @game.defineState 'state1', {}
-        @game.defineState 'state2', {}
-        @game.defineState 'state3', {}        
-        callback()
-        
-    setget: (test) ->
-        point1 = @game.point([3,4]).push('state1')
-        point2 = @game.point([3,4]).push(new @game.state.state2())
-        
-        test.deepEqual @game.point([3,4]).map((state) -> state.name), [ 'state1', 'state2' ]
-        test.done()
-
-    has: (test) ->
-        point1 = @game.point([3,4]).push('state1')
-        test.equals point1.has('state1'), true, 'state1 is missing!'
-        test.equals point1.has('state2'), false, 'state2 has been found but it should be missing'
-        test.done()
-    
-    duplicate: (test) ->
-        point1 = @game.point([3,4]).push('state1').push('state2')
-        test.deepEqual @game.point([3,4]).map((state) -> state.name), [ 'state1', 'state2' ]
-        #test.equals point1.has('state1').constructor, @game.state.state1
-        point1.push('state1')
-        #test.equals point1.has('state1').constructor, Array
-        test.done()
-        
-    directionmodifiers: (test) ->
-        point1 = @game.point([3,4]).push('state1')
-        point2 = @game.point([3,5]).push('state2')
-        test.equals Boolean(point1.down().has('state2')), true
-        test.equals Boolean(point2.direction(new game.Direction().up()).has('state1')), true
-        test.done()
-
-    remove: (test) ->
-        point1 = @game.point([3,4])
-        test.equals _.keys(@game.points).length, 0
-        point1.push 'state1'
-        test.equals _.keys(@game.points).length, 1
-        point1.push 'state2'
-        test.equals _.keys(@game.points).length, 1
-        point1.remove 'state1' 
-        test.equals _.keys(@game.points).length, 1
-        point1.removeall()
-        test.equals _.keys(@game.points).length, 0
-        test.done()
-
 exports.Point =
     setUp: (callback) ->
         @game = new game.Game width: 25, height: 25
@@ -112,12 +63,73 @@ exports.Point =
         @point.push wall1 = new @game.state.Wall()
         @point.push wall2 = new @game.state.Wall()
         @point.push p1 = new @game.state.Player1()
-
-        console.log @point.render()
+        test.deepEqual @point.render(), [ 'Wall', 'Wall', 'Player1' ]
 
         test.done()
 
 
+
+exports.Field =
+    setUp: (callback) ->
+        @game = new game.Game {width:25,height:25}
+        @game.defineState 'state1', {}
+        @game.defineState 'state2', {}
+        @game.defineState 'state3', {}        
+        callback()
+        
+    setget: (test) ->
+        point1 = @game.point([3,4]).push('state1')
+        point2 = @game.point([3,4]).push(new @game.state.state2())
+        
+        test.deepEqual @game.point([3,4]).map((state) -> state.name), [ 'state1', 'state2' ]
+        test.done()
+
+    has: (test) ->
+        point1 = @game.point([3,4]).push('state1')
+        test.equals point1.has('state1'), true, 'state1 is missing!'
+        test.equals point1.has('state2'), false, 'state2 has been found but it should be missing'
+        test.done()
+    
+    duplicate: (test) ->
+        point1 = @game.point([3,4]).push('state1').push('state2')
+        test.deepEqual @game.point([3,4]).map((state) -> state.name), [ 'state1', 'state2' ]
+        #test.equals point1.has('state1').constructor, @game.state.state1
+        point1.push('state1')
+        #test.equals point1.has('state1').constructor, Array
+        test.done()
+        
+    directionmodifiers: (test) ->
+        point1 = @game.point([3,4]).push('state1')
+        point2 = @game.point([3,5]).push('state2')
+        test.equals Boolean(point1.down().has('state2')), true
+        test.equals Boolean(point2.direction(new game.Direction().up()).has('state1')), true
+        test.done()
+
+    remove: (test) ->
+        point1 = @game.point([3,4])
+        test.equals _.keys(@game.points).length, 0, 'not empty when started?'
+        point1.push 'state1'
+        test.equals _.keys(@game.points).length, 1
+        point1.push 'state2'
+        point1.push 'state2'
+        point1.push 'state3'
+        test.equals point1.states.length, 4
+        test.equals _.keys(@game.points).length, 1
+        point1.remove 'state1'
+        test.equals point1.states.length, 3
+        test.equals _.keys(@game.points).length, 1
+        point1.removeall()
+        test.equals _.keys(@game.points).length, 0, 'removeall failed?'
+        test.done()
+
+    render: (test) ->
+        point1 = @game.point([3,4]).push('state1')
+        point1 = @game.point([3,4]).push('state3')
+        point2 = @game.point([8,9]).push(new @game.state.state2())
+        test.deepEqual @game.render(), { '103': [ 'state1', 'state3' ], '233': [ 'state2' ] }
+        test.done()
+
+###
 exports.View = 
     setUp: (callback) ->
         
@@ -138,15 +150,12 @@ exports.View =
         
         callback()
 
-    test1: (test) ->
-        
+    test1: (test) ->        
         @game.point([2,2]).push 'state1'
         @game.point([2,2]).push 'state2'
 
-                
-        console.log @gameview.pinstances
+        #console.log @gameview.pinstances
         
         test.done()
 
-
-
+###
