@@ -10,7 +10,7 @@ decorators = require 'decorators'
 Tagged = Backbone.Model.extend4000
     has: (tags...) -> not _.find(tags, (tag) => not @tags[tag])    
     hasor: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
-
+    
 #
 # decorator for point functions to be able to receive tags instead of states, and automatically translate those tags to particular states under that point
 # 
@@ -92,17 +92,20 @@ exports.Point = Point = Tagged.extend4000
             @game.push(@)
             state.set point: @
             _.map state.tags, (v,tag) => @_addtag tag
-            @game.trigger 'set', @, state
+            @trigger 'set', state
 
         @states.on 'remove', (state) =>
             if not @states.length then @game.remove(@)
             _.map state.tags, (v,tag) => @_deltag tag
             @trigger 'del', state
-            @game.trigger 'del', @, state
 
         # states can dinamically change their tags
         @states.on 'addtag', (tag) => @_addtag tag
         @states.on 'deltag', (tag) => @_deltag tag
+
+        @on 'del', (state) => @game.trigger 'del', state, @
+        @on 'set', (state) => @game.trigger 'set', state, @
+        @on 'movefrom', (state,where) => @game.trigger 'move', state, @, where
 
     _addtag: (tag) ->
         if not @tags[tag] then @tags[tag] = 1 else @tags[tag]++
@@ -155,8 +158,8 @@ exports.Point = Point = Tagged.extend4000
         @remove(state)
         where = @modifier(where.coords())
         where.push(state)
-        where.trigger 'moveto', state
-        @trigger 'movefrom', state
+        where.trigger 'moveto', state, @
+        @trigger 'movefrom', state, where
 
     render: -> @states.map (state) -> state.render()
             
@@ -285,5 +288,3 @@ exports.Direction = Direction = class Direction
         if @y is -1 then return 'horizontal'
         if @y is 1 then return 'horizontal'
         if not @x and not @y  then return 'stop'
-
-
