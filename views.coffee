@@ -24,15 +24,14 @@ Painter = exports.Painter = Backbone.Model.extend4000
 GameView = exports.GameView = exports.View = Backbone.Model.extend4000
     initialize: ->
         @game = @get 'game'
-
         @painters = {}
         @pinstances = {} # per stateview instance dict        
 
         _start = =>
             # game should hook only on create to create new point view
             # and point views should deal with their own state changes and deletions/garbage collection
-            @game.on 'set', (point,state) => @drawPoint point
-            @game.on 'del', (point,state) => @drawPoint point
+            @game.on 'set', (state,point) => @drawPoint point
+            @game.on 'del', (state,point) => @drawPoint point
 
             @game.each (point) => @drawPoint point
 

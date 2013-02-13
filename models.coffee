@@ -238,7 +238,10 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
             
     stop: -> clearTimeout(@timeout)
 
-    defineState: (definitions...) ->
+
+
+
+    makeState: (definitions) ->
         lastdef = {}
         # just a small sintax sugar, first argument is optionally a name for the painter
         if _.first(definitions).constructor == String
@@ -256,7 +259,18 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
 
         definitions.push(lastdef)
 
-        @state[name] = State.extend4000.apply(State,definitions)
+        State.extend4000.apply(State,definitions)
+
+    defineState: (definitions...) ->
+        @state[name] = @serversideState[name] = @makeState(definitions)
+        
+    defineServersideState: (definitions...) ->
+        @serversideState[name] = @makeState(definitions)
+
+    defineClientsideState: (definitions...) ->
+        @state[name] = @makeState(definitions)
+    
+
 
 #
 # as close as you can get to a 2D vector in a world of bomberman.

@@ -15,19 +15,21 @@ coordsDecorator = (targetf,coords) ->
 
 GameView = exports.GameView = View.GameView.extend4000
     initialize: ->
-        @paper = raphael @get('el'), "100%", "100%" # create raphael paper
+        @paper = raphael @get('el'), "100%", "77%" # create raphael paper
         
         # calculate size for points
-        sizey = Math.floor(@paper.canvas.clientHeight / @game.get('height') ) - 2
-        sizex = Math.floor(@paper.canvas.clientWidth / @game.get('width') ) - 2
+        sizey = Math.floor(@paper.canvas.clientHeight / @game.get('height'))
+        sizex = Math.floor(@paper.canvas.clientWidth / @game.get('width'))
         if sizex > sizey then @size = sizey else @size = sizex
+
+        @size_offset = Math.round((@paper.canvas.clientWidth - (@size * game.get('width'))) / 2)
         
         # hook window onresize event, and trigger gameview.pan event to redraw the game
         # TODO
         
     # convert abstract game coordinates to concrete raphael paper coordinates
     translate: (coords) ->
-        return _.map coords, (a) => a * @size
+        return _.map coords, (a) => @size_offset + (a * @size)
 
 # generic raphael painter, it just translates in game abstract coordinates to raphael coordinates
 RaphaelPainter = View.Painter.extend4000
