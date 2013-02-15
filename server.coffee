@@ -1,6 +1,7 @@
 Backbone = require 'backbone4000'
+Game = require 'game/models'
 
-RemoteGame = exports.RemoteGame = Backbone.Model.extend4000
+GameSever = exports.GameServer = Game.Game.extend4000
     initialize: ->
         @setHook = @setHook.bind @
         @delHook = @delHook.bind @
@@ -46,4 +47,5 @@ RemoteGame = exports.RemoteGame = Backbone.Model.extend4000
         console.log (log)
         @send { game: @id, tick: @tick, changes: log }
         
+
         
