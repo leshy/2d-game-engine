@@ -192,7 +192,10 @@ exports.Field = Field = Backbone.Model.extend4000
         
     getIndexRev: (i) -> width = @get('width'); [ i % width, Math.floor(i / width) ]
 
-    map: (callback) -> _.map @points, (point,index) => callback @getPoint(@getindexRev(index), index)
+    map: (callback) ->
+        ret = []
+        @each (data) -> ret.push(callback(data))
+        ret
 
     eachFull: (callback) -> @map(callback)
 

@@ -1,6 +1,7 @@
 Backbone = require 'backbone4000'
 Game = require('game/models').Game
 comm = require('comm/clientside')
+_ = require 'underscore'
 
 # mixin for a game model - will transmit state changes
 GameSever = exports.GameServer = comm.MsgNode.extend4000
@@ -23,7 +24,7 @@ GameSever = exports.GameServer = comm.MsgNode.extend4000
         @on 'del', @delHook
         @on 'move', @moveHook
 
-        #@each (point) => point.each (state) => @send { a: 'set', p: point.coords(), s: state.render() }
+        @send {game: @id, tick: 0, changes: _.flatten(@map (point) => point.map (state) => { a: 'set', p: point.coords(), s: state.render() }) }
         
         @networkTickLoop()
 
