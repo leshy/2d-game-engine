@@ -1,8 +1,11 @@
 Backbone = require 'backbone4000'
-Game = require 'game/models'
+Game = require('game/models').Game
+comm = require('comm/clientside')
 
-GameSever = exports.GameServer = Game.Game.extend4000
+# mixin for a game model - will transmit state changes
+GameSever = exports.GameServer = comm.MsgNode.extend4000
     initialize: ->
+        console.log "GAMESERVER INIT".green
         @setHook = @setHook.bind @
         @delHook = @delHook.bind @
         @moveHook = @moveHook.bind @
@@ -21,7 +24,7 @@ GameSever = exports.GameServer = Game.Game.extend4000
         @on 'del', @delHook
         @on 'move', @moveHook
 
-        @each (point) => point.each (state) => @send { a: 'set', p: point.coords(), s: state.render() }
+        #@each (point) => point.each (state) => @send { a: 'set', p: point.coords(), s: state.render() }
         
         @networkTickLoop()
 

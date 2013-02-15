@@ -1,5 +1,4 @@
 Backbone = require 'backbone4000'
-comm = require 'comm/clientside'
 _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
@@ -205,8 +204,9 @@ exports.Field = Field = Backbone.Model.extend4000
 #
 # used to define possible states, has tickloop controls, field width/height, and this is what main game views hook to
 # 
-exports.Game = Game = comm.MsgNode.extend4000 Field,
+exports.Game = Game = Field.extend4000
     initialize: ->
+        console.log "GAME INIT".green
         @controls = {}
         @state = {}
         @tickspeed = 50        
@@ -238,7 +238,7 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
             
     stop: -> clearTimeout(@timeout)
 
-    defineState: (definitions) ->
+    defineState: (definitions...) ->
         lastdef = {}
         # just a small sintax sugar, first argument is optionally a name for the painter
         if _.first(definitions).constructor == String
@@ -255,7 +255,7 @@ exports.Game = Game = comm.MsgNode.extend4000 Field,
                 if tag then lastdef.tags[tag] = true
 
         definitions.push(lastdef)
-
+        console.log "will I fail".red, @
         @state[name] = State.extend4000.apply(State,definitions)
     
 #
