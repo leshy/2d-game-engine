@@ -5,7 +5,6 @@ comm = require('comm/clientside')
 # mixin for a game model - will transmit state changes
 GameSever = exports.GameServer = comm.MsgNode.extend4000
     initialize: ->
-        console.log "GAMESERVER INIT".green
         @setHook = @setHook.bind @
         @delHook = @delHook.bind @
         @moveHook = @moveHook.bind @

@@ -206,7 +206,6 @@ exports.Field = Field = Backbone.Model.extend4000
 # 
 exports.Game = Game = Field.extend4000
     initialize: ->
-        console.log "GAME INIT".green
         @controls = {}
         @state = {}
         @tickspeed = 50        
@@ -255,7 +254,7 @@ exports.Game = Game = Field.extend4000
                 if tag then lastdef.tags[tag] = true
 
         definitions.push(lastdef)
-        console.log "will I fail".red, @
+        
         @state[name] = State.extend4000.apply(State,definitions)
     
 #
