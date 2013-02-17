@@ -35,7 +35,7 @@ GameSever = exports.GameServer = comm.MsgNode.extend4000
         #console.log 'del'.magenta, state.name
         @log.push { a: 'del', id: state.id }
             
-    moveHook: (state,pointfrom,pointto) -> 
+    moveHook: (state,pointto) -> 
         #console.log 'move'.magenta, state.name
         @log.push { a: 'move', p: pointto.coords(), id: state.id }
             

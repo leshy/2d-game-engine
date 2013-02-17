@@ -33,8 +33,8 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
             @game.on 'set', (state,point) => @drawPoint point
             @game.on 'del', (state,point) => @drawPoint point
             @game.on 'move', (state,point,from) =>
+                console.log 'from', from.coords(), 'to', point.coords()
                 @drawPoint point
-                @drawPoint from
 
             @game.each (point) => @drawPoint point
 

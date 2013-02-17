@@ -106,7 +106,7 @@ exports.Point = Point = Tagged.extend4000
 
         @on 'del', (state) => @game.trigger 'del', state, @
         @on 'set', (state) => @game.trigger 'set', state, @
-        @on 'movefrom', (state,from) => @game.trigger 'move', state, @, from
+        @on 'move', (state,from) => @game.trigger 'move', state, @, from
 
     _addtag: (tag) ->
         if not @tags[tag] then @tags[tag] = 1 else @tags[tag]++
@@ -162,8 +162,7 @@ exports.Point = Point = Tagged.extend4000
         # where can be a direction or a point
         if where.constructor isnt Point then where = @modifier(where)
         where.push(state, silent: true)
-        where.trigger 'moveto', state, @
-        @trigger 'movefrom', state, where
+        where.trigger 'move', state, @
 
     render: -> @states.map (state) -> state.render()
             
