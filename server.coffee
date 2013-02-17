@@ -12,8 +12,7 @@ GameSever = exports.GameServer = comm.MsgNode.extend4000
 
     stopNetworkTicker: ->
         clearTimeout(@timeout)
-        
-        @log = []
+        @log = undefined
         @off 'set', @setHook
         @off 'del', @delHook
         @off 'move', @moveHook
@@ -23,22 +22,22 @@ GameSever = exports.GameServer = comm.MsgNode.extend4000
         @on 'set', @setHook
         @on 'del', @delHook
         @on 'move', @moveHook
-
-        @send {game: @id, tick: 0, changes: _.flatten(@map (point) => point.map (state) => { a: 'set', p: point.coords(), s: state.render() }) }
+        
+        #@each (point) => point.each (state) => @setHook(state)
         
         @networkTickLoop()
 
-    setHook: (state,point) =>
-        console.log onsole.log 'set'.magenta, state
-        @log.push { a: 'set', p: point.coords(), s: state.render() }
+    setHook: (state) -> 
+        console.log 'set'.magenta, state.name
+        @log.push { a: 'set', p: state.point.coords(), id: state.id, s: state.render() }
 
-    delHook: (state,point) =>
+    delHook: (state) -> 
         console.log 'del'.magenta, state
-        @log.push { a: 'del', p: point.coords(), s: state.render() }
+        @log.push { a: 'del', id: state.id }
             
-    moveHook: (state,pointfrom,pointto) =>
+    moveHook: (state,pointfrom,pointto) -> 
         console.log 'move'.magenta, state
-        @log.push { a: 'move', pf: pointfrom.coords(), p: pointto.coords(), s: state.render() }
+        @log.push { a: 'move', p: pointto.coords(), id: state.id }
             
     networkTickLoop: ->
         @networkTick()
@@ -49,6 +48,4 @@ GameSever = exports.GameServer = comm.MsgNode.extend4000
         @log = []
         console.log (log)
         @send { game: @id, tick: @tick, changes: log }
-        
-
         

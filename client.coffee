@@ -11,6 +11,6 @@ GameClient = exports.GameClient = comm.MsgNode.extend4000
             _.map msg.changes, @applychange.bind(@)
 
     applychange: (change) ->
-        if change.a is 'set' then @point(change.p).push new @state[change.s]
+        if change.a is 'set' then @point(change.p).push new @state[change.s](id: change.id)
             
         
