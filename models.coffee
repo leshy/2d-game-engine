@@ -37,18 +37,20 @@ exports.State = State = Tagged.extend4000
     initialize: ->
         @when 'point', (point) =>
             @point = point
-            if not @id
-                @id = point.game.nextid()
-                #console.log("new state",@name, @id)
-                if @start then @start()
-
+            if not @id then @id = point.game.nextid(@)
+            point.game.byid[@id] = @
+            if @start then @start()
+                
     place: (states...) -> @point.push.apply(@point,states)
     
     replace: (state) -> @remove(); @point.push(state)
     
     move: (where) -> @point.move(@, where)
     
-    remove: -> @point.remove @; @trigger 'del'
+    remove: ->
+        @point.remove @;
+        delete @point.game.byid[@id]
+        @trigger 'del'
     
     in: (n,callback) -> @point.game.onOnce 'tick_' + (@point.game.tick + n), => callback()
     
@@ -104,7 +106,7 @@ exports.Point = Point = Tagged.extend4000
 
         @on 'del', (state) => @game.trigger 'del', state, @
         @on 'set', (state) => @game.trigger 'set', state, @
-        @on 'movefrom', (state,where) => @game.trigger 'move', state, @, where
+        @on 'movefrom', (state,from) => @game.trigger 'move', state, @, from
 
     _addtag: (tag) ->
         if not @tags[tag] then @tags[tag] = 1 else @tags[tag]++
@@ -114,7 +116,9 @@ exports.Point = Point = Tagged.extend4000
         if @tags[tag] is 0 then delete @tags[tag]
 
     # operations for finding other points
-    modifier: (coords) -> @game.point [@x + coords[0], @y + coords[1]]
+    modifier: (coords) -> # I can take a direction or a point
+        if coords.constructor isnt Array then coords = coords.coords() 
+        @game.point [@x + coords[0], @y + coords[1]]
     
     direction: (direction) -> @modifier direction.coords()
 
@@ -130,16 +134,16 @@ exports.Point = Point = Tagged.extend4000
     # general point operations            
     coords: -> [@x,@y]
 
-    add: (state) ->
+    add: (state,options) ->
         state.point = @
         if state.constructor == String then state = new @game.state[state]
-        @states.add(state); @
+        @states.add(state,options); @
 
     dir: -> @states.map (state) -> state.name
     
     dirtags: -> _.keys @tags
 
-    push: (state) -> @add(state)
+    push: (state,options) -> @add(state,options)
 
     map: (args...) -> @states.map.apply @states, args
 
@@ -154,9 +158,10 @@ exports.Point = Point = Tagged.extend4000
     removeall: -> true while @states.pop()    
     
     move: (state,where) ->
-        @remove(state)
-        where = @modifier(where.coords())
-        where.push(state)
+        @states.remove(state, silent: true)
+        # where can be a direction or a point
+        if where.constructor isnt Point then where = @modifier(where)
+        where.push(state, silent: true)
         where.trigger 'moveto', state, @
         @trigger 'movefrom', state, where
 
@@ -215,9 +220,10 @@ exports.Game = Game = Field.extend4000
         @tick = 0
         @stateid = 0
         @ended = false
-
-    nextid: -> @stateid++
-
+        @byid = {}
+        
+    nextid: (state) -> @stateid++
+        
     dotick: ->
         @tick++
         @trigger('tick_' + @tick)

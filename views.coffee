@@ -32,6 +32,9 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
             # and point views should deal with their own state changes and deletions/garbage collection
             @game.on 'set', (state,point) => @drawPoint point
             @game.on 'del', (state,point) => @drawPoint point
+            @game.on 'move', (state,point,from) =>
+                @drawPoint point
+                @drawPoint from
 
             @game.each (point) => @drawPoint point
 

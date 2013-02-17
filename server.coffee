@@ -28,24 +28,24 @@ GameSever = exports.GameServer = comm.MsgNode.extend4000
         @networkTickLoop()
 
     setHook: (state) -> 
-        console.log 'set'.magenta, state.name
+        #console.log 'set'.magenta, state.name
         @log.push { a: 'set', p: state.point.coords(), id: state.id, s: state.render() }
 
     delHook: (state) -> 
-        console.log 'del'.magenta, state
+        #console.log 'del'.magenta, state.name
         @log.push { a: 'del', id: state.id }
             
     moveHook: (state,pointfrom,pointto) -> 
-        console.log 'move'.magenta, state
+        #console.log 'move'.magenta, state.name
         @log.push { a: 'move', p: pointto.coords(), id: state.id }
             
     networkTickLoop: ->
         @networkTick()
-        @networkTickTimeout = setTimeout @networkTickLoop.bind(@), 500
+        @networkTickTimeout = setTimeout @networkTickLoop.bind(@), 50
     
     networkTick: ->
+        if @log.length is 0 then return
         log = @log
         @log = []
-        console.log (log)
         @send { game: @id, tick: @tick, changes: log }
         

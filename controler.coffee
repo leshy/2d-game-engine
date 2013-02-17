@@ -1,8 +1,11 @@
 if not window then window = {}
 $ = require 'jquery-browserify'
 comm = require 'comm/clientside'
+validator = require 'validator2-extras'
 
-exports.KeyControler = comm.MsgNode.extend4000
+exports.KeyControler = comm.MsgNode.extend4000 validator.ValidatedModel,
+    validator: { actions: 'Object' }
+    
     initialize: ->
         @pass()
         state = {}

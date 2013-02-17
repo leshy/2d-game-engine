@@ -12,5 +12,7 @@ GameClient = exports.GameClient = comm.MsgNode.extend4000
 
     applychange: (change) ->
         if change.a is 'set' then @point(change.p).push new @state[change.s](id: change.id)
+        if change.a is 'del' then @byid[change.id].remove()
+        if change.a is 'move' then @byid[change.id].move @point(change.p)
             
         
