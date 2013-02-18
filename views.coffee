@@ -32,9 +32,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
             # and point views should deal with their own state changes and deletions/garbage collection
             @game.on 'set', (state,point) => @drawPoint point
             @game.on 'del', (state,point) => @drawPoint point
-            @game.on 'move', (state,point,from) =>
-                console.log 'from', from.coords(), 'to', point.coords()
-                @drawPoint point
+            @game.on 'move', (state,point,from) => @drawPoint point # how come I don't need to redraw point from?
 
             @game.each (point) => @drawPoint point
 
@@ -78,7 +76,7 @@ exports.PointView = PointView = Models.Point.extend4000
         #point.on 'del', (state) => console.log 'DEL', point.coords(), state.name; @draw()
         #point.on 'move', (state) => console.log 'MOVE', point.coords(), state.name; @draw()
 
-    specialPainters: -> {} # override me
+    specialPainters: (painters) -> painters  # override me
 
     # fetches a painter for a state at this point, or instantiates a new one
     # painter: (painter) ->
@@ -105,7 +103,7 @@ exports.PointView = PointView = Models.Point.extend4000
         _instantiate = (painters) -> _.map painters, (painter) -> if painter.constructor is Function then new painter() else painter
 
         painters = @point.map (state) => @gameview.getPainter(state)
-        #painters = @specialPainters(painters) # empty doesn't have to be a specific state..
+        painters = @specialPainters(painters) # empty doesn't have to be a specific state..
         painters = _applyEliminations(painters)
         painters = _applyOrder(painters)
         painters = _instantiate(painters)

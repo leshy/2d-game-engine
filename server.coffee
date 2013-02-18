@@ -2,7 +2,7 @@ Backbone = require 'backbone4000'
 Game = require('game/models').Game
 comm = require('comm/clientside')
 _ = require 'underscore'
-
+helpers = require 'helpers'
 # mixin for a game model - will transmit state changes
 GameSever = exports.GameServer = comm.MsgNode.extend4000
     initialize: ->
@@ -27,16 +27,18 @@ GameSever = exports.GameServer = comm.MsgNode.extend4000
         
         @networkTickLoop()
 
-    setHook: (state) -> 
-        #console.log 'set'.magenta, state.name
-        @log.push { a: 'set', p: state.point.coords(), id: state.id, s: state.render() }
+    setHook: (state) -> #maybe state render should take care of syncattributes and not this f
+        if state.nosync or state.noset then return
+        entry = { a: 'set', p: state.point.coords(), id: state.id, s: state.render() }
+        if state.syncattributes entry.o = helpers.hashmap state.syncattributes, (val,key) -> state.get(key)
+        @log.push entry
 
-    delHook: (state) -> 
-        #console.log 'del'.magenta, state.name
+    delHook: (state) ->
+        if state.nosync or state.nodel then return
         @log.push { a: 'del', id: state.id }
             
-    moveHook: (state,pointto) -> 
-        #console.log 'move'.magenta, state.name
+    moveHook: (state,pointto) ->
+        if state.nosync or state.nomove then return
         @log.push { a: 'move', p: pointto.coords(), id: state.id }
             
     networkTickLoop: ->
