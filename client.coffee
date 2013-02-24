@@ -25,3 +25,6 @@ GameClient = exports.GameClient = comm.MsgNode.extend4000
         
         
     nextid: (state) -> "c" + @stateid++
+
+
+    

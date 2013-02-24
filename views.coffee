@@ -6,7 +6,7 @@ _ = require 'underscore'
 
 # painter subclass should implement Draw(coords) Move(coords) and Remove() methods
 Painter = exports.Painter = Backbone.Model.extend4000
-    initialize: ->        
+    initialize: ->  # what is this, check this, it should always be the same..
         if not @gameview then @gameview = @get 'gameview'
         if not @state then @state = @get 'state'
             
@@ -58,9 +58,9 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         if _.first(definitions).constructor == String
             definitions.push { name: name = definitions.shift() }
         else name = _.last(definitions).name # or figure out the name from the last definition
-
-        @painters[name] = Backbone.Model.extend4000.apply Backbone.Model, definitions
-
+        @painters[name] = painter = Backbone.Model.extend4000.apply Backbone.Model, definitions
+        @trigger 'definePainter', painter
+        painter
     # game keeps the collection of all state view instances (painters) for all the visible states in the game
     # so that different point views can fetch state views and draw them in themselves when states get moved..
     # (I don't want to reinstantiate state views for speed and as they might have internal variables that are relevant)
