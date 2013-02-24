@@ -43,7 +43,6 @@ Image = exports.Image = RaphaelPainter.extend4000
             @rendering = @gameview.paper.image(src=@getpic(), coords[0], coords[1], @gameview.size, @gameview.size); @rendering.toFront();
             if @rotation then @rendering.rotate @rotation
             return
-
         # do we need to move our rendering? 
         if @rendering.attrs.x != coords[0] or @rendering.attrs.y != coords[1] then @move(coords)
         # bring us to front..
@@ -51,11 +50,10 @@ Image = exports.Image = RaphaelPainter.extend4000
 
     getpic: -> 'pic/' + (@pic or @name) + '.png'
     
-    move: (coords) ->
-        #console.log('move',coords,@state.name,@rendering.attrs.x, @rendering.attrs.y)
-        #@coords = @gameview.translate point.coords()
-        @rendering.attr { x: coords[0], y: coords[1] }
-    
+    move: (coords) -> @rendering.attr { x: coords[0], y: coords[1] }
+
+    images: -> [ @getpic() ]
+            
     remove: -> @rendering.remove()
     
 Sprite = exports.Sprite = Image.extend4000
@@ -80,6 +78,8 @@ Sprite = exports.Sprite = Image.extend4000
         @rendering.attr src: @getpic()
         @frame++
 
+    images: -> @frame_pics
+    
 Color = exports.Color = RaphaelPainter.extend4000
     render: decorate coordsDecorator, (coords) -> @rendering = @gameview.paper.rect(coords[0], coords[1], @gameview.size, @gameview.size).attr( 'opacity': .7, 'stroke-width': 1, stroke: @color, fill: @color)
     move: decorate coordsDecorator, (coords) -> @rendering.attr { x: coords[0], y: coords[1] }    

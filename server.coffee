@@ -30,7 +30,7 @@ GameSever = exports.GameServer = comm.MsgNode.extend4000
     setHook: (state) -> #maybe state render should take care of syncattributes and not this f
         if state.nosync or state.noset then return
         entry = { a: 'set', p: state.point.coords(), id: state.id, s: state.render() }
-        if state.syncattributes entry.o = helpers.hashmap state.syncattributes, (val,key) -> state.get(key)
+        if state.syncattributes then entry.o = helpers.hashmap state.syncattributes, (val,key) -> state.get(key)
         @log.push entry
 
     delHook: (state) ->
@@ -38,6 +38,7 @@ GameSever = exports.GameServer = comm.MsgNode.extend4000
         @log.push { a: 'del', id: state.id }
             
     moveHook: (state,pointto) ->
+        console.log "MOVE",state.render(),pointto.coords()
         if state.nosync or state.nomove then return
         @log.push { a: 'move', p: pointto.coords(), id: state.id }
             

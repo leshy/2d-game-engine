@@ -6,8 +6,7 @@ _ = require 'underscore'
 
 # painter subclass should implement Draw(coords) Move(coords) and Remove() methods
 Painter = exports.Painter = Backbone.Model.extend4000
-    initialize: ->
-        
+    initialize: ->        
         if not @gameview then @gameview = @get 'gameview'
         if not @state then @state = @get 'state'
             
@@ -20,19 +19,28 @@ Painter = exports.Painter = Backbone.Model.extend4000
     
     move: -> throw 'not implemented'
 
+    images: -> [] # painters can dump the images they use.. preloader uses this
+    
 # very simmilar to game model, maybe should share the superclass with it
 GameView = exports.GameView = exports.View = Backbone.Model.extend4000
     initialize: ->
         @game = @get 'game'
         @painters = {}
-        @pinstances = {} # per stateview instance dict        
+        @pinstances = {} # per stateview instance dict
+        @pointviews = {}
 
         _start = =>
             # game should hook only on create to create new point view
             # and point views should deal with their own state changes and deletions/garbage collection
-            @game.on 'set', (state,point) => @drawPoint point
-            @game.on 'del', (state,point) => @drawPoint point
-            @game.on 'move', (state,point,from) => @drawPoint point # how come I don't need to redraw point from?
+            @game.on 'set', (state,point) =>
+                #console.log 'set',state.render(), point.coords()
+                @drawPoint point
+            @game.on 'del', (state,point) =>
+                #console.log 'del',state.render(), point.coords()
+                @drawPoint point
+            @game.on 'move', (state,point,from) =>
+                #console.log 'move', state.render(), 'to', point.coords()
+                @drawPoint point # how come I don't need to redraw point from?
 
             @game.each (point) => @drawPoint point
 
@@ -53,42 +61,18 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
 
         @painters[name] = Backbone.Model.extend4000.apply Backbone.Model, definitions
 
+    # game keeps the collection of all state view instances (painters) for all the visible states in the game
+    # so that different point views can fetch state views and draw them in themselves when states get moved..
+    # (I don't want to reinstantiate state views for speed and as they might have internal variables that are relevant)
     getPainter: (state) ->
         if painter = @pinstances[state.id] then return painter
         painterclass = @painters[state.name]
         if not painterclass then painterclass = @painters['unknown']
         return painterclass.extend4000 state: state, gameview: @
-            
+
+    specialPainters: (painters) -> painters
+                        
     drawPoint: (point) ->
-        view = new PointView(@,point)
-        view.draw()
-    
-exports.PointView = PointView = Models.Point.extend4000
-    initialize: (gameview,point) ->
-        @gameview = gameview
-        @point = point
-        # redraw a point when world view has changed
-        #gameview.on 'pan', => @draw()
-        #gameview.on 'zoom', => @draw()
-        
-        # redraw a point when states in it have changed
-        #point.on 'add', (state) => console.log 'ADD', point.coords(), state.name; @draw()
-        #point.on 'del', (state) => console.log 'DEL', point.coords(), state.name; @draw()
-        #point.on 'move', (state) => console.log 'MOVE', point.coords(), state.name; @draw()
-
-    specialPainters: (painters) -> painters  # override me
-
-    # fetches a painter for a state at this point, or instantiates a new one
-    # painter: (painter) ->
-    #    if localpainter = @has(painter.prototype.name) then return localpainter
-    #    return new painter state: state, view: @
-        
-    # looks at states at a particular point and finds painters for those states.
-    # figures out a correct painter order and applies eliminations..
-    # spits out an array of painters
-    # point > [ painter, painter, ... ]
-    #
-    draw: (point) ->   
         _applyEliminations = (painters) ->
             dict = helpers.makedict painters, (painter) -> helpers.objorclass painter, 'name'
             _.map painters, (painter) ->
@@ -101,16 +85,16 @@ exports.PointView = PointView = Models.Point.extend4000
         _applyOrder = (painters) -> _.sortBy painters, _sortf
         
         _instantiate = (painters) -> _.map painters, (painter) -> if painter.constructor is Function then new painter() else painter
-
-        painters = @point.map (state) => @gameview.getPainter(state)
+        
+        painters = point.map (state) => @getPainter(state)
         painters = @specialPainters(painters) # empty doesn't have to be a specific state..
         painters = _applyEliminations(painters)
         painters = _applyOrder(painters)
         painters = _instantiate(painters)
-
+       
         #console.log JSON.stringify(_.map painters, (painter) -> [ _sortf(painter), helpers.objorclass(painter, 'state').name ])
-
-        # remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
-        _.map painters, (painter) => painter.draw(@point)
-
         
+        # remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
+        _.map painters, (painter) => painter.draw(point)
+
+

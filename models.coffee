@@ -36,12 +36,11 @@ StatesFromTags = (f,args...) ->
 exports.State = State = Tagged.extend4000
     initialize: ->
         @when 'point', (point) =>
-            @point = point
-            
             if not @id then @id = @get('id') or @id = point.game.nextid(@)
             point.game.byid[@id] = @
+            
             if @start then @start()
-                
+                        
     place: (states...) -> @point.push.apply(@point,states)
     
     replace: (state) -> @remove(); @point.push(state)
@@ -51,7 +50,6 @@ exports.State = State = Tagged.extend4000
     remove: ->
         @point.remove @;
         delete @point.game.byid[@id]
-        @trigger 'del'
     
     in: (n,callback) -> @point.game.onOnce 'tick_' + (@point.game.tick + n), => callback()
     
@@ -90,16 +88,11 @@ exports.Point = Point = Tagged.extend4000
         @tags = {}
         @states = new Backbone.Collection()
         
-        @states.on 'add', (state) =>
-            @game.push(@)
-            state.set point: @
-            _.map state.tags, (v,tag) => @_addtag tag
-            @trigger 'set', state
+        @states.on 'add', (state) => @_addstate(state); @trigger 'set', state
+        @states.on 'remove', (state) => @_delstate(state); state.trigger 'del'; @trigger 'del', state
 
-        @states.on 'remove', (state) =>
-            if not @states.length then @game.remove(@)
-            _.map state.tags, (v,tag) => @_deltag tag
-            @trigger 'del', state
+        @on 'move', (state) => @_addstate(state)
+        @on 'moveaway', (state) => @_delstate(state)
 
         # states can dinamically change their tags
         @states.on 'addtag', (tag) => @_addtag tag
@@ -109,6 +102,18 @@ exports.Point = Point = Tagged.extend4000
         @on 'set', (state) => @game.trigger 'set', state, @
         @on 'move', (state,from) => @game.trigger 'move', state, @, from
 
+    # called by @states collection automatically, or by move, manually
+    _addstate: (state) ->
+        @game.push(@)
+        state.point = @
+        state.set point: @
+        _.map state.tags, (v,tag) => @_addtag tag
+        
+    # called by @states collection automatically, or by move, manually
+    _delstate: (state) ->
+        if not @states.length then @game.remove(@)
+        _.map state.tags, (v,tag) => @_deltag tag
+        
     _addtag: (tag) ->
         if not @tags[tag] then @tags[tag] = 1 else @tags[tag]++
 
@@ -118,7 +123,8 @@ exports.Point = Point = Tagged.extend4000
 
     # operations for finding other points
     modifier: (coords) -> # I can take a direction or a point
-        if coords.constructor isnt Array then coords = coords.coords() 
+        if coords.constructor isnt Array then coords = coords.coords();
+        #console.log 'applying direction', coords, ' to ', @coords()
         @game.point [@x + coords[0], @y + coords[1]]
     
     direction: (direction) -> @modifier direction.coords()
@@ -136,7 +142,6 @@ exports.Point = Point = Tagged.extend4000
     coords: -> [@x,@y]
 
     add: (state,options) ->
-        state.point = @
         if state.constructor == String then state = new @game.state[state]
         @states.add(state,options); @
 
@@ -156,14 +161,20 @@ exports.Point = Point = Tagged.extend4000
 
     remove: decorators.decorate( StatesFromTags, (states...) -> _.map states, (state) => @states.remove(state) )
 
-    removeall: -> true while @states.pop()    
+    removeall: -> true while @states.pop()
     
     move: (state,where) ->
         @states.remove(state, silent: true)
+        
         # where can be a direction or a point
-        if where.constructor isnt Point then where = @modifier(where)
+        if where.constructor isnt Point
+            if where.constructor is Direction then where = @modifier(where) # if I get a direction, I'll apply it to self
+            if where.constructor is Array then where = @game.point(where) # if I get an array I'll suppose that its a point
+        
         where.push(state, silent: true)
+        
         where.trigger 'move', state, @
+        @trigger 'moveaway', state, where
 
     render: -> @states.map (state) -> state.render()
             
