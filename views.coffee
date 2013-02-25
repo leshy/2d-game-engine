@@ -6,12 +6,24 @@ _ = require 'underscore'
 
 # painter subclass should implement Draw(coords) Move(coords) and Remove() methods
 Painter = exports.Painter = Backbone.Model.extend4000
-    initialize: ->  # what is this, check this, it should always be the same..
-        if not @gameview then @gameview = @get 'gameview'
+    initialize: ->
+        if not @gameview then @gameview = @get 'gameview' # wtf.. why.. why?
         if not @state then @state = @get 'state'
-            
+
+        if not @gameview or not @state then return # painter needs to be able to be instantiated without models (preloader needs to be able to call images() on it) .. this init function sucks.. fix it..
+
         @gameview.pinstances[@state.id] = @
         @state.on 'del', => @remove()
+
+        # 'when' somehow doesn't work.. figure it out..
+        # 
+        #@when 'gameview', (gameview) => 
+        #    @gameview = gameview
+        #    @gameview.pinstances[@state.id] = @
+
+        #@when 'state', (state) =>
+        #    @state = state
+        #    state.on 'del', => @remove()
 
     draw: (coords,size) -> console.log "draw", @state.point.coords(), @state.name
     
@@ -25,9 +37,10 @@ Painter = exports.Painter = Backbone.Model.extend4000
 GameView = exports.GameView = exports.View = Backbone.Model.extend4000
     initialize: ->
         @game = @get 'game'
-        @painters = {}
+        @painters = {} # name -> painter class map
+        
         @pinstances = {} # per stateview instance dict
-        @pointviews = {}
+        @spinstances = {} # per point special painter instance dict
 
         _start = =>
             # game should hook only on create to create new point view
@@ -68,8 +81,8 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         if painter = @pinstances[state.id] then return painter
         painterclass = @painters[state.name]
         if not painterclass then painterclass = @painters['unknown']
-        return painterclass.extend4000 state: state, gameview: @
-
+        return painterclass.extend4000 state: state, gameview: @                    
+                
     specialPainters: (painters) -> painters
                         
     drawPoint: (point) ->
@@ -84,10 +97,14 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
             
         _applyOrder = (painters) -> _.sortBy painters, _sortf
         
-        _instantiate = (painters) -> _.map painters, (painter) -> if painter.constructor is Function then new painter() else painter
+        _instantiate = (painters) -> _.map painters, (painter) ->
+            if painter.constructor is Function then new painter()
+            else if painter.constructor is String then new @painters[painter] gameview: @
+            else painter
         
         painters = point.map (state) => @getPainter(state)
-        painters = @specialPainters(painters) # empty doesn't have to be a specific state..
+
+        painters = @specialPainters(painters) # this needs to be redone.. sometime. I'm rerendering specialpainters each time the point gets rerendered..
         painters = _applyEliminations(painters)
         painters = _applyOrder(painters)
         painters = _instantiate(painters)

@@ -15,13 +15,9 @@ GameClient = exports.GameClient = comm.MsgNode.extend4000
             attrs = { id: change.id }
             if change.o then attrs = _.extend attrs, change.o
             @point(change.p).push state = new @state[change.s](attrs)
-            console.log 'received new state',state.render(),attrs
-            #if state.start then state.start()
             
-        if change.a is 'del' then console.log 'received del', change.id; @byid[change.id].remove()
-        if change.a is 'move'
-            console.log 'move', change
-            @byid[change.id].move @point(change.p)
+        if change.a is 'del' then @byid[change.id].remove()
+        if change.a is 'move'then @byid[change.id].move @point(change.p)
         
         
     nextid: (state) -> "c" + @stateid++

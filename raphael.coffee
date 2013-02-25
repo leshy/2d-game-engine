@@ -15,7 +15,7 @@ coordsDecorator = (targetf,coords) ->
 
 GameView = exports.GameView = View.GameView.extend4000
     initialize: ->
-        @paper = raphael @get('el'), "100%", "77%" # create raphael paper
+        @paper = raphael @get('el'), "100%", "100%" # create raphael paper
         
         # calculate size for points
         sizey = Math.floor(@paper.canvas.clientHeight / @game.get('height'))
@@ -48,7 +48,7 @@ Image = exports.Image = RaphaelPainter.extend4000
         # bring us to front..
         @rendering.toFront()
 
-    getpic: -> 'pic/' + (@pic or @name) + '.png'
+    getpic: -> '/pic/' + (@pic or @name) + '.png'
     
     move: (coords) -> @rendering.attr { x: coords[0], y: coords[1] }
 
@@ -60,9 +60,9 @@ Sprite = exports.Sprite = Image.extend4000
     initialize: ->
         @frame_pics = []
         _.times @frames, (frame) =>
-            @frame_pics.push 'pic/' + (@pic or @name) + frame + ".png"
+            @frame_pics.push '/pic/' + (@pic or @name) + frame + ".png"
         @frame = 0
-        @listenTo @gameview,'tick', => @tick()
+        if @gameview then @listenTo @gameview,'tick', => @tick()
 
     getpic: -> @frame_pics[@frame]
 
