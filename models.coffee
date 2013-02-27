@@ -44,7 +44,8 @@ StatesFromTags = (f,args...) ->
 exports.State = State = Tagged.extend4000
     initialize: ->
         @when 'point', (point) =>
-            if not @id then @id = @get('id') or @id = point.game.nextid(@)
+            if not @id then @id = @get('id')
+            if not @id then @set(id: @id = point.game.nextid())
             point.game.byid[@id] = @
             if @start then @start()
                         

@@ -14,7 +14,8 @@ Painter = exports.Painter = Backbone.Model.extend4000
 
         @gameview.pinstances[@state.id] = @
         @state.on 'del', => @remove()
-
+        @state.on 'del', => delete @gameview.pinstances[@state.id]
+        
         # 'when' somehow doesn't work.. figure it out..
         # 
         #@when 'gameview', (gameview) => 
@@ -74,6 +75,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         @painters[name] = painter = Backbone.Model.extend4000.apply Backbone.Model, definitions
         @trigger 'definePainter', painter
         painter
+    
     # game keeps the collection of all state view instances (painters) for all the visible states in the game
     # so that different point views can fetch state views and draw them in themselves when states get moved..
     # (I don't want to reinstantiate state views for speed and as they might have internal variables that are relevant)
@@ -103,15 +105,15 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
             else painter
         
         painters = point.map (state) => @getPainter(state)
-
+        
         painters = @specialPainters(painters) # this needs to be redone.. sometime. I'm rerendering specialpainters each time the point gets rerendered..
         painters = _applyEliminations(painters)
         painters = _applyOrder(painters)
         painters = _instantiate(painters)
        
-        #console.log JSON.stringify(_.map painters, (painter) -> [ _sortf(painter), helpers.objorclass(painter, 'state').name ])
+#        console.log JSON.stringify(_.map painters, (painter) -> [ _sortf(painter), helpers.objorclass(painter, 'state').name ])
         
-        # remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
+        #remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
         _.map painters, (painter) => painter.draw(point)
 
 
