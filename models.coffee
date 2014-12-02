@@ -3,19 +3,17 @@ _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
 
-
 #
 # there is a problem with state being added to a collection before its ID is set
 # as collection.get looks up the model by model.id first, and it will fail
 # fixed it by changing the priority of backbone collections to look at cid first
 #
 
-
 #
 # states and points have tags.. here are some tag operations
 # 
 Tagged = Backbone.Model.extend4000
-    has: (tags...) -> not _.find(tags, (tag) => not @tags[tag])    
+    has: (tags...) -> not _.find(tags, (tag) => not @tags[tag])
     hasor: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
     
 #
@@ -59,7 +57,8 @@ exports.State = State = Tagged.extend4000
         @point.remove @;
         delete @point.game.byid[@id]
     
-    in: (n,callback) -> @point.game.onOnce 'tick_' + (@point.game.tick + n), => callback()
+    in: (n,callback) ->
+        @point.game.onceOff 'tick_' + (@point.game.tick + n), => callback()
     
     cancel: (callback) -> @point.game.off null, callback
     
@@ -315,3 +314,4 @@ exports.Direction = Direction = class Direction
         if @y is -1 then return 'horizontal'
         if @y is 1 then return 'horizontal'
         if not @x and not @y  then return 'stop'
+
