@@ -55,7 +55,7 @@ GameSever = exports.GameServer = Backbone.Model.extend4000
         if @log.length is 0 then return
         log = @log
         @log = []
-        @send { game: @id, tick: @tick, changes: log }
+        @send { tick: @tick, changes: log }
         
     send: (msg) ->
         console.warn "game server trying to send, but no send method is implemented"

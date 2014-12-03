@@ -16,7 +16,7 @@ exports.preloaderMixin = validator.ValidatedModel.extend4000
         @preloadQueue = new preloadjs.LoadQueue useXHR: true # init preload queue
     
         handleFileLoad = (event) ->
-            console.log 'loaded',event.item.src
+            event.result.style.visibility = 'hidden'
             if event.item.type is preloadjs.LoadQueue.IMAGE then $(document.body).append(event.result)
                 
         @preloadQueue.addEventListener("fileload", handleFileLoad);

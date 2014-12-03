@@ -3,6 +3,7 @@ helpers = require 'helpers'
 Backbone = require 'backbone4000'
 validator = require 'validator2-extras'; v = validator.v
 decorators = require 'decorators'; decorate = decorators.decorate
+$ = require 'jquery-browserify'
 
 # painter is made concrete by subclassing abstract painter
 View = require './views'
@@ -15,7 +16,9 @@ coordsDecorator = (targetf,coords) ->
 
 GameView = exports.GameView = View.GameView.extend4000
     initialize: ->
-        @paper = raphael @get('el'), "100%", "100%" # create raphael paper
+        el = @get('el')
+        @paper = raphael el.get(0), el.width(), el.height() # create raphael paper
+        window.paper = @paper
         
         # calculate size for points
         sizey = Math.floor(@paper.canvas.clientHeight / @game.get('height'))
