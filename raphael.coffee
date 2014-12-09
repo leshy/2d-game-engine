@@ -25,14 +25,14 @@ GameView = exports.GameView = View.GameView.extend4000
         sizex = Math.floor(@paper.canvas.clientWidth / @game.get('width'))
         if sizex > sizey then @size = sizey else @size = sizex
 
-        @size_offset = Math.round((@paper.canvas.clientWidth - (@size * game.get('width'))) / 2)
-        
+        @size_offsetx = Math.round((@paper.canvas.clientWidth - (@size * game.get('width'))) / 2)
+        @size_offsety = Math.round((@paper.canvas.clientHeight - (@size * game.get('height'))) / 2)        
         # hook window onresize event, and trigger gameview.pan event to redraw the game
         # TODO
         
     # convert abstract game coordinates to concrete raphael paper coordinates
     translate: (coords) ->
-        return _.map coords, (a) => @size_offset + (a * @size)
+        return [ @size_offsetx + (coords[0] * @size),  @size_offsety + (coords[1] * @size) ]
 
 # generic raphael painter, it just translates in game abstract coordinates to raphael coordinates
 RaphaelPainter = View.Painter.extend4000

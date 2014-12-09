@@ -236,7 +236,7 @@ exports.Game = Game = Field.extend4000
         @state = {}
         @tickspeed = 50        
         @tick = 0
-        @stateid = 0
+        @stateid = 1
         @ended = false
         @byid = {}
         

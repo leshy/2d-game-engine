@@ -7,7 +7,6 @@ exports.KeyControler = Backbone.Model.extend4000 validator.ValidatedModel,
     validator: { actions: 'Object' }
     
     initialize: ->
-        @pass()
         state = {}
         actions = @get 'actions'
 
