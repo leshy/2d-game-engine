@@ -25,3 +25,8 @@ exports.KeyControler = Backbone.Model.extend4000 validator.ValidatedModel,
 
     send: ->
         console.warn "controler trying to send, but no send method is implemented"
+
+    end: ->
+        $(document).off('keydown')
+        $(document).off('keyup')
+        @trigger 'end'

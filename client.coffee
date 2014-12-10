@@ -8,6 +8,9 @@ GameClient = exports.GameClient = Backbone.Model.extend4000
         @subscribe { changes: Array }, (msg) =>
             _.map msg.changes, (change) => @applychange change
 
+        @subscribe { end: true }, (msg) =>
+            _.defer => @end(msg.end)
+        
     applychange: (change) ->
         if change.a is 'set'
             attrs = { id: change.id }
