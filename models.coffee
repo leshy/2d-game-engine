@@ -256,13 +256,12 @@ exports.Game = Game = Field.extend4000
         @ended = true            
 
     start: (callback) ->
-        console.log 'test test test start'
         if @ended then callback 'This game has already ended'; return
         #@each (point) => point.each (state) => if state.start then state.start()
         @tickloop()
         @on 'end', (data) =>
-            console.log 'sart call got',data
             @stop()
+            console.log 'calling win callback with',data
             helpers.cbc callback, data
             
     stop: -> clearTimeout(@timeout)

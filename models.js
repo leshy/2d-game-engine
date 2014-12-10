@@ -416,7 +416,6 @@
       return this.ended = true;
     },
     start: function(callback) {
-      console.log('test test test start');
       if (this.ended) {
         callback('This game has already ended');
         return;
@@ -424,8 +423,8 @@
       this.tickloop();
       return this.on('end', (function(_this) {
         return function(data) {
-          console.log('sart call got', data);
           _this.stop();
+          console.log('calling win callback with', data);
           return helpers.cbc(callback, data);
         };
       })(this));
