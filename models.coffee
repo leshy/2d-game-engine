@@ -251,18 +251,18 @@ exports.Game = Game = Field.extend4000
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
     end: (data) ->
+        console.log 'got end call with data',data
         if not @ended then @trigger 'end', data
         @ended = true            
-        console.log 'got end call with data',data
-        
-    
+
     start: (callback) ->
         if @ended then callback 'This game has already ended'; return
         #@each (point) => point.each (state) => if state.start then state.start()
         @tickloop()
         @on 'end', (data) =>
+            console.log 'sart call got',data
             @stop()
-            helpers.cbc callback, null, data
+            helpers.cbc callback, data
             
     stop: -> clearTimeout(@timeout)
 
