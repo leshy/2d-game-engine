@@ -12,7 +12,7 @@ helpers = require 'helpers'
 # subscribe ??? -- subscriptionman2 ???
 # 
 
-GameSever = exports.GameServer = Backbone.Model.extend4000
+GameServer = exports.GameServer = Backbone.Model.extend4000
     initialize: ->
         @setHook = @setHook.bind @
         @delHook = @delHook.bind @

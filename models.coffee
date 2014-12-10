@@ -250,17 +250,17 @@ exports.Game = Game = Field.extend4000
         @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
-    end: ->
-        @trigger 'end'
+    end: (data) ->
+        @trigger 'end', data
         @ended = true
     
     start: (callback) ->
         if @ended then callback 'This game has already ended'; return
         #@each (point) => point.each (state) => if state.start then state.start()
         @tickloop()
-        @on 'end', =>
+        @on 'end', (data) =>
             @stop()
-            helpers.cbc callback
+            helpers.cbc callback, null, data
             
     stop: -> clearTimeout(@timeout)
 
