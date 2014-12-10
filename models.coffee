@@ -249,13 +249,14 @@ exports.Game = Game = Field.extend4000
     tickloop: ->
         @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
-
+        
     end: (data) ->
         console.log 'got end call with data',data
         if not @ended then @trigger 'end', data
         @ended = true            
 
     start: (callback) ->
+        console.log 'test test test start'
         if @ended then callback 'This game has already ended'; return
         #@each (point) => point.each (state) => if state.start then state.start()
         @tickloop()
