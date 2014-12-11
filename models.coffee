@@ -251,7 +251,6 @@ exports.Game = Game = Field.extend4000
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
         
     end: (data) ->
-        console.log 'got end call with data',data
         if not @ended then @trigger 'end', data
         @ended = true            
 
@@ -261,7 +260,6 @@ exports.Game = Game = Field.extend4000
         @tickloop()
         @on 'end', (data) =>
             @stop()
-            console.log 'calling win callback with',data
             helpers.cbc callback, data
             
     stop: -> clearTimeout(@timeout)

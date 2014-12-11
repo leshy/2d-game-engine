@@ -409,7 +409,6 @@
       return this.timeout = setTimeout(this.tickloop.bind(this), this.tickspeed);
     },
     end: function(data) {
-      console.log('got end call with data', data);
       if (!this.ended) {
         this.trigger('end', data);
       }
@@ -424,7 +423,6 @@
       return this.on('end', (function(_this) {
         return function(data) {
           _this.stop();
-          console.log('calling win callback with', data);
           return helpers.cbc(callback, data);
         };
       })(this));
