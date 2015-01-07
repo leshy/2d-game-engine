@@ -389,7 +389,7 @@
     },
     render: function() {
       var data;
-      data = "   ";
+      data = "  ";
       _.times(this.get('width'), (function(_this) {
         return function(y) {
           return data += helpers.pad(y, 2, ' ');
@@ -406,7 +406,7 @@
           return data += helpers.pad(y, 2) + " " + row.join(' ') + "\n";
         };
       })(this));
-      data += "\ny (height)\n";
+      data += "y (height)\n";
       return data;
     }
   });

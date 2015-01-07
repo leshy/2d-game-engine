@@ -228,7 +228,7 @@ exports.Field = Field = Backbone.Model.extend4000
 
     #render: (callback) -> helpers.dictMap @points, (point,index) -> point.render()
     render: ->
-        data = "   "
+        data = "  "
         _.times @get('width'), (y) =>
             data += helpers.pad(y,2,' ')
         data += " x (width)\n"
@@ -239,7 +239,7 @@ exports.Field = Field = Backbone.Model.extend4000
                 row.push @point([x,y]).render()
             data += helpers.pad(y,2) + " " + row.join(' ') + "\n"
             
-        data += "\ny (height)\n"
+        data += "y (height)\n"
         data 
         
 
