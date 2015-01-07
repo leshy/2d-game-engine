@@ -78,7 +78,7 @@ exports.State = State = Tagged.extend4000
         @tags[tag] = true
         @trigger 'addtag', tag
 
-    render: -> @name
+    render: -> if @repr then @repr else _.first(@name)
 
 #
 # has (tags...) - check if point has all of those tags
@@ -183,8 +183,10 @@ exports.Point = Point = Tagged.extend4000
         where.trigger 'move', state, @
         @trigger 'moveaway', state, where
 
-    render: -> @states.map (state) -> state.render()
-            
+    #render: -> @states.map (state) -> state.render()
+    render: ->
+        if state = @states.last() then state.render() else "."
+  
 #
 # needs width and height attributes
 # holds bunch of points together
@@ -224,7 +226,21 @@ exports.Field = Field = Backbone.Model.extend4000
 
     each: (callback) -> _.times @get('width') * @get('height'), (i) => callback @point(@getIndexRev(i))
 
-    render: (callback) -> helpers.hashmap @points, (point,index) -> point.render()
+    #render: (callback) -> helpers.dictMap @points, (point,index) -> point.render()
+    render: ->
+        data = "   "
+        _.times @get('width'), (y) =>
+            data += helpers.pad(y,2,' ')
+        data += " x (width)\n"
+        
+        _.times @get('height'), (y) =>
+            row = []
+            _.times @get('width'), (x) =>
+                row.push @point([x,y]).render()
+            data += helpers.pad(y,2) + " " + row.join(' ') + "\n"
+            
+        data += "\ny (height)\n"
+        data 
         
 
 #
@@ -283,35 +299,37 @@ exports.Game = Game = Field.extend4000
         definitions.push(lastdef)
         
         @state[name] = State.extend4000.apply(State,definitions)
-    
+
 #
 # as close as you can get to a 2D vector in a world of bomberman.
 # 
+
 exports.Direction = Direction = class Direction
     constructor: (@x,@y) -> true
-
+    
     reverse: -> @x *= -1 or @y *= -1
-        
+    
     up:    -> @set 0,-1
     down:  -> @set 0,1
     left:  -> @set -1,0
     right: -> @set 1,0
-
+    
     coords: -> [ @x, @y ]
-
+    
     set: (@x,@y) -> @
-
+    
     string: -> 
         if @x is 1 then return 'up'
         if @x is -1 then return 'down'
         if @y is -1 then return 'left'
         if @y is 1 then return 'right'
         if not @x and not @y  then return 'stop'
-
+    
     orientation: -> 
         if @x is 1 then return 'vertical'
         if @x is -1 then return 'vertical'
         if @y is -1 then return 'horizontal'
         if @y is 1 then return 'horizontal'
-        if not @x and not @y  then return 'stop'
-
+        if not @x and not @y then return 'stop'
+    
+    

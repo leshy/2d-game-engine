@@ -111,7 +111,11 @@
       return this.trigger('addtag', tag);
     },
     render: function() {
-      return this.name;
+      if (this.repr) {
+        return this.repr;
+      } else {
+        return _.first(this.name);
+      }
     }
   });
 
@@ -311,9 +315,12 @@
       return this.trigger('moveaway', state, where);
     },
     render: function() {
-      return this.states.map(function(state) {
+      var state;
+      if (state = this.states.last()) {
         return state.render();
-      });
+      } else {
+        return ".";
+      }
     }
   });
 
@@ -380,10 +387,27 @@
         };
       })(this));
     },
-    render: function(callback) {
-      return helpers.hashmap(this.points, function(point, index) {
-        return point.render();
-      });
+    render: function() {
+      var data;
+      data = "   ";
+      _.times(this.get('width'), (function(_this) {
+        return function(y) {
+          return data += helpers.pad(y, 2, ' ');
+        };
+      })(this));
+      data += " x (width)\n";
+      _.times(this.get('height'), (function(_this) {
+        return function(y) {
+          var row;
+          row = [];
+          _.times(_this.get('width'), function(x) {
+            return row.push(_this.point([x, y]).render());
+          });
+          return data += helpers.pad(y, 2) + " " + row.join(' ') + "\n";
+        };
+      })(this));
+      data += "\ny (height)\n";
+      return data;
     }
   });
 
