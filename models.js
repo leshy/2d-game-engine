@@ -216,7 +216,7 @@
       return this.game.point([this.x + coords[0], this.y + coords[1]]);
     },
     direction: function(direction) {
-      return this.modifier(direction.coords());
+      return this.modifier(direction);
     },
     find: function(tag) {
       return this.states.find(function(state) {
@@ -389,24 +389,24 @@
     },
     render: function() {
       var data;
-      data = "  ";
+      data = "    ";
       _.times(this.get('width'), (function(_this) {
         return function(y) {
           return data += helpers.pad(y, 2, ' ');
         };
       })(this));
-      data += " x (width)\n";
+      data += "  x (width)\n\n";
       _.times(this.get('height'), (function(_this) {
         return function(y) {
           var row;
-          row = [];
+          row = [' '];
           _.times(_this.get('width'), function(x) {
             return row.push(_this.point([x, y]).render());
           });
-          return data += helpers.pad(y, 2) + " " + row.join(' ') + "\n";
+          return data += helpers.pad(y, 2, ' ') + " " + row.join(' ') + "\n";
         };
       })(this));
-      data += "y (height)\n";
+      data += "\ny (height)\n";
       return data;
     }
   });

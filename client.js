@@ -30,7 +30,7 @@
       })(this));
     },
     applychange: function(change) {
-      var attrs, state;
+      var attrs, point, state;
       if (change.a === 'set') {
         attrs = {
           id: change.id
@@ -38,7 +38,9 @@
         if (change.o) {
           attrs = _.extend(attrs, change.o);
         }
-        this.point(change.p).push(state = new this.state[change.s](attrs));
+        point = this.point(change.p);
+        console.log('got point', change, point);
+        point.push(state = new this.state[change.s](attrs));
       }
       if (change.a === 'del') {
         this.byid[change.id].remove();

@@ -46,7 +46,7 @@
         a: 'set',
         p: state.point.coords(),
         id: state.id,
-        s: state.render()
+        s: state.name
       };
       if (state.syncattributes) {
         entry.o = helpers.dictMap(state.syncattributes, function(val, key) {

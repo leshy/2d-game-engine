@@ -134,7 +134,7 @@ exports.Point = Point = Tagged.extend4000
         #console.log 'applying direction', coords, ' to ', @coords()
         @game.point [@x + coords[0], @y + coords[1]]
     
-    direction: (direction) -> @modifier direction.coords()
+    direction: (direction) -> @modifier direction
 
     find: (tag) -> @states.find (state) -> state.tags[tag]
 
@@ -200,9 +200,8 @@ exports.Field = Field = Backbone.Model.extend4000
             fun.apply(@,args)
 
         @getIndex = decorators.decorate(pointDecorator,@getIndex)
-        #@point = decorators.decorate(pointDecorator,@point)
         
-    # decorator takes care of everything with this one..
+    # will fetch point from the field, or construct a new one if it isn't defined
     point: (point) ->
         if point.constructor is Array then point = new Point(point, @)
         if ret = @points[ @getIndex(point) ] then ret
@@ -228,20 +227,19 @@ exports.Field = Field = Backbone.Model.extend4000
 
     #render: (callback) -> helpers.dictMap @points, (point,index) -> point.render()
     render: ->
-        data = "  "
+        data = "    "
         _.times @get('width'), (y) =>
             data += helpers.pad(y,2,' ')
-        data += " x (width)\n"
+        data += "  x (width)\n\n"
         
         _.times @get('height'), (y) =>
-            row = []
+            row = [' ']
             _.times @get('width'), (x) =>
                 row.push @point([x,y]).render()
-            data += helpers.pad(y,2) + " " + row.join(' ') + "\n"
+            data += helpers.pad(y,2,' ') + " " + row.join(' ') + "\n"
             
-        data += "y (height)\n"
+        data += "\ny (height)\n"
         data 
-        
 
 #
 # used to define possible states, has tickloop controls, field width/height, and this is what main game views hook to
