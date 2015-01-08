@@ -24,7 +24,7 @@ StatesFromTags = (f,args...) ->
     args = _.flatten args
     f.apply @, args
 
-#
+
 # place - create a new state in current point
 # replace - replace the state with some other state
 # remove - remove the state
@@ -78,9 +78,11 @@ exports.State = State = Tagged.extend4000
         @tags[tag] = true
         @trigger 'addtag', tag
 
+    msg: (msg = {}) ->
+        @point.game.trigger 'message', @, msg
+
     render: -> if @repr then @repr else _.first(@name)
 
-#
 # has (tags...) - check if point has all of those tags
 # hasor (tags...) - check if point has any of those tags
 # direction(direction) - return another point in this direction
@@ -289,10 +291,18 @@ exports.Game = Game = Field.extend4000
         lastdef.tags = {}
 
         lastdef.tags[name] = true
+
+        start = []
+        initialize = []
         
         _.map definitions, (definition) ->
+            if definition.start then start.push definition.start
+            if definition.initialize then initialize.push definition.initialize
             helpers.maybeiterate definition.tags, (tag,v) ->
                 if tag then lastdef.tags[tag] = true
+
+        lastdef.initialize = helpers.joinF.apply @, initialize
+        lastdef.start = helpers.joinF.apply @, start
 
         definitions.push(lastdef)
         

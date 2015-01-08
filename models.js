@@ -110,6 +110,12 @@
       this.tags[tag] = true;
       return this.trigger('addtag', tag);
     },
+    msg: function(msg) {
+      if (msg == null) {
+        msg = {};
+      }
+      return this.point.game.trigger('message', this, msg);
+    },
     render: function() {
       if (this.repr) {
         return this.repr;
@@ -455,7 +461,7 @@
       return clearTimeout(this.timeout);
     },
     defineState: function() {
-      var definitions, lastdef, name;
+      var definitions, initialize, lastdef, name, start;
       definitions = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       lastdef = {};
       if (_.first(definitions).constructor === String) {
@@ -465,13 +471,23 @@
       }
       lastdef.tags = {};
       lastdef.tags[name] = true;
+      start = [];
+      initialize = [];
       _.map(definitions, function(definition) {
+        if (definition.start) {
+          start.push(definition.start);
+        }
+        if (definition.initialize) {
+          initialize.push(definition.initialize);
+        }
         return helpers.maybeiterate(definition.tags, function(tag, v) {
           if (tag) {
             return lastdef.tags[tag] = true;
           }
         });
       });
+      lastdef.initialize = helpers.joinF.apply(this, initialize);
+      lastdef.start = helpers.joinF.apply(this, start);
       definitions.push(lastdef);
       return this.state[name] = State.extend4000.apply(State, definitions);
     }

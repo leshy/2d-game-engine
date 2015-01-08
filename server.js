@@ -21,13 +21,15 @@
       this.log = void 0;
       this.off('set', this.setHook);
       this.off('del', this.delHook);
-      return this.off('move', this.moveHook);
+      this.off('move', this.moveHook);
+      return this.off('message', this.msgHook);
     },
     startNetworkTicker: function() {
       this.log = [];
       this.on('set', this.setHook);
       this.on('del', this.delHook);
       this.on('move', this.moveHook);
+      this.on('message', this.msgHook);
       this.each((function(_this) {
         return function(point) {
           return point.each(function(state) {
@@ -72,6 +74,13 @@
         a: 'move',
         p: pointto.coords(),
         id: state.id
+      });
+    },
+    msgHook: function(state, msg) {
+      return this.log.push({
+        a: 'msg',
+        id: state.id,
+        m: msg
       });
     },
     networkTickLoop: function() {

@@ -24,12 +24,14 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
         @off 'set', @setHook
         @off 'del', @delHook
         @off 'move', @moveHook
-
+        @off 'message', @msgHook
+        
     startNetworkTicker: ->
         @log = []
         @on 'set', @setHook
         @on 'del', @delHook
         @on 'move', @moveHook        
+        @on 'message', @msgHook
         @each (point) => point.each (state) => @setHook(state)
         @networkTickLoop()
 
@@ -46,7 +48,11 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
     moveHook: (state,pointto) ->
         if state.nosync or state.nomove then return
         @log.push { a: 'move', p: pointto.coords(), id: state.id }
-            
+        
+    msgHook: (state,msg) ->
+        @log.push { a: 'msg', id: state.id, m: msg }
+
+                        
     networkTickLoop: ->
         @networkTick()
         @networkTickTimeout = setTimeout @networkTickLoop.bind(@), 50
