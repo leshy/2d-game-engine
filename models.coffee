@@ -11,11 +11,11 @@ decorators = require 'decorators'
 
 #
 # states and points have tags.. here are some tag operations
-# 
+#
 Tagged = Backbone.Model.extend4000
     has: (tags...) -> not _.find(tags, (tag) => not @tags[tag])
     hasor: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
-    
+
 #
 # decorator for point functions to be able to receive tags instead of states, and automatically translate those tags to particular states under that point
 # 
@@ -46,7 +46,11 @@ exports.State = State = Tagged.extend4000
             if not @id then @set(id: @id = point.game.nextid())
             point.game.byid[@id] = @
             if @start then @start()
-                        
+
+# will implement this later if needed..
+#            if @syncatributes _.map @syncattributes, (val,key) =>
+#                @on 'change:' + key, (model,value) => @point.game.trigger 'attr', @, { key: value }
+        
     place: (states...) -> @point.push.apply(@point,states)
     
     replace: (state) -> @remove(); @point.push(state)
@@ -183,6 +187,7 @@ exports.Point = Point = Tagged.extend4000
         where.push(state, silent: true)
         
         where.trigger 'move', state, @
+        state.trigger 'move', where
         @trigger 'moveaway', state, where
 
     #render: -> @states.map (state) -> state.render()
@@ -229,16 +234,21 @@ exports.Field = Field = Backbone.Model.extend4000
 
     #render: (callback) -> helpers.dictMap @points, (point,index) -> point.render()
     render: ->
+        colors = require 'colors'
         data = "    "
+        
+        flip = false
+        colorFlip = (text) -> if flip then flip = false; return colors.yellow text else flip= true; return colors.green text
+                
         _.times @get('width'), (y) =>
-            data += helpers.pad(y,2,' ')
+            data += colorFlip helpers.pad(y,2,'0')
+            
         data += "  x (width)\n\n"
         
         _.times @get('height'), (y) =>
             row = [' ']
-            _.times @get('width'), (x) =>
-                row.push @point([x,y]).render()
-            data += helpers.pad(y,2,' ') + " " + row.join(' ') + "\n"
+            _.times @get('width'), (x) => row.push @point([x,y]).render()
+            data += colorFlip(helpers.pad(y,2,'0')) + " " + row.join(' ') + "\n"
             
         data += "\ny (height)\n"
         data 
@@ -260,7 +270,7 @@ exports.Game = Game = Field.extend4000
         
     dotick: ->
         @tick++
-        @trigger('tick_' + @tick)
+        @trigger 'tick_' + @tick
 
     tickloop: ->
         @dotick()
@@ -301,7 +311,8 @@ exports.Game = Game = Field.extend4000
             helpers.maybeiterate definition.tags, (tag,v) ->
                 if tag then lastdef.tags[tag] = true
 
-        lastdef.initialize = helpers.joinF.apply @, initialize
+        # extend4000 already does this
+        #lastdef.initialize = helpers.joinF.apply @, initialize
         lastdef.start = helpers.joinF.apply @, start
 
         definitions.push(lastdef)
@@ -327,12 +338,15 @@ exports.Direction = Direction = class Direction
     set: (@x,@y) -> @
     
     string: -> 
-        if @x is 1 then return 'up'
-        if @x is -1 then return 'down'
-        if @y is -1 then return 'left'
-        if @y is 1 then return 'right'
+        if @y is -1 then return 'up'
+        if @y is 1 then return 'down'
+        if @x is -1 then return 'left'
+        if @x is 1 then return 'right'
         if not @x and not @y  then return 'stop'
-    
+
+    stop: -> if not @x and not @y then true else false
+        
+        
     orientation: -> 
         if @x is 1 then return 'vertical'
         if @x is -1 then return 'vertical'

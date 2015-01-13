@@ -21,7 +21,6 @@ Painter = exports.Painter = Backbone.Model.extend4000
         #@when 'gameview', (gameview) => 
         #    @gameview = gameview
         #    @gameview.pinstances[@state.id] = @
-
         #@when 'state', (state) =>
         #    @state = state
         #    state.on 'del', => @remove()
@@ -57,7 +56,6 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
                 @drawPoint point # how come I don't need to redraw point from?
 
             @game.each (point) => @drawPoint point
-
             setInterval @tick.bind(@), 100
 
         # stupid trick for start to be called after initialize function for other subclasses is completed
@@ -83,7 +81,8 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         if painter = @pinstances[state.id] then return painter
         painterclass = @painters[state.name]
         if not painterclass then painterclass = @painters['unknown']
-        return painterclass.extend4000 state: state, gameview: @                    
+        console.log 'extending painter with ', state.name
+        return painterclass.extend4000 state: state, gameview: @
                 
     specialPainters: (painters) -> painters
                         
@@ -115,5 +114,4 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         
         #remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
         _.map painters, (painter) => painter.draw(point)
-
 

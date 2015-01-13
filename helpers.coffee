@@ -1,17 +1,36 @@
 _ = require 'underscore'
 helpers = require 'helpers'
 Game = require 'game/models'
-
-exports.mover = {         
+colors = require 'colors'
+exports.mover = {
     initialize: (options) ->
         _.extend @, {
             coordinates: [ 0.5, 0.5]
             speed: 0
             direction: new Game.Direction(0,0)
         }, options
+        
+        console.log 'mover init', @direction, @speed
 
-    start: -> @scheduleMove()
-
+    display: ->
+        @movementChange()
+        x = Math.round(@coordinates[0] * 20)
+        y = Math.round(@coordinates[1] * 10)
+        ret = ""
+        console.log colors.red("DRAW"),x,y, @coordinates
+        _.times 10, (cy)  ->
+            res = []
+            _.times 20, (cx) ->
+                res.push if cx is x and cy is y then colors.green("⊛") else colors.grey("∶")
+            ret += "       " + res.join("") + "\n"
+        
+        "\n\n" + ret + "\n\n" + @coordinates + "\n"
+        
+        
+        
+    start: ->
+        @scheduleMove()
+        
     movementChange: ->
         if @doSubMove
             # some other movement is already scheduled, unschedule it
@@ -22,10 +41,15 @@ exports.mover = {
             delete @doSubMove
 
         else @scheduleMove()
+        
+        @set speed: @speed, direction: @direction, coordinates: @coordinates
+        
+        @msg { d: @direction.coords(), speed: @speed, c: @coordinates }
 
     scheduleMove: ->
-        eta = @boundaryEta(@direction, @speed)
-        if eta is Infinity then return
+        eta = @nextCheck(@direction, @speed)
+        console.log 'schedulemove', eta, @direction.string(), @direction.coords()
+        if eta is Infinity then return    
         @unsub  = @in Math.ceil(eta), @doSubMove = @makeMover()
 
     makeMover: (direction=@direction,speed=@speed) ->
@@ -35,20 +59,48 @@ exports.mover = {
             @subMove direction, speed, ticks
             @scheduleMove()
 
+    nextCheck: (direction, speed) ->
+        check = undefined
+        eta = helpers.squish direction.coords(), @coordinates, (direction,coordinate) =>
+            
+            if direction is 0 then return undefined
+            
+            if direction > 0
+                if coordinate < 0.5 then return _.bind(@centerEta,@) else return _.bind(@boundaryEta,@)
+                    
+            if direction < 0
+                if coordinate > 0.5 then return _.bind(@centerEta,@) else return _.bind(@boundaryEta,@)
+
+        f = _.find eta, (x) -> x
+        
+        if not f then Infinity else f(direction,speed)
+        
+    # will calculate when the object will come to the point center given some speed and direction, used to decide if object is allowed to keep going
+    centerEta: (direction, speed) ->
+        eta = helpers.squish direction.coords(), @coordinates, (direction,coordinate) =>
+            if direction is 0 then Infinity
+            else if direction > 0 then (0.5 - coordinate) / speed
+            else (coordinate - 0.5) / speed
+        _.reduce eta, ((min,x) -> if x < min then x else min), Infinity
+        
     # will calculate when the object will pass the point boundary given some speed and direction
     boundaryEta: (direction, speed) ->
         eta = helpers.squish direction.coords(), @coordinates, (direction,coordinate) =>
-            if direction > 0 then (1 - coordinate) / speed
+            if direction is 0 then Infinity
+            else if direction > 0 then (1 - coordinate) / speed
             else coordinate / speed
 
-        _.reduce eta, ((max,x) -> if x > max then x else max), 0
+        _.reduce eta, ((min,x) -> if x < min then x else min), Infinity
 
     # will calculate position depending on direction and time
     subMove: (direction, speed, time) ->
+        if not time then return
+        console.log colors.yellow('move'), @coordinates, colors.green(direction.string()), speed, time
         @coordinates = helpers.squish direction.coords(), @coordinates, (direction,coordinate) => coordinate += direction * speed * time
 
         if (movePoint = @point.direction( _.map @coordinates, (c) -> if c >= 1 then 1 else if c <= 0 then -1 else 0 )) isnt @point
             @coordinates = _.map @coordinates, (c) -> if c >= 1 then c - 1 else if c <= 0 then c + 1 else c
+            console.log 'moved from', @point.coords(),'to', movePoint.coords(), @coordinates
             @move movePoint
 
         #@coordinates = _.map @coordinates, (c) -> helpers.round(c)

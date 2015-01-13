@@ -318,6 +318,7 @@
         silent: true
       });
       where.trigger('move', state, this);
+      state.trigger('move', where);
       return this.trigger('moveaway', state, where);
     },
     render: function() {
@@ -394,11 +395,22 @@
       })(this));
     },
     render: function() {
-      var data;
+      var colorFlip, colors, data, flip;
+      colors = require('colors');
       data = "    ";
+      flip = false;
+      colorFlip = function(text) {
+        if (flip) {
+          flip = false;
+          return colors.yellow(text);
+        } else {
+          flip = true;
+          return colors.green(text);
+        }
+      };
       _.times(this.get('width'), (function(_this) {
         return function(y) {
-          return data += helpers.pad(y, 2, ' ');
+          return data += colorFlip(helpers.pad(y, 2, '0'));
         };
       })(this));
       data += "  x (width)\n\n";
@@ -409,7 +421,7 @@
           _.times(_this.get('width'), function(x) {
             return row.push(_this.point([x, y]).render());
           });
-          return data += helpers.pad(y, 2, ' ') + " " + row.join(' ') + "\n";
+          return data += colorFlip(helpers.pad(y, 2, '0')) + " " + row.join(' ') + "\n";
         };
       })(this));
       data += "\ny (height)\n";
@@ -486,7 +498,6 @@
           }
         });
       });
-      lastdef.initialize = helpers.joinF.apply(this, initialize);
       lastdef.start = helpers.joinF.apply(this, start);
       definitions.push(lastdef);
       return this.state[name] = State.extend4000.apply(State, definitions);
@@ -531,20 +542,28 @@
     };
 
     Direction.prototype.string = function() {
-      if (this.x === 1) {
+      if (this.y === -1) {
         return 'up';
       }
-      if (this.x === -1) {
+      if (this.y === 1) {
         return 'down';
       }
-      if (this.y === -1) {
+      if (this.x === -1) {
         return 'left';
       }
-      if (this.y === 1) {
+      if (this.x === 1) {
         return 'right';
       }
       if (!this.x && !this.y) {
         return 'stop';
+      }
+    };
+
+    Direction.prototype.stop = function() {
+      if (!this.x && !this.y) {
+        return true;
+      } else {
+        return false;
       }
     };
 
