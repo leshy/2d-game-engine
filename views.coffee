@@ -81,7 +81,6 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         if painter = @pinstances[state.id] then return painter
         painterclass = @painters[state.name]
         if not painterclass then painterclass = @painters['unknown']
-        console.log 'extending painter with ', state.name
         return painterclass.extend4000 state: state, gameview: @
                 
     specialPainters: (painters) -> painters

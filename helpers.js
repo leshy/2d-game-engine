@@ -22,19 +22,18 @@
     display: function() {
       var ret, x, y;
       this.movementChange();
-      x = Math.round(this.coordinates[0] * 20);
-      y = Math.round(this.coordinates[1] * 10);
+      x = Math.round(this.coordinates[0] * 40);
+      y = Math.round(this.coordinates[1] * 20);
       ret = "";
-      console.log(colors.red("DRAW"), x, y, this.coordinates);
-      _.times(10, function(cy) {
+      _.times(20, function(cy) {
         var res;
         res = [];
-        _.times(20, function(cx) {
-          return res.push(cx === x && cy === y ? colors.green("⊛") : colors.grey("∶"));
+        _.times(40, function(cx) {
+          return res.push(cx === x && cy === y ? colors.green("♙") : colors.grey("∘"));
         });
         return ret += "       " + res.join("") + "\n";
       });
-      return "\n\n" + ret + "\n\n" + this.coordinates + "\n";
+      return ret + "       " + colors.red(this.point.coords()) + " | " + colors.yellow(this.coordinates) + "\n";
     },
     start: function() {
       return this.scheduleMove();
@@ -64,6 +63,9 @@
       console.log('schedulemove', eta, this.direction.string(), this.direction.coords());
       if (eta === Infinity) {
         return;
+      }
+      if (this.unsub) {
+        this.unsub();
       }
       return this.unsub = this["in"](Math.ceil(eta), this.doSubMove = this.makeMover());
     },
@@ -165,7 +167,7 @@
       if (!time) {
         return;
       }
-      console.log(colors.yellow('move'), this.coordinates, colors.green(direction.string()), speed, time);
+      console.log(this.point.game.tick + " " + colors.yellow('move'), this.coordinates, colors.green(direction.string()), speed, time);
       this.coordinates = helpers.squish(direction.coords(), this.coordinates, (function(_this) {
         return function(direction, coordinate) {
           return coordinate += direction * speed * time;

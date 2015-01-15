@@ -62,6 +62,7 @@ exports.Direction = Direction = class Direction
 
 Vector = exports.Vector = Backbone.Model.extend4000
     true
+    
 
 # place - create a new state in current point
 # replace - replace the state with some other state

@@ -17,35 +17,68 @@ coordsDecorator = (targetf,coords) ->
 GameView = exports.GameView = View.GameView.extend4000
     initialize: ->
         el = @get('el')
-        @paper = raphael el.get(0), el.width(), el.height() # create raphael paper
+        #@paper = raphael el.get(0), el.width(), el.height() # create raphael paper
+        @paper = raphael el.get(0), "100%", "100%" # create raphael paper        
         window.paper = @paper
-        
-        # calculate size for points
-        sizey = Math.floor(@paper.canvas.clientHeight / @game.get('height'))
-        sizex = Math.floor(@paper.canvas.clientWidth / @game.get('width'))
-        if sizex > sizey then @size = sizey else @size = sizex
 
-        @size_offsetx = Math.round((@paper.canvas.clientWidth - (@size * game.get('width'))) / 2)
-        @size_offsety = Math.round((@paper.canvas.clientHeight - (@size * game.get('height'))) / 2)
+        calculateSizes = =>
+            # calculate size for points
+            elHeight = $(@paper.canvas).height()
+            elWidth = $(@paper.canvas).width()
+            gameHeight = @game.get('height')
+            gameWidth = @game.get('width')
+
+            sizey = Math.floor(elHeight / gameHeight)
+            sizex = Math.floor(elWidth / gameWidth)
+            if sizex > sizey then @size = sizey else @size = sizex
+
+            console.log "elHeight: ", elHeight, gameHeight, @size
+            console.log "elWidth: ", elWidth, gameWidth, @size
+            @size_offsetx = Math.floor((elWidth - (@size * gameWidth)) / 2)
+            @size_offsety = Math.floor((elHeight - (@size * gameHeight)) / 2)
+
+        calculateSizes()
+        
         # hook window onresize event, and trigger gameview.pan event to redraw the game
         # TODO
+        
+#        $(window).resize =>
+#            calculateSizes()
+#            @rerender()
+            
+#    rerender: ->
+#        _.map @pinstances, (painter) -> painter.render()
         
     # convert abstract game coordinates to concrete raphael paper coordinates
     translate: (coords) -> [ @size_offsetx + (coords[0] * @size),  @size_offsety + (coords[1] * @size) ]
 
 # generic raphael painter, it just translates in game abstract coordinates to raphael coordinates
 RaphaelPainter = View.Painter.extend4000
-    draw: (point) -> @render @gameview.translate(point.coords()), @gameview.size
+    draw: (point) ->
+        if @state?.mover and @rendering then return
+        console.log '>> ' + @state?.name + ' draw called'            
+        @render @gameview.translate(point.coords()), @gameview.size
 
 Image = exports.Image = RaphaelPainter.extend4000
-    #animate: ->
-        #if @state.direction.orientation() is 'horizontal'
-            #@rendering.animate({ @rendering.attrs.x += direction.x * speed * @cellSize })
-        
+    animate: ->
+        animation = {}
+        if @state.direction.x then animation.x = @rendering.attrs.x + @state.direction.x * @state.speed * @cellSize * 100
+        if @state.direction.y then animation.y = @rendering.attrs.y + @state.direction.y * @state.speed * @cellSize * 100
+        console.log "ANIMATE!",@rendering.attrs, animation
+        @animation = @rendering.animate animation, 5000
+        @ticker = setInterval (=>
+            @rendering.node.style.display='none'
+            @rendering.node.offsetHeight # no need to store this anywhere, the reference is enough
+            @rendering.node.style.display='block'
+            ), 15
     stopAnimate: ->
-        console.log 'stop animating'
+        clearInterval @ticker
+        @rendering.stop @animation
+        
 
     render: (coords, cellSize) ->
+        if c = @state?.point?.coords() then coords = @gameview.translate(c)
+        console.log 'coords',c
         if not coords then coords = @coords else @coords = coords
         if not cellSize then cellSize = @cellSize else @cellSize = cellSize
         
@@ -53,15 +86,17 @@ Image = exports.Image = RaphaelPainter.extend4000
         #console.log 'painter render', @name, 'for state', @state?.name
         if @name is "Player" then console.log 'player state: ',@state
         if @state?.mover
-            console.log "STATE MOVER!", coords, @state.coordinates
-            coords = helpers.squish coords, @state.coordinates, (coord,subCoord) -> Math.round(coord + (cellSize * (0.5 - subCoord )))
+            console.log 'coords',coords, @cellSize, @state.coordinates
+            coords = helpers.squish coords, @state.coordinates, (coord,subCoord) -> Math.round(coord + (cellSize * (subCoord - 0.5)))
             
-            console.log 'coords updated to', coords
+            console.log 'coordsafter',coords
         
         if not @rendering
             @rendering = @gameview.paper.image(src=@getpic(), coords[0], coords[1], @gameview.size, @gameview.size); @rendering.toFront();
             if @rotation then @rendering.rotate @rotation
-            if @state?.mover then @state.on 'movementChange', => @render()
+            if @state?.mover then @state.on 'movementChange', =>
+                console.log 'movementchange rerender'
+                @render()
             return
         
         # do we need to move our rendering? 
@@ -75,7 +110,16 @@ Image = exports.Image = RaphaelPainter.extend4000
     
     move: (coords) ->
         console.log 'need to move rendering to new coords', coords
+        window.rendering = @rendering
         @rendering.attr { x: coords[0], y: coords[1] }
+        @rendering.node.style.display='none'
+        @rendering.node.offsetHeight # no need to store this anywhere, the reference is enough
+        @rendering.node.style.display='block'
+
+
+
+        #@rendering.hide()
+        #helpers.wait 20, => @rendering.show()
 
     images: -> [ @getpic() ]
             
@@ -106,7 +150,7 @@ Sprite = exports.Sprite = Image.extend4000
     images: -> @frame_pics
     
 Color = exports.Color = RaphaelPainter.extend4000
-    render: decorate coordsDecorator, (coords) -> @rendering = @gameview.paper.rect(coords[0], coords[1], @gameview.size, @gameview.size).attr( 'opacity': .7, 'stroke-width': 1, stroke: @color, fill: @color)
+    render: decorate coordsDecorator, (coords) -> @rendering = @gameview.paper.rect(coords[0], coords[1], @gameview.size, @gameview.size).attr( 'opacity': .5, 'stroke-width': 1, stroke: @color, fill: @color)
     move: decorate coordsDecorator, (coords) -> @rendering.attr { x: coords[0], y: coords[1] }
     remove: -> @rendering.remove()
 

@@ -14,22 +14,21 @@ exports.mover = {
 
     display: ->
         @movementChange()
-        x = Math.round(@coordinates[0] * 20)
-        y = Math.round(@coordinates[1] * 10)
+        x = Math.round(@coordinates[0] * 40)
+        y = Math.round(@coordinates[1] * 20)
         ret = ""
-        console.log colors.red("DRAW"),x,y, @coordinates
-        _.times 10, (cy)  ->
+
+        _.times 20, (cy)  ->
             res = []
-            _.times 20, (cx) ->
-                res.push if cx is x and cy is y then colors.green("⊛") else colors.grey("∶")
+            _.times 40, (cx) ->
+                res.push if cx is x and cy is y then colors.green("♙") else colors.grey("∘")
             ret += "       " + res.join("") + "\n"
         
-        "\n\n" + ret + "\n\n" + @coordinates + "\n"
-        
-        
+        ret + "       " + colors.red(@point.coords()) + " | " + colors.yellow(@coordinates) + "\n"
         
     start: ->
         @scheduleMove()
+        
         
     movementChange: ->
         if @doSubMove
@@ -49,7 +48,8 @@ exports.mover = {
     scheduleMove: ->
         eta = @nextCheck(@direction, @speed)
         console.log 'schedulemove', eta, @direction.string(), @direction.coords()
-        if eta is Infinity then return    
+        if eta is Infinity then return
+        if @unsub then @unsub()
         @unsub  = @in Math.ceil(eta), @doSubMove = @makeMover()
 
     makeMover: (direction=@direction,speed=@speed) ->
@@ -95,7 +95,7 @@ exports.mover = {
     # will calculate position depending on direction and time
     subMove: (direction, speed, time) ->
         if not time then return
-        console.log colors.yellow('move'), @coordinates, colors.green(direction.string()), speed, time
+        console.log @point.game.tick + " " + colors.yellow('move'), @coordinates, colors.green(direction.string()), speed, time
         @coordinates = helpers.squish direction.coords(), @coordinates, (direction,coordinate) => coordinate += direction * speed * time
 
         if (movePoint = @point.direction( _.map @coordinates, (c) -> if c >= 1 then 1 else if c <= 0 then -1 else 0 )) isnt @point
