@@ -76,6 +76,10 @@
   Image = exports.Image = RaphaelPainter.extend4000({
     animate: function() {
       var animation;
+      if (this.animating) {
+        this.stopAnimate();
+      }
+      this.animating = true;
       animation = {};
       if (this.state.direction.x) {
         animation.x = this.rendering.attrs.x + this.state.direction.x * this.state.speed * this.cellSize * 100;
@@ -83,7 +87,6 @@
       if (this.state.direction.y) {
         animation.y = this.rendering.attrs.y + this.state.direction.y * this.state.speed * this.cellSize * 100;
       }
-      console.log("ANIMATE!", this.rendering.attrs, animation);
       this.animation = this.rendering.animate(animation, 5000);
       return this.ticker = setInterval(((function(_this) {
         return function() {
@@ -94,8 +97,9 @@
       })(this)), 15);
     },
     stopAnimate: function() {
+      this.animating = false;
       clearInterval(this.ticker);
-      return this.rendering.stop(this.animation);
+      return this.rendering.stop();
     },
     render: function(coords, cellSize) {
       var c, src, _ref, _ref1, _ref2, _ref3;

@@ -109,11 +109,12 @@
         gameview: this
       });
     },
+    getSpecialPainter: function(point) {},
     specialPainters: function(painters) {
       return painters;
     },
     drawPoint: function(point) {
-      var painters, _applyEliminations, _applyOrder, _instantiate, _sortf;
+      var painters, _applyEliminations, _applyOrder, _instantiate, _sortf, _specialPainters;
       _applyEliminations = function(painters) {
         var dict;
         dict = helpers.makedict(painters, function(painter) {
@@ -148,12 +149,16 @@
           }
         });
       };
+      _specialPainters = function(painters) {
+        var specialPainters;
+        return specialPainters = this.specialPainters(painters, point);
+      };
       painters = point.map((function(_this) {
         return function(state) {
           return _this.getPainter(state);
         };
       })(this));
-      painters = this.specialPainters(painters);
+      painters = this.specialPainters(painters, point);
       painters = _applyEliminations(painters);
       painters = _applyOrder(painters);
       painters = _instantiate(painters);

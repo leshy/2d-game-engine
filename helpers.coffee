@@ -41,9 +41,16 @@ exports.mover = {
 
         else @scheduleMove()
         
-        @set speed: @speed, direction: @direction, coordinates: @coordinates
-        
+        @set speed: @speed, direction: @direction, coordinates: @coordinates        
         @msg { d: @direction.coords(), speed: @speed, c: @coordinates }
+
+    centeredCoord: (coord) ->
+        distance = (coord) -> Math.abs(coord - 0.5)
+        d = distance(coord)
+        if d < distance(coord + @speed) and d < distance(coord - @speed) then true else false
+            
+    centered: (direction) ->
+        not _.reject(@coordinates, (coordinate) => @centeredCoord(coordinate)).length
 
     scheduleMove: ->
         eta = @nextCheck(@direction, @speed)
@@ -51,7 +58,8 @@ exports.mover = {
         if eta is Infinity then return
         if @unsub then @unsub()
         @unsub  = @in Math.ceil(eta), @doSubMove = @makeMover()
-
+        if @centered() then @trigger 'centered'
+            
     makeMover: (direction=@direction,speed=@speed) ->
         startTime = @point.game.tick
         =>

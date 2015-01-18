@@ -61,19 +61,23 @@ RaphaelPainter = View.Painter.extend4000
 
 Image = exports.Image = RaphaelPainter.extend4000
     animate: ->
+        if @animating then @stopAnimate()
+        @animating = true
         animation = {}
         if @state.direction.x then animation.x = @rendering.attrs.x + @state.direction.x * @state.speed * @cellSize * 100
         if @state.direction.y then animation.y = @rendering.attrs.y + @state.direction.y * @state.speed * @cellSize * 100
-        console.log "ANIMATE!",@rendering.attrs, animation
         @animation = @rendering.animate animation, 5000
         @ticker = setInterval (=>
             @rendering.node.style.display='none'
             @rendering.node.offsetHeight # no need to store this anywhere, the reference is enough
             @rendering.node.style.display='block'
             ), 15
+        
+            
     stopAnimate: ->
+        @animating = false
         clearInterval @ticker
-        @rendering.stop @animation
+        @rendering.stop()
         
 
     render: (coords, cellSize) ->
@@ -92,6 +96,7 @@ Image = exports.Image = RaphaelPainter.extend4000
             console.log 'coordsafter',coords
         
         if not @rendering
+
             @rendering = @gameview.paper.image(src=@getpic(), coords[0], coords[1], @gameview.size, @gameview.size); @rendering.toFront();
             if @rotation then @rendering.rotate @rotation
             if @state?.mover then @state.on 'movementChange', =>
@@ -115,8 +120,6 @@ Image = exports.Image = RaphaelPainter.extend4000
         @rendering.node.style.display='none'
         @rendering.node.offsetHeight # no need to store this anywhere, the reference is enough
         @rendering.node.style.display='block'
-
-
 
         #@rendering.hide()
         #helpers.wait 20, => @rendering.show()

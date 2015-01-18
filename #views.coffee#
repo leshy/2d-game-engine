@@ -106,7 +106,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
 
         _specialPainters = (painters) ->
             specialPainters = @specialPainters(painters,point)
-            
+            dictArrayMap @spInstances
     
         painters = point.map (state) => @getPainter(state)
         

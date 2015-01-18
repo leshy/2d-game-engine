@@ -57,6 +57,25 @@
         c: this.coordinates
       });
     },
+    centeredCoord: function(coord) {
+      var d, distance;
+      distance = function(coord) {
+        return Math.abs(coord - 0.5);
+      };
+      d = distance(coord);
+      if (d < distance(coord + this.speed) && d < distance(coord - this.speed)) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    centered: function(direction) {
+      return !_.reject(this.coordinates, (function(_this) {
+        return function(coordinate) {
+          return _this.centeredCoord(coordinate);
+        };
+      })(this)).length;
+    },
     scheduleMove: function() {
       var eta;
       eta = this.nextCheck(this.direction, this.speed);
@@ -67,7 +86,10 @@
       if (this.unsub) {
         this.unsub();
       }
-      return this.unsub = this["in"](Math.ceil(eta), this.doSubMove = this.makeMover());
+      this.unsub = this["in"](Math.ceil(eta), this.doSubMove = this.makeMover());
+      if (this.centered()) {
+        return this.trigger('centered');
+      }
     },
     makeMover: function(direction, speed) {
       var startTime;

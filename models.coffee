@@ -24,44 +24,6 @@ StatesFromTags = (f,args...) ->
     args = _.flatten args
     f.apply @, args
 
-#
-# as close as you can get to a 2D vector in a world of bomberman.
-# 
-
-exports.Direction = Direction = class Direction
-    constructor: (@x,@y) -> true
-    
-    reverse: -> @x *= -1 or @y *= -1
-    
-    up:    -> @set 0,-1
-    down:  -> @set 0,1
-    left:  -> @set -1,0
-    right: -> @set 1,0
-    
-    coords: -> [ @x, @y ]
-    
-    set: (@x,@y) -> @
-    
-    string: -> 
-        if @y is -1 then return 'up'
-        if @y is 1 then return 'down'
-        if @x is -1 then return 'left'
-        if @x is 1 then return 'right'
-        if not @x and not @y  then return 'stop'
-
-    stop: -> if not @x and not @y then true else false
-        
-        
-    orientation: -> 
-        if @x is 1 then return 'vertical'
-        if @x is -1 then return 'vertical'
-        if @y is -1 then return 'horizontal'
-        if @y is 1 then return 'horizontal'
-        if not @x and not @y then return 'stop'
-
-
-Vector = exports.Vector = Backbone.Model.extend4000
-    true
 
 # place - create a new state in current point
 # replace - replace the state with some other state
@@ -232,9 +194,6 @@ exports.Point = Point = Tagged.extend4000
     render: ->
         if state = @states.last() then state.render() else "."
 
-exports.mover = mover = ->
-    true
-
   
 # Field is a collection of discrete points containing objects (@points)
 # and objects with coordinates in a continuous coordinate space (@movers)
@@ -244,7 +203,7 @@ exports.mover = mover = ->
 exports.Field = Field = Backbone.Model.extend4000
     initialize: ->
         @points = {}
-        
+                
         pointDecorator = (fun,args...) =>
             if args[0].constructor != Point then args[0] = @point(args[0])
             fun.apply(@,args)
@@ -295,18 +254,12 @@ exports.Field = Field = Backbone.Model.extend4000
             
         data += "\ny (height)\n"
         data 
-
-
-exports.Mover = Mover = Backbone.Model.extend4000
-    initialize: ->
-        
-
+                
 #
 # used to define possible states, has tickloop controls, field width/height, and this is what main game views hook to
 # 
 exports.Game = Game = Field.extend4000
     initialize: ->
-        @movers = new Backbone.Collection()
         @controls = {}
         @state = {}
         @tickspeed = 50        
@@ -314,14 +267,13 @@ exports.Game = Game = Field.extend4000
         @stateid = 1
         @ended = false
         @byid = {}
-
-                
+        
     nextid: (state) -> @stateid++
         
     dotick: ->
         @tick++
         @trigger 'tick_' + @tick
-
+        
     tickloop: ->
         @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
@@ -329,7 +281,7 @@ exports.Game = Game = Field.extend4000
     end: (data) ->
         if not @ended then @trigger 'end', data
         @ended = true            
-
+        
     start: (callback) ->
         if @ended then callback 'This game has already ended'; return
         #@each (point) => point.each (state) => if state.start then state.start()
@@ -337,11 +289,11 @@ exports.Game = Game = Field.extend4000
         @on 'end', (data) =>
             @stop()
             helpers.cbc callback, data
-            
+        
     stop: -> clearTimeout(@timeout)
-
+        
     defineMover: (name, definitions...) -> defineState [ name ].concat mover, definitions
-
+        
     defineState: (definitions...) ->
         lastdef = {}
         # just a small sintax sugar, first argument is optionally a name for the painter
@@ -371,5 +323,45 @@ exports.Game = Game = Field.extend4000
         
         @state[name] = State.extend4000.apply(State,definitions)
 
+#
+# as close as you can get to a 2D vector in a world of bomberman.
+# 
+exports.Direction = Direction = class Direction
+    constructor: (@x,@y) -> true
+    
+    reverse: -> @x *= -1 or @y *= -1
+    
+    up:    -> @set 0,-1
+    down:  -> @set 0,1
+    left:  -> @set -1,0
+    right: -> @set 1,0
+    
+    coords: -> [ @x, @y ]
+
+    relevant: -> (coords) -> if not @x then coords[1] else coords[0]
+    
+    set: (@x,@y) -> @
+    
+    string: -> 
+        if @y is -1 then return 'up'
+        if @y is 1 then return 'down'
+        if @x is -1 then return 'left'
+        if @x is 1 then return 'right'
+        if not @x and not @y then return 'stop'
+
+    stop: -> if not @x and not @y then true else false
+
+    horizontal: ->  if @x then true else false
+    vertical: ->  if @y then true else false
+    
+    forward: -> if @x > 0 or @y > 0 then true else false
+    backward: -> if @x < 0 or @y < 0 then true else false
+    
+    orientation: -> 
+        if @x is 1 then return 'vertical'
+        if @x is -1 then return 'vertical'
+        if @y is -1 then return 'horizontal'
+        if @y is 1 then return 'horizontal'
+        if not @x and not @y then return 'stop'
     
     
