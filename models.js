@@ -116,6 +116,9 @@
       }
       return this.point.game.trigger('message', this, msg);
     },
+    show: function() {
+      return this.name;
+    },
     render: function() {
       if (this.repr) {
         return this.repr;
@@ -321,6 +324,11 @@
       state.trigger('move', where);
       return this.trigger('moveaway', state, where);
     },
+    show: function() {
+      return this.states.map(function(state) {
+        return state.show();
+      });
+    },
     render: function() {
       var state;
       if (state = this.states.last()) {
@@ -393,6 +401,11 @@
           return callback(_this.point(_this.getIndexRev(i)));
         };
       })(this));
+    },
+    show: function(callback) {
+      return helpers.dictMap(this.points, function(point, index) {
+        return point.show();
+      });
     },
     render: function() {
       var colorFlip, colors, data, flip;

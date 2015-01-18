@@ -59,11 +59,11 @@ exports.Point =
 
         test.done()
 
-    render: (test) ->
+    show: (test) ->
         @point.push wall1 = new @game.state.Wall()
         @point.push wall2 = new @game.state.Wall()
         @point.push p1 = new @game.state.Player1()
-        test.deepEqual @point.render(), [ 'Wall', 'Wall', 'Player1' ]
+        test.deepEqual @point.show(), [ 'Wall', 'Wall', 'Player1' ]
 
         test.done()
 
@@ -122,11 +122,11 @@ exports.Field =
         test.equals _.keys(@game.points).length, 0, 'removeall failed?'
         test.done()
 
-    render: (test) ->
+    show: (test) ->
         point1 = @game.point([3,4]).push('state1')
         point1 = @game.point([3,4]).push('state3')
         point2 = @game.point([8,9]).push(new @game.state.state2())
-        test.deepEqual @game.render(), { '103': [ 'state1', 'state3' ], '233': [ 'state2' ] }
+        test.deepEqual @game.show(), { '103': [ 'state1', 'state3' ], '233': [ 'state2' ] }
         test.done()
 
 ###

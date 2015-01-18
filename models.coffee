@@ -84,7 +84,9 @@ exports.State = State = Tagged.extend4000
     
     msg: (msg = {}) ->
         @point.game.trigger 'message', @, msg
-    
+
+    show: -> @name
+        
     render: -> if @repr then @repr else _.first(@name)
 
 # has (tags...) - check if point has all of those tags
@@ -100,6 +102,9 @@ exports.Point = Point = Tagged.extend4000
     initialize: ([@x,@y],@game) ->
         @tags = {}
         @states = new Backbone.Collection()
+        
+#        if not @id then @id = @get('id')
+#        if not @id then @set id: @id = @game.getIntex(@)
         
         @states.on 'add', (state) => @_addstate(state); @trigger 'set', state
         @states.on 'remove', (state) => @_delstate(state); state.trigger 'del'; @trigger 'del', state
@@ -133,7 +138,7 @@ exports.Point = Point = Tagged.extend4000
     _deltag: (tag) ->
         @tags[tag]--
         if @tags[tag] is 0 then delete @tags[tag]
-
+            
     # operations for finding other points
     modifier: (coords) -> # I can take a direction or a point
         if coords.constructor isnt Array then coords = coords.coords();
@@ -190,7 +195,7 @@ exports.Point = Point = Tagged.extend4000
         state.trigger 'move', where
         @trigger 'moveaway', state, where
 
-    #render: -> @states.map (state) -> state.render()
+    show: -> @states.map (state) -> state.show()
     render: ->
         if state = @states.last() then state.render() else "."
 
@@ -234,7 +239,8 @@ exports.Field = Field = Backbone.Model.extend4000
 
     each: (callback) -> _.times @get('width') * @get('height'), (i) => callback @point(@getIndexRev(i))
 
-    #render: (callback) -> helpers.dictMap @points, (point,index) -> point.render()
+    show: (callback) -> helpers.dictMap @points, (point,index) -> point.show()
+    
     render: ->
         colors = require 'colors'
         data = "    "
