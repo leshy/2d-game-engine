@@ -14,8 +14,13 @@ Painter = exports.Painter = Backbone.Model.extend4000
 
         if @name is 'Player' then console.log "IM A PLAYER, STATE IS",@state,@
                                     
-        if @state then @gameview.pInstances[@state.id] = @
-        else if @point then helpers.dictpush(@gameview.spInstances, String(@point.coords()), @) # I guess I'm a specialpainter?
+        if @state
+            @gameview.pInstances[@state.id] = @
+            @on 'remove', => delete @gameview.pInstances[@state.id]
+            
+        else if @point
+            helpers.dictpush(@gameview.spInstances, String(@point.coords()), @) # I guess I'm a specialpainter?
+            @on 'remove', => helpers.dictpop(@gameview.spInstances, String(@point.coords()), @)
             
         if not @gameview or not @state then return # painter needs to be able to be instantiated without models (preloader needs to be able to call images() on it) .. this init function sucks.. fix it..
 
@@ -33,7 +38,7 @@ Painter = exports.Painter = Backbone.Model.extend4000
 
     draw: (coords,size) -> console.log "draw", @state.point.coords(), @state.name
     
-    remove: -> throw 'not implemented'
+    remove: -> @trigger 'remove'
     
     move: -> throw 'not implemented'
 
@@ -97,9 +102,15 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
     drawPoint: (point) ->
         _applyEliminations = (painters) ->
             dict = helpers.makedict painters, (painter) -> helpers.objorclass painter, 'name'
+            console.log 'eliminations', dict
+            
             _.map painters, (painter) ->
-                if eliminates = helpers.objorclass painter, 'eliminates'
-                    helpers.maybeiterate eliminates, (name) -> delete dict[name]
+                if eliminates = helpers.objorclass painter, 'eliminates'                    
+                    helpers.maybeiterate eliminates, (name) ->
+                        painter = dict[name]
+                        if typeof(painter) is 'object' then painter.remove()                        
+                        delete dict[name]
+
             helpers.makelist dict
 
         _sortf = (painter) -> helpers.objorclass painter, 'zindex'
@@ -112,7 +123,6 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
             else painter
 
         _specialPainters = (painters,point) =>
-
             existingPainters = @spInstances[String(point.coords())] or []
             
             newPainters = @specialPainters(painters,point) 
@@ -125,6 +135,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         painters = _specialPainters(painters,point)
         painters = _applyEliminations(painters)
         painters = _applyOrder(painters)
+        console.log 'will draw', _.map(painters, (painter) -> helpers.objorclass painter, 'name')
         painters = _instantiate(painters)
        
         #remove() removed painter instances?, it should call cancel() on all in() calls for that painter..

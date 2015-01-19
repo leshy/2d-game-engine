@@ -32,8 +32,18 @@
       }
       if (this.state) {
         this.gameview.pInstances[this.state.id] = this;
+        this.on('remove', (function(_this) {
+          return function() {
+            return delete _this.gameview.pInstances[_this.state.id];
+          };
+        })(this));
       } else if (this.point) {
         helpers.dictpush(this.gameview.spInstances, String(this.point.coords()), this);
+        this.on('remove', (function(_this) {
+          return function() {
+            return helpers.dictpop(_this.gameview.spInstances, String(_this.point.coords()), _this);
+          };
+        })(this));
       }
       if (!this.gameview || !this.state) {
         return;
@@ -53,7 +63,7 @@
       return console.log("draw", this.state.point.coords(), this.state.name);
     },
     remove: function() {
-      throw 'not implemented';
+      return this.trigger('remove');
     },
     move: function() {
       throw 'not implemented';
@@ -132,10 +142,15 @@
         dict = helpers.makedict(painters, function(painter) {
           return helpers.objorclass(painter, 'name');
         });
+        console.log('eliminations', dict);
         _.map(painters, function(painter) {
           var eliminates;
           if (eliminates = helpers.objorclass(painter, 'eliminates')) {
             return helpers.maybeiterate(eliminates, function(name) {
+              painter = dict[name];
+              if (typeof painter === 'object') {
+                painter.remove();
+              }
               return delete dict[name];
             });
           }
@@ -191,6 +206,9 @@
       painters = _specialPainters(painters, point);
       painters = _applyEliminations(painters);
       painters = _applyOrder(painters);
+      console.log('will draw', _.map(painters, function(painter) {
+        return helpers.objorclass(painter, 'name');
+      }));
       painters = _instantiate(painters);
       return _.map(painters, (function(_this) {
         return function(painter) {

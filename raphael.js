@@ -64,12 +64,14 @@
 
   RaphaelPainter = View.Painter.extend4000({
     draw: function(point) {
-      var _ref;
+      var _ref, _ref1;
       if (((_ref = this.state) != null ? _ref.mover : void 0) && this.rendering) {
         return;
       }
+      console.log('>>', this.name, (_ref1 = this.state) != null ? _ref1.name : void 0, ' draw called', point.coords(), this.gameview.translate(point.coords()));
       return this.render(this.gameview.translate(point.coords()), this.gameview.size);
-    }
+    },
+    initialize: function() {}
   });
 
   Image = exports.Image = RaphaelPainter.extend4000({
@@ -115,9 +117,6 @@
       } else {
         this.cellSize = cellSize;
       }
-      if (this.name === "Player") {
-        console.log('player state: ', this.state);
-      }
       if ((_ref2 = this.state) != null ? _ref2.mover : void 0) {
         console.log('coords', coords, this.cellSize, this.state.coordinates);
         coords = helpers.squish(coords, this.state.coordinates, function(coord, subCoord) {
@@ -139,6 +138,14 @@
             };
           })(this));
         }
+        this.on('remove', (function(_this) {
+          return function() {
+            if (_this.rendering) {
+              _this.rendering.remove();
+              return delete _this.rendering;
+            }
+          };
+        })(this));
         return;
       }
       if (!this.state) {
@@ -170,9 +177,6 @@
     },
     images: function() {
       return [this.getpic()];
-    },
-    remove: function() {
-      return this.rendering.remove();
     }
   });
 
@@ -186,19 +190,20 @@
       })(this));
       this.frame = 0;
       if (this.gameview) {
-        return this.listenTo(this.gameview, 'tick', (function(_this) {
+        this.listenTo(this.gameview, 'tick', (function(_this) {
           return function() {
             return _this.tick();
           };
         })(this));
       }
+      return this.on('remove', (function(_this) {
+        return function() {
+          return _this.stopListening();
+        };
+      })(this));
     },
     getpic: function() {
       return this.frame_pics[this.frame];
-    },
-    remove: function() {
-      this.stopListening();
-      return Image.prototype.remove.call(this);
     },
     tick: function() {
       if (!this.rendering) {
@@ -223,28 +228,39 @@
 
   Color = exports.Color = RaphaelPainter.extend4000({
     render: decorate(coordsDecorator, function(coords) {
-      return this.rendering = this.gameview.paper.rect(coords[0], coords[1], this.gameview.size, this.gameview.size).attr({
+      this.rendering = this.gameview.paper.rect(coords[0], coords[1], this.gameview.size, this.gameview.size).attr({
         'opacity': .5,
         'stroke-width': 1,
         stroke: this.color,
         fill: this.color
       });
+      return this.on('remove', (function(_this) {
+        return function() {
+          if (_this.rendering) {
+            _this.rendering.remove();
+            return delete _this.rendering;
+          }
+        };
+      })(this));
     }),
     move: decorate(coordsDecorator, function(coords) {
       return this.rendering.attr({
         x: coords[0],
         y: coords[1]
       });
-    }),
-    remove: function() {
-      return this.rendering.remove();
-    }
+    })
   });
 
   MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000({
+    initialize: function() {
+      return this.on('remove', (function(_this) {
+        return function() {
+          return _this.repr.remove();
+        };
+      })(this));
+    },
     render: function(coords) {
       var cls;
-      console.log("METAPAINTER RENDER", this.state, this);
       if (!this.repr) {
         cls = this.decideRepr();
         this.repr = new cls({
@@ -253,9 +269,6 @@
         });
       }
       return this.repr.render(coords);
-    },
-    remove: function() {
-      return this.repr.remove();
     },
     decideRepr: function() {
       throw 'override me';

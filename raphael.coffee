@@ -56,8 +56,11 @@ GameView = exports.GameView = View.GameView.extend4000
 RaphaelPainter = View.Painter.extend4000
     draw: (point) ->
         if @state?.mover and @rendering then return
-#        console.log '>>', @name, @state?.name,' draw called'            
+        console.log '>>', @name, @state?.name,' draw called', point.coords(), @gameview.translate(point.coords())
         @render @gameview.translate(point.coords()), @gameview.size
+
+    initialize: ->
+
 
 Image = exports.Image = RaphaelPainter.extend4000
     animate: ->
@@ -88,7 +91,7 @@ Image = exports.Image = RaphaelPainter.extend4000
         
         # is this the first time this state has been rendered?
         #console.log 'painter render', @name, 'for state', @state?.name
-        if @name is "Player" then console.log 'player state: ',@state
+        #if @name is "Player" then console.log 'player state: ',@state
 
         if @state?.mover
             console.log 'coords',coords, @cellSize, @state.coordinates
@@ -97,12 +100,18 @@ Image = exports.Image = RaphaelPainter.extend4000
             console.log 'coordsafter',coords
         
         if not @rendering
-
             @rendering = @gameview.paper.image(src=@getpic(), coords[0], coords[1], @gameview.size, @gameview.size); @rendering.toFront();
             if @rotation then @rendering.rotate @rotation
             if @state?.mover then @state.on 'movementChange', =>
                 console.log 'movementchange rerender'
                 @render()
+
+            @on 'remove', =>
+                if @rendering
+                    @rendering.remove()
+                    delete @rendering
+
+    
             return
             
         if not @state then return        
@@ -128,7 +137,7 @@ Image = exports.Image = RaphaelPainter.extend4000
 
     images: -> [ @getpic() ]
             
-    remove: -> @rendering.remove()
+        
     
 Sprite = exports.Sprite = Image.extend4000
     initialize: ->
@@ -138,12 +147,10 @@ Sprite = exports.Sprite = Image.extend4000
         @frame = 0
         if @gameview then @listenTo @gameview,'tick', => @tick()
 
+        @on 'remove',  => @stopListening()
+        
     getpic: -> @frame_pics[@frame]
 
-    remove: ->
-        @stopListening()
-        Image.prototype.remove.call @
-    
     tick: ->
         if not @rendering then return
         if @frame > @frame_pics.length - 1
@@ -155,20 +162,26 @@ Sprite = exports.Sprite = Image.extend4000
     images: -> @frame_pics
     
 Color = exports.Color = RaphaelPainter.extend4000
-    render: decorate coordsDecorator, (coords) -> @rendering = @gameview.paper.rect(coords[0], coords[1], @gameview.size, @gameview.size).attr( 'opacity': .5, 'stroke-width': 1, stroke: @color, fill: @color)
+    render: decorate coordsDecorator, (coords) ->
+        @rendering = @gameview.paper.rect(coords[0], coords[1], @gameview.size, @gameview.size).attr( 'opacity': .5, 'stroke-width': 1, stroke: @color, fill: @color)
+        
+        @on 'remove', =>
+            if @rendering
+                @rendering.remove()
+                delete @rendering
+
     move: decorate coordsDecorator, (coords) -> @rendering.attr { x: coords[0], y: coords[1] }
-    remove: -> @rendering.remove()
 
 # matches different states of a model and renders the appropriate painter
 MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
+    initialize: ->
+        @on 'remove', => @repr.remove()
+        
     render: (coords) ->
-        console.log "METAPAINTER RENDER", @state, @
         if not @repr
             cls = @decideRepr()
             @repr = new cls { gameview: @gameview, state: @state }
         @repr.render(coords)
-        
-    remove: -> @repr.remove()
         
     decideRepr: -> throw 'override me'
         
@@ -177,8 +190,3 @@ DirectionPainter = exports.DirectionPainter = MetaPainter.extend4000
 
 OrientationPainter = exports.OrientationPainter = MetaPainter.extend4000
     decideRepr: -> @reprs[@state.get('direction').orientation()]
-
-#TransformPainter = exports.TransformPainter = Backbone.Model.extend4000
-#    render: (coords) ->
-#        @repr 
-
