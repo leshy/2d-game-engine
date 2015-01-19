@@ -6,16 +6,22 @@ _ = require 'underscore'
 
 # painter subclass should implement Draw(coords) Move(coords) and Remove() methods
 Painter = exports.Painter = Backbone.Model.extend4000
-    initialize: ->
-        if not @gameview then @gameview = @get 'gameview' # wtf.. why.. why?
+    initialize: (options) ->
+        _.extend @, @set options
+        if not @gameview then @gameview = @get 'gameview'
         if not @state then @state = @get 'state'
+        if not @point then @point = @get 'point'
 
+        if @name is 'Player' then console.log "IM A PLAYER, STATE IS",@state,@
+                                    
+        if @state then @gameview.pInstances[@state.id] = @
+        else if @point then helpers.dictpush(@gameview.spInstances, String(@point.coords()), @) # I guess I'm a specialpainter?
+            
         if not @gameview or not @state then return # painter needs to be able to be instantiated without models (preloader needs to be able to call images() on it) .. this init function sucks.. fix it..
 
-        @gameview.pinstances[@state.id] = @
         @state.on 'del', => @remove()
-        @state.on 'del', => delete @gameview.pinstances[@state.id]
-        
+        @state.on 'del', => delete @gameview.pInstances[@state.id]
+                
         # 'when' somehow doesn't work.. figure it out..
         # 
         #@when 'gameview', (gameview) => 
@@ -39,8 +45,8 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         @game = @get 'game'
         @painters = {} # name -> painter class map
         
-        @pinstances = {} # per stateview instance dict
-        @spinstances = {} # per point special painter instance dict
+        @pInstances = {} # per stateview instance dict
+        @spInstances = {} # per point special painter instance dict
 
         _start = =>
             # game should hook only on create to create new point view
@@ -78,12 +84,13 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
     # so that different point views can fetch state views and draw them in themselves when states get moved..
     # (I don't want to reinstantiate state views for speed and as they might have internal variables that are relevant)
     getPainter: (state) ->
-        if painter = @pinstances[state.id] then return painter
+        if painter = @pInstances[state.id] then return painter
         painterclass = @painters[state.name]
         if not painterclass then painterclass = @painters['unknown']
-        return painterclass.extend4000 state: state, gameview: @
+        return painterclass.extend4000 state: state
 
-    getSpecialPainter: (point) ->
+    getExistingSpecialPainters: (point) ->
+        @spInstances[point.id]
         
     specialPainters: (painters) -> painters
         
@@ -99,24 +106,27 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
             
         _applyOrder = (painters) -> _.sortBy painters, _sortf
         
-        _instantiate = (painters) -> _.map painters, (painter) ->
-            if painter.constructor is Function then new painter()
-            else if painter.constructor is String then new @painters[painter] gameview: @
+        _instantiate = (painters) => _.map painters, (painter) =>
+            if painter.constructor is Function then new painter gameview: @, point: point
+            else if painter.constructor is String then new @painters[painter] gameview: @, point: point
             else painter
 
-        _specialPainters = (painters) ->
-            specialPainters = @specialPainters(painters,point)
+        _specialPainters = (painters,point) =>
+
+            existingPainters = @spInstances[String(point.coords())] or []
             
-    
-        painters = point.map (state) => @getPainter(state)
+            newPainters = @specialPainters(painters,point) 
+            [ existingKeep, existingRemove, newAdd ] = helpers.difference existingPainters, newPainters, ((x) -> x.name), ((x) -> x::name)
+            
+            _.each existingRemove, (painter) -> painter.remove()
+            return painters.concat existingKeep, newAdd
         
-        painters = @specialPainters(painters,point) # this needs to be redone.. sometime. I'm rerendering specialpainters each time the point gets rerendered..
+        painters = point.map (state) => @getPainter(state)
+        painters = _specialPainters(painters,point)
         painters = _applyEliminations(painters)
         painters = _applyOrder(painters)
         painters = _instantiate(painters)
        
-#        console.log JSON.stringify(_.map painters, (painter) -> [ _sortf(painter), helpers.objorclass(painter, 'state').name ])
-        
         #remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
         _.map painters, (painter) => painter.draw(point)
 

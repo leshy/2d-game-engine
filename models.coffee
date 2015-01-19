@@ -38,7 +38,7 @@ StatesFromTags = (f,args...) ->
 # addtag(tags...)
 # deltag(tags...)
 # each(callback) - iterate through tags
-#
+# 
 exports.State = State = Tagged.extend4000
     initialize: ->
         @when 'point', (point) =>
@@ -103,8 +103,8 @@ exports.Point = Point = Tagged.extend4000
         @tags = {}
         @states = new Backbone.Collection()
         
-#        if not @id then @id = @get('id')
-#        if not @id then @set id: @id = @game.getIntex(@)
+        if not @id then @id = @get('id')
+        if not @id then @set id: @id = @game.getIndex(@)
         
         @states.on 'add', (state) => @_addstate(state); @trigger 'set', state
         @states.on 'remove', (state) => @_delstate(state); state.trigger 'del'; @trigger 'del', state
@@ -218,9 +218,8 @@ exports.Field = Field = Backbone.Model.extend4000
     # will fetch point from the field, or construct a new one if it isn't defined
     point: (point) ->
         if point.constructor is Array then point = new Point(point, @)
-        if ret = @points[ @getIndex(point) ] then ret
-        else
-            if point.game is @ then point else new Point point.coords(), @
+        if ret = @points[ point.id ] then ret
+        else if point.game is @ then point else new Point point.coords(), @
 
     remove: (point) -> delete @points[@getIndex(point)]
 

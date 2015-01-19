@@ -134,6 +134,14 @@
       this.game = game;
       this.tags = {};
       this.states = new Backbone.Collection();
+      if (!this.id) {
+        this.id = this.get('id');
+      }
+      if (!this.id) {
+        this.set({
+          id: this.id = this.game.getIndex(this)
+        });
+      }
       this.states.on('add', (function(_this) {
         return function(state) {
           _this._addstate(state);
@@ -360,14 +368,12 @@
       if (point.constructor === Array) {
         point = new Point(point, this);
       }
-      if (ret = this.points[this.getIndex(point)]) {
+      if (ret = this.points[point.id]) {
         return ret;
+      } else if (point.game === this) {
+        return point;
       } else {
-        if (point.game === this) {
-          return point;
-        } else {
-          return new Point(point.coords(), this);
-        }
+        return new Point(point.coords(), this);
       }
     },
     remove: function(point) {

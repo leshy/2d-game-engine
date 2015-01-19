@@ -16,17 +16,28 @@
   _ = require('underscore');
 
   Painter = exports.Painter = Backbone.Model.extend4000({
-    initialize: function() {
+    initialize: function(options) {
+      _.extend(this, this.set(options));
       if (!this.gameview) {
         this.gameview = this.get('gameview');
       }
       if (!this.state) {
         this.state = this.get('state');
       }
+      if (!this.point) {
+        this.point = this.get('point');
+      }
+      if (this.name === 'Player') {
+        console.log("IM A PLAYER, STATE IS", this.state, this);
+      }
+      if (this.state) {
+        this.gameview.pInstances[this.state.id] = this;
+      } else if (this.point) {
+        helpers.dictpush(this.gameview.spInstances, String(this.point.coords()), this);
+      }
       if (!this.gameview || !this.state) {
         return;
       }
-      this.gameview.pinstances[this.state.id] = this;
       this.state.on('del', (function(_this) {
         return function() {
           return _this.remove();
@@ -34,7 +45,7 @@
       })(this));
       return this.state.on('del', (function(_this) {
         return function() {
-          return delete _this.gameview.pinstances[_this.state.id];
+          return delete _this.gameview.pInstances[_this.state.id];
         };
       })(this));
     },
@@ -57,8 +68,8 @@
       var _start;
       this.game = this.get('game');
       this.painters = {};
-      this.pinstances = {};
-      this.spinstances = {};
+      this.pInstances = {};
+      this.spInstances = {};
       _start = (function(_this) {
         return function() {
           _this.game.on('set', function(state, point) {
@@ -97,7 +108,7 @@
     },
     getPainter: function(state) {
       var painter, painterclass;
-      if (painter = this.pinstances[state.id]) {
+      if (painter = this.pInstances[state.id]) {
         return painter;
       }
       painterclass = this.painters[state.name];
@@ -105,11 +116,12 @@
         painterclass = this.painters['unknown'];
       }
       return painterclass.extend4000({
-        state: state,
-        gameview: this
+        state: state
       });
     },
-    getSpecialPainter: function(point) {},
+    getExistingSpecialPainters: function(point) {
+      return this.spInstances[point.id];
+    },
     specialPainters: function(painters) {
       return painters;
     },
@@ -136,29 +148,47 @@
       _applyOrder = function(painters) {
         return _.sortBy(painters, _sortf);
       };
-      _instantiate = function(painters) {
-        return _.map(painters, function(painter) {
-          if (painter.constructor === Function) {
-            return new painter();
-          } else if (painter.constructor === String) {
-            return new this.painters[painter]({
-              gameview: this
-            });
-          } else {
-            return painter;
-          }
-        });
-      };
-      _specialPainters = function(painters) {
-        var specialPainters;
-        return specialPainters = this.specialPainters(painters, point);
-      };
+      _instantiate = (function(_this) {
+        return function(painters) {
+          return _.map(painters, function(painter) {
+            if (painter.constructor === Function) {
+              return new painter({
+                gameview: _this,
+                point: point
+              });
+            } else if (painter.constructor === String) {
+              return new _this.painters[painter]({
+                gameview: _this,
+                point: point
+              });
+            } else {
+              return painter;
+            }
+          });
+        };
+      })(this);
+      _specialPainters = (function(_this) {
+        return function(painters, point) {
+          var existingKeep, existingPainters, existingRemove, newAdd, newPainters, _ref;
+          existingPainters = _this.spInstances[String(point.coords())] || [];
+          newPainters = _this.specialPainters(painters, point);
+          _ref = helpers.difference(existingPainters, newPainters, (function(x) {
+            return x.name;
+          }), (function(x) {
+            return x.prototype.name;
+          })), existingKeep = _ref[0], existingRemove = _ref[1], newAdd = _ref[2];
+          _.each(existingRemove, function(painter) {
+            return painter.remove();
+          });
+          return painters.concat(existingKeep, newAdd);
+        };
+      })(this);
       painters = point.map((function(_this) {
         return function(state) {
           return _this.getPainter(state);
         };
       })(this));
-      painters = this.specialPainters(painters, point);
+      painters = _specialPainters(painters, point);
       painters = _applyEliminations(painters);
       painters = _applyOrder(painters);
       painters = _instantiate(painters);

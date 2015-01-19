@@ -56,7 +56,7 @@ GameView = exports.GameView = View.GameView.extend4000
 RaphaelPainter = View.Painter.extend4000
     draw: (point) ->
         if @state?.mover and @rendering then return
-        console.log '>> ' + @state?.name + ' draw called'            
+#        console.log '>>', @name, @state?.name,' draw called'            
         @render @gameview.translate(point.coords()), @gameview.size
 
 Image = exports.Image = RaphaelPainter.extend4000
@@ -82,13 +82,14 @@ Image = exports.Image = RaphaelPainter.extend4000
 
     render: (coords, cellSize) ->
         if c = @state?.point?.coords() then coords = @gameview.translate(c)
-        console.log 'coords',c
+        #console.log 'coords',c
         if not coords then coords = @coords else @coords = coords
         if not cellSize then cellSize = @cellSize else @cellSize = cellSize
         
         # is this the first time this state has been rendered?
         #console.log 'painter render', @name, 'for state', @state?.name
         if @name is "Player" then console.log 'player state: ',@state
+
         if @state?.mover
             console.log 'coords',coords, @cellSize, @state.coordinates
             coords = helpers.squish coords, @state.coordinates, (coord,subCoord) -> Math.round(coord + (cellSize * (subCoord - 0.5)))
@@ -103,7 +104,8 @@ Image = exports.Image = RaphaelPainter.extend4000
                 console.log 'movementchange rerender'
                 @render()
             return
-        
+            
+        if not @state then return        
         # do we need to move our rendering? 
         if @rendering.attrs.x != coords[0] or @rendering.attrs.y != coords[1] then @move(coords)
         if @state.speed and not @state.direction.stop() then @animate() else @stopAnimate()
