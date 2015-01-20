@@ -15,12 +15,13 @@
 
   _ = require('underscore');
 
-  Painter = exports.Painter = Backbone.Model.extend4000({
+  Painter = exports.Painter = Models.ClockListener.extend4000({
     initialize: function(options) {
       _.extend(this, this.set(options));
       if (!this.gameview) {
         this.gameview = this.get('gameview');
       }
+      this.clockParent = this.gameview;
       if (!this.state) {
         this.state = this.get('state');
       }
@@ -73,7 +74,7 @@
     }
   });
 
-  GameView = exports.GameView = exports.View = Backbone.Model.extend4000({
+  GameView = exports.GameView = exports.View = Backbone.Model.extend4000(Models.Clock, {
     initialize: function() {
       var _start;
       this.game = this.get('game');
@@ -94,13 +95,10 @@
           _this.game.each(function(point) {
             return _this.drawPoint(point);
           });
-          return setInterval(_this.tick.bind(_this), 100);
+          return _this.tickloop();
         };
       })(this);
       return _.defer(_start);
-    },
-    tick: function() {
-      return this.trigger('tick');
     },
     definePainter: function() {
       var definitions, name, painter;
@@ -142,7 +140,6 @@
         dict = helpers.makedict(painters, function(painter) {
           return helpers.objorclass(painter, 'name');
         });
-        console.log('eliminations', dict);
         _.map(painters, function(painter) {
           var eliminates;
           if (eliminates = helpers.objorclass(painter, 'eliminates')) {
@@ -206,9 +203,6 @@
       painters = _specialPainters(painters, point);
       painters = _applyEliminations(painters);
       painters = _applyOrder(painters);
-      console.log('will draw', _.map(painters, function(painter) {
-        return helpers.objorclass(painter, 'name');
-      }));
       painters = _instantiate(painters);
       return _.map(painters, (function(_this) {
         return function(painter) {

@@ -3,18 +3,46 @@ _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
 
-#
+# !!! IMPORTANT !!!
 # there is a problem with state being added to a collection before its ID is set
 # as collection.get looks up the model by model.id first, and it will fail
 # fixed it by changing the priority of backbone collections to look at cid first
-#
 
+#
+# game engine, and render engine have seperate clocks
+# 
+Clock = exports.Clock = Backbone.Model.extend4000
+    initialize: (options) ->
+        _.extend @, { tickspeed: 50, tick: 0 }, options
+        
+    dotick: ->
+        @tick++
+        @trigger 'tick'
+        @trigger 'tick_' + @tick
+        
+    tickloop: ->
+        @dotick()
+        @timeout = setTimeout @tickloop.bind(@), @tickspeed
+
+    getTick: -> @tick
+#
+# states, points, and painters can subscribe to clocks
+# 
+ClockListener = exports.ClockListener = Backbone.Model.extend4000
+    in: (n, callback) ->
+        if not (@clockParent.tick + n) then console.log "I HAVE NOT PARENTA!",n, @name
+#        console.log 'subscribing to tick', 'tick_' + (@clockParent.tick + n)
+        @listenToOnceOff @clockParent, 'tick_' + (@clockParent.tick + n), callback
+    nextTick: (callback) -> @in 1, callback
+    eachTick: (callback) -> @listenTo @clockParent, 'tick', callback
+    getTick: -> @clockParent.tick    
 #
 # states and points have tags.. here are some tag operations
 #
 Tagged = Backbone.Model.extend4000
-    has: (tags...) -> not _.find(tags, (tag) => not @tags[tag])
-    hasor: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
+    hasTag: (tags...) ->
+        not _.find(tags, (tag) => not @tags[tag])
+    hasTagOr: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
 
 #
 # decorator for point functions to be able to receive tags instead of states, and automatically translate those tags to particular states under that point
@@ -34,23 +62,21 @@ StatesFromTags = (f,args...) ->
 # 
 # tag operations
 # 
-# has(tags...)
+# hasTag(tags...)
 # addtag(tags...)
 # deltag(tags...)
 # each(callback) - iterate through tags
 # 
-exports.State = State = Tagged.extend4000
+exports.State = State = Tagged.extend4000 ClockListener,
     initialize: ->
         @when 'point', (point) =>
+            @point = point
+            @clockParent = point.game
             if not @id then @id = @get('id')
             if not @id then @set(id: @id = point.game.nextid())
             point.game.byid[@id] = @
             if @start then @start()
 
-# will implement this later if needed..
-#            if @syncatributes _.map @syncattributes, (val,key) =>
-#                @on 'change:' + key, (model,value) => @point.game.trigger 'attr', @, { key: value }
-        
     place: (states...) -> @point.push.apply(@point,states)
     
     replace: (state) -> @remove(); @point.push(state)
@@ -60,10 +86,7 @@ exports.State = State = Tagged.extend4000
     remove: ->
         @point.remove @;
         delete @point.game.byid[@id]
-    
-    in: (n,callback) ->
-        @point.game.onceOff 'tick_' + (@point.game.tick + n), => callback()
-    
+        
     cancel: (callback) -> @point.game.off null, callback
     
     each: (callback) ->
@@ -89,8 +112,8 @@ exports.State = State = Tagged.extend4000
         
     render: -> if @repr then @repr else _.first(@name)
 
-# has (tags...) - check if point has all of those tags
-# hasor (tags...) - check if point has any of those tags
+# hasTag (tags...) - check if point has all of those tags
+# hasTagOr (tags...) - check if point has any of those tags
 # direction(direction) - return another point in this direction
 # 
 # right now local tags dictionary is updated automatically
@@ -98,8 +121,9 @@ exports.State = State = Tagged.extend4000
 # this could also be done each time that data is requested, or lazily (I could cache)
 # is this relevant/should I benchmark?
 #
-exports.Point = Point = Tagged.extend4000
+exports.Point = Point = Tagged.extend4000 ClockListener,
     initialize: ([@x,@y],@game) ->
+        @clockParent = @game
         @tags = {}
         @states = new Backbone.Collection()
         
@@ -123,7 +147,6 @@ exports.Point = Point = Tagged.extend4000
     # called by @states collection automatically, or by move, manually
     _addstate: (state) ->
         @game.push(@)
-        state.point = @
         state.set point: @
         _.map state.tags, (v,tag) => @_addtag tag
         
@@ -155,7 +178,11 @@ exports.Point = Point = Tagged.extend4000
     down:  -> @modifier [0,1]
     left:  -> @modifier [-1,0]
     right: -> @modifier [1,0]
-
+    upRight: -> @modifier [1,-1]
+    upLeft: -> @modifier [-1,-1]
+    downRight: -> @modifier [ 1, 1 ]
+    downLeft: -> @modifier [ -1, 1 ]
+    
     # general point operations            
     coords: -> [@x,@y]
 
@@ -219,7 +246,7 @@ exports.Field = Field = Backbone.Model.extend4000
     point: (point) ->
         if point.constructor is Array then point = new Point(point, @)
         if ret = @points[ point.id ] then ret
-        else if point.game is @ then point else new Point point.coords(), @
+        else if point.game is @ then point else new Point(point.coords(), @)
 
     remove: (point) -> delete @points[@getIndex(point)]
 
@@ -259,11 +286,10 @@ exports.Field = Field = Backbone.Model.extend4000
             
         data += "\ny (height)\n"
         data 
-                
 #
 # used to define possible states, has tickloop controls, field width/height, and this is what main game views hook to
 # 
-exports.Game = Game = Field.extend4000
+exports.Game = Game = Field.extend4000 Clock,
     initialize: ->
         @controls = {}
         @state = {}
@@ -274,15 +300,7 @@ exports.Game = Game = Field.extend4000
         @byid = {}
         
     nextid: (state) -> @stateid++
-        
-    dotick: ->
-        @tick++
-        @trigger 'tick_' + @tick
-        
-    tickloop: ->
-        @dotick()
-        @timeout = setTimeout @tickloop.bind(@), @tickspeed
-        
+                
     end: (data) ->
         if not @ended then @trigger 'end', data
         @ended = true            

@@ -15,19 +15,13 @@
         height: 25
       });
       this.game.defineState('Wall', {
-        tags: {
-          'nogo': true
-        }
+        tags: ['nogo']
       });
       this.game.defineState('Player1', {
-        tags: {
-          'p1': true
-        }
+        tags: ['p1']
       });
       this.game.defineState('Bomb', {
-        tags: {
-          'nogo': true
-        }
+        tags: ['nogo']
       });
       this.point = this.game.point([3, 5]);
       return callback();
@@ -60,17 +54,24 @@
       test.equals(cnt, 2);
       return test.done();
     },
+    tag_basic: function(test) {
+      var wall1;
+      wall1 = new this.game.state.Wall();
+      test.equals(wall1.hasTag('Wall'), true, 'no name tag');
+      test.equals(wall1.hasTag('nogo'), true, 'no tag');
+      return test.done();
+    },
     tag_propagation: function(test) {
       var wall1, wall2, wall3;
       this.point.push(wall1 = new this.game.state.Wall());
       this.point.push(wall2 = new this.game.state.Wall());
       this.point.push(wall3 = new this.game.state.Wall());
       wall1.addtag('testtag');
-      test.equals(this.point.has('testtag'), true);
-      test.equals(this.point.has('testtag2'), false);
-      test.equals(wall1.has('testtag'), true);
-      test.equals(wall1.has('testtag2'), false);
-      test.equals(wall2.has('testtag'), false, 'tag change leaked through instances');
+      test.equals(wall1.hasTag('testtag'), true, 'testtag not found on state');
+      test.equals(this.point.hasTag('testtag'), true, 'no testtag');
+      test.equals(this.point.hasTag('testtag2'), false, 'testtag2 found???');
+      test.equals(wall1.hasTag('testtag2'), false, 'testtag2 at wall1 found???');
+      test.equals(wall2.hasTag('testtag'), false, 'tag change leaked through instances');
       return test.done();
     },
     tagdict_forking: function(test) {
@@ -116,8 +117,8 @@
     has: function(test) {
       var point1;
       point1 = this.game.point([3, 4]).push('state1');
-      test.equals(point1.has('state1'), true, 'state1 is missing!');
-      test.equals(point1.has('state2'), false, 'state2 has been found but it should be missing');
+      test.equals(point1.hasTag('state1'), true, 'state1 is missing!');
+      test.equals(point1.hasTag('state2'), false, 'state2 has been found but it should be missing');
       return test.done();
     },
     duplicate: function(test) {
@@ -133,8 +134,8 @@
       var point1, point2;
       point1 = this.game.point([3, 4]).push('state1');
       point2 = this.game.point([3, 5]).push('state2');
-      test.equals(Boolean(point1.down().has('state2')), true);
-      test.equals(Boolean(point2.direction(new game.Direction().up()).has('state1')), true);
+      test.equals(Boolean(point1.down().hasTag('state2')), true);
+      test.equals(Boolean(point2.direction(new game.Direction().up()).hasTag('state1')), true);
       return test.done();
     },
     remove: function(test) {

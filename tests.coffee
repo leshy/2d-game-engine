@@ -5,9 +5,9 @@ Backbone = require 'backbone4000'
 exports.Point =
     setUp: (callback) ->
         @game = new game.Game width: 25, height: 25
-        @game.defineState 'Wall', { tags: { 'nogo': true } }
-        @game.defineState 'Player1', { tags: { 'p1': true } }
-        @game.defineState 'Bomb', { tags: { 'nogo': true } }
+        @game.defineState 'Wall', { tags: [ 'nogo' ] }
+        @game.defineState 'Player1', { tags: [ 'p1' ] }
+        @game.defineState 'Bomb', { tags: [ 'nogo'] } 
 
         @point = @game.point [3, 5]
         callback()
@@ -31,19 +31,24 @@ exports.Point =
         
         test.equals(cnt,2)
         test.done()
-            
+
+    tag_basic: (test) ->
+        wall1 = new @game.state.Wall()
+        test.equals wall1.hasTag('Wall'), true, 'no name tag'
+        test.equals wall1.hasTag('nogo'), true, 'no tag'
+        test.done()
+        
     tag_propagation: (test) ->
         @point.push wall1 = new @game.state.Wall()
         @point.push wall2 = new @game.state.Wall()
         @point.push wall3 = new @game.state.Wall()
 
         wall1.addtag('testtag')
-
-        test.equals @point.has('testtag'), true
-        test.equals @point.has('testtag2'), false
-        test.equals wall1.has('testtag'), true
-        test.equals wall1.has('testtag2'), false
-        test.equals wall2.has('testtag'), false, 'tag change leaked through instances'
+        test.equals wall1.hasTag('testtag'), true, 'testtag not found on state'
+        test.equals @point.hasTag('testtag'), true, 'no testtag'
+        test.equals @point.hasTag('testtag2'), false, 'testtag2 found???'
+        test.equals wall1.hasTag('testtag2'), false, 'testtag2 at wall1 found???'
+        test.equals wall2.hasTag('testtag'), false, 'tag change leaked through instances'
 
         test.done()
 
@@ -86,23 +91,23 @@ exports.Field =
 
     has: (test) ->
         point1 = @game.point([3,4]).push('state1')
-        test.equals point1.has('state1'), true, 'state1 is missing!'
-        test.equals point1.has('state2'), false, 'state2 has been found but it should be missing'
+        test.equals point1.hasTag('state1'), true, 'state1 is missing!'
+        test.equals point1.hasTag('state2'), false, 'state2 has been found but it should be missing'
         test.done()
     
     duplicate: (test) ->
         point1 = @game.point([3,4]).push('state1').push('state2')
         test.deepEqual @game.point([3,4]).map((state) -> state.name), [ 'state1', 'state2' ]
-        #test.equals point1.has('state1').constructor, @game.state.state1
+        #test.equals point1.hasTag('state1').constructor, @game.state.state1
         point1.push('state1')
-        #test.equals point1.has('state1').constructor, Array
+        #test.equals point1.hasTag('state1').constructor, Array
         test.done()
         
     directionmodifiers: (test) ->
         point1 = @game.point([3,4]).push('state1')
         point2 = @game.point([3,5]).push('state2')
-        test.equals Boolean(point1.down().has('state2')), true
-        test.equals Boolean(point2.direction(new game.Direction().up()).has('state1')), true
+        test.equals Boolean(point1.down().hasTag('state2')), true
+        test.equals Boolean(point2.direction(new game.Direction().up()).hasTag('state1')), true
         test.done()
 
     remove: (test) ->

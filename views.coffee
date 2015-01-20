@@ -4,11 +4,15 @@ validator = require 'validator2-extras'; v = validator.v
 Models = require './models'
 _ = require 'underscore'
 
+
 # painter subclass should implement Draw(coords) Move(coords) and Remove() methods
-Painter = exports.Painter = Backbone.Model.extend4000
+Painter = exports.Painter = Models.ClockListener.extend4000
     initialize: (options) ->
         _.extend @, @set options
         if not @gameview then @gameview = @get 'gameview'
+
+        
+        @clockParent = @gameview
         if not @state then @state = @get 'state'
         if not @point then @point = @get 'point'
 
@@ -45,7 +49,7 @@ Painter = exports.Painter = Backbone.Model.extend4000
     images: -> [] # painters can dump the images they use.. preloader uses this
     
 # very simmilar to game model, maybe should share the superclass with it
-GameView = exports.GameView = exports.View = Backbone.Model.extend4000
+GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Clock,
     initialize: ->
         @game = @get 'game'
         @painters = {} # name -> painter class map
@@ -56,25 +60,17 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
         _start = =>
             # game should hook only on create to create new point view
             # and point views should deal with their own state changes and deletions/garbage collection
-            @game.on 'set', (state,point) =>
-                #console.log 'set',state.render(), point.coords()
-                @drawPoint point
-            @game.on 'del', (state,point) =>
-                #console.log 'del',state.render(), point.coords()
-                @drawPoint point
-            @game.on 'move', (state,point,from) =>
-                #console.log 'move', state.render(), 'to', point.coords()
-                @drawPoint point # how come I don't need to redraw point from?
+            @game.on 'set', (state,point) => @drawPoint point
+            @game.on 'del', (state,point) => @drawPoint point
+            @game.on 'move', (state,point,from) => @drawPoint point
 
             @game.each (point) => @drawPoint point
-            setInterval @tick.bind(@), 100
+            @tickloop()
 
         # stupid trick for start to be called after initialize function for other subclasses is completed
         # need some kind of better extend4000 function that takes those things into account.. 
         _.defer _start
 
-    tick: ->  @trigger 'tick'
-        
     # painters should be called like the states, that's how the view looks them up
     definePainter: (definitions...) ->
         # just a small sintax sugar first argument is optionally a name for the painter
@@ -88,7 +84,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
     # game keeps the collection of all state view instances (painters) for all the visible states in the game
     # so that different point views can fetch state views and draw them in themselves when states get moved..
     # (I don't want to reinstantiate state views for speed and as they might have internal variables that are relevant)
-    getPainter: (state) ->
+    getPainter: (state) -> 
         if painter = @pInstances[state.id] then return painter
         painterclass = @painters[state.name]
         if not painterclass then painterclass = @painters['unknown']
@@ -102,10 +98,9 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
     drawPoint: (point) ->
         _applyEliminations = (painters) ->
             dict = helpers.makedict painters, (painter) -> helpers.objorclass painter, 'name'
-            console.log 'eliminations', dict
             
             _.map painters, (painter) ->
-                if eliminates = helpers.objorclass painter, 'eliminates'                    
+                if eliminates = helpers.objorclass painter, 'eliminates'
                     helpers.maybeiterate eliminates, (name) ->
                         painter = dict[name]
                         if typeof(painter) is 'object' then painter.remove()                        
@@ -130,12 +125,11 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000
             
             _.each existingRemove, (painter) -> painter.remove()
             return painters.concat existingKeep, newAdd
-        
+            
         painters = point.map (state) => @getPainter(state)
         painters = _specialPainters(painters,point)
         painters = _applyEliminations(painters)
         painters = _applyOrder(painters)
-        console.log 'will draw', _.map(painters, (painter) -> helpers.objorclass painter, 'name')
         painters = _instantiate(painters)
        
         #remove() removed painter instances?, it should call cancel() on all in() calls for that painter..
