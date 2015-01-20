@@ -100,11 +100,13 @@ exports.State = State = Tagged.extend4000 ClockListener,
         @forktags()
         delete @tags[tag]
         @trigger 'deltag', tag
-    
+        @trigger 'deltag:' + tag
+            
     addtag: (tag) ->
         @forktags()
         @tags[tag] = true
         @trigger 'addtag', tag
+        @trigger 'addtag:' + tag        
     
     msg: (msg = {}) ->
         @point.game.trigger 'message', @, msg
@@ -157,11 +159,18 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
         _.map state.tags, (v,tag) => @_deltag tag
         
     _addtag: (tag) ->
-        if not @tags[tag] then @tags[tag] = 1 else @tags[tag]++
+        if not @tags[tag]
+            @tags[tag] = 1
+            @trigger 'addtag', tag
+            @trigger 'addtag:' + tag, @
+        else @tags[tag]++
 
     _deltag: (tag) ->
         @tags[tag]--
-        if @tags[tag] is 0 then delete @tags[tag]
+        if @tags[tag] is 0
+            delete @tags[tag]
+            @trigger 'deltag', tag
+            @trigger 'deltag:' + tag, @
             
     # operations for finding other points
     modifier: (coords) -> # I can take a direction or a point
@@ -294,7 +303,7 @@ exports.Game = Game = Field.extend4000 Clock,
     initialize: ->
         @controls = {}
         @state = {}
-        @tickspeed = 50        
+#        @tickspeed = 50        
         @tick = 0
         @stateid = 1
         @ended = false
@@ -372,6 +381,8 @@ exports.Direction = Direction = class Direction
         if @x is -1 then return 'left'
         if @x is 1 then return 'right'
         if not @x and not @y then return 'stop'
+
+    flip: -> return new Direction(-@x, -@y)
 
     stop: -> if not @x and not @y then true else false
 

@@ -17,7 +17,8 @@
 
   Painter = exports.Painter = Models.ClockListener.extend4000({
     initialize: function(options) {
-      _.extend(this, this.set(options));
+      this.set(options);
+      _.extend(this, options);
       if (!this.gameview) {
         this.gameview = this.get('gameview');
       }
@@ -49,14 +50,11 @@
       if (!this.gameview || !this.state) {
         return;
       }
-      this.state.on('del', (function(_this) {
-        return function() {
-          return _this.remove();
-        };
-      })(this));
       return this.state.on('del', (function(_this) {
         return function() {
-          return delete _this.gameview.pInstances[_this.state.id];
+          _this.remove();
+          delete _this.gameview.pInstances[_this.state.id];
+          return _this.gameview.drawPoint(_this.state.point);
         };
       })(this));
     },

@@ -39,7 +39,6 @@ GameView = exports.GameView = View.GameView.extend4000
         calculateSizes()
 
         @zMarkers = {}
-        
 
         @on 'definePainter', (painter) =>
             if not painter::zindex? then return
@@ -92,7 +91,7 @@ Image = exports.Image = RaphaelPainter.extend4000
         animation = {}
         if @state.direction.x then animation.x = @rendering.attrs.x + @state.direction.x * @state.speed * @cellSize * 100
         if @state.direction.y then animation.y = @rendering.attrs.y + @state.direction.y * @state.speed * @cellSize * 100
-        @animation = @rendering.animate animation, 5000
+        @animation = @rendering.animate animation, @state.point.game.tickspeed * 100
         @ticker = setInterval (=>
             @rendering.node.style.display='none'
             @rendering.node.offsetHeight # no need to store this anywhere, the reference is enough
@@ -165,11 +164,14 @@ Image = exports.Image = RaphaelPainter.extend4000
             
 Sprite = exports.Sprite = Image.extend4000
     initialize: ->
+        
         @frame_pics = []
+        
         _.times @frames, (frame) =>
             @frame_pics.push '/pic/' + (@pic or @name) + frame + ".png"
-        @frame = 0
-        
+            
+        if @frame is undefined then @frame = 0
+        console.log 'init sprite with frame', @frame
         if @gameview then @tick()
 
         @on 'remove',  => @stopListening()
@@ -207,16 +209,31 @@ Color = exports.Color = RaphaelPainter.extend4000
 MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
     initialize: ->
         @on 'remove', => @repr.remove()
-        
+
+    reprChange: -> 
+        cls = @decideRepr()
+        if @repr.constructor isnt cls
+            oldRepr = @repr
+            @repr.remove()
+            console.log 'oldrepr frame', oldRepr.name, cls::name, oldRepr.repr.frame + 1,
+            @repr = new cls { gameview: @gameview, state: @state, frame: oldRepr.repr.frame + 1 }
+            @render.apply @, @args
+            
+    inherit: -> helpers.dictFromArray [ 'frame' ], (attr) => [ attr, @[attr] ]
+
     render: (args...) ->
-        if not @repr
+        @trigger 'render'
+        @args = args
+        
+        if not @repr            
             cls = @decideRepr()
-            @repr = new cls { gameview: @gameview, state: @state }
+            @repr = new cls _.extend @inherit(), { gameview: @gameview, state: @state }
+            
         @repr.render.apply @repr, args
         
     decideRepr: -> throw 'override me'
-        
-DirectionPainter = exports.DirectionPainter = MetaPainter.extend4000
+
+DirectionPainter = exports.DirectionPainter = MetaPainter.extend4000        
     decideRepr: -> @reprs[(@state.direction or @state.get('direction')).string()]
     
 OrientationPainter = exports.OrientationPainter = MetaPainter.extend4000

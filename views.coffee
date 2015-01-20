@@ -8,10 +8,10 @@ _ = require 'underscore'
 # painter subclass should implement Draw(coords) Move(coords) and Remove() methods
 Painter = exports.Painter = Models.ClockListener.extend4000
     initialize: (options) ->
-        _.extend @, @set options
+        @set options
+        _.extend @, options
         if not @gameview then @gameview = @get 'gameview'
 
-        
         @clockParent = @gameview
         if not @state then @state = @get 'state'
         if not @point then @point = @get 'point'
@@ -28,11 +28,12 @@ Painter = exports.Painter = Models.ClockListener.extend4000
             
         if not @gameview or not @state then return # painter needs to be able to be instantiated without models (preloader needs to be able to call images() on it) .. this init function sucks.. fix it..
 
-        @state.on 'del', => @remove()
-        @state.on 'del', => delete @gameview.pInstances[@state.id]
+        @state.on 'del', =>
+            @remove()
+            delete @gameview.pInstances[@state.id]
+            @gameview.drawPoint(@state.point)
                 
         # 'when' somehow doesn't work.. figure it out..
-        # 
         #@when 'gameview', (gameview) => 
         #    @gameview = gameview
         #    @gameview.pinstances[@state.id] = @

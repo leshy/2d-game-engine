@@ -118,7 +118,7 @@
       if (this.state.direction.y) {
         animation.y = this.rendering.attrs.y + this.state.direction.y * this.state.speed * this.cellSize * 100;
       }
-      this.animation = this.rendering.animate(animation, 5000);
+      this.animation = this.rendering.animate(animation, this.state.point.game.tickspeed * 100);
       return this.ticker = setInterval(((function(_this) {
         return function() {
           _this.rendering.node.style.display = 'none';
@@ -228,7 +228,10 @@
           return _this.frame_pics.push('/pic/' + (_this.pic || _this.name) + frame + ".png");
         };
       })(this));
-      this.frame = 0;
+      if (this.frame === void 0) {
+        this.frame = 0;
+      }
+      console.log('init sprite with frame', this.frame);
       if (this.gameview) {
         this.tick();
       }
@@ -311,15 +314,38 @@
         };
       })(this));
     },
+    reprChange: function() {
+      var cls, oldRepr;
+      cls = this.decideRepr();
+      if (this.repr.constructor !== cls) {
+        oldRepr = this.repr;
+        this.repr.remove();
+        console.log('oldrepr frame', oldRepr.name, cls.prototype.name, oldRepr.repr.frame + 1, this.repr = new cls({
+          gameview: this.gameview,
+          state: this.state,
+          frame: oldRepr.repr.frame + 1
+        }));
+        return this.render.apply(this, this.args);
+      }
+    },
+    inherit: function() {
+      return helpers.dictFromArray(['frame'], (function(_this) {
+        return function(attr) {
+          return [attr, _this[attr]];
+        };
+      })(this));
+    },
     render: function() {
       var args, cls;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      this.trigger('render');
+      this.args = args;
       if (!this.repr) {
         cls = this.decideRepr();
-        this.repr = new cls({
+        this.repr = new cls(_.extend(this.inherit(), {
           gameview: this.gameview,
           state: this.state
-        });
+        }));
       }
       return this.repr.render.apply(this.repr, args);
     },

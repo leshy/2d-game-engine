@@ -54,6 +54,20 @@
       test.equals(cnt, 2);
       return test.done();
     },
+    tag_subscription: function(test) {
+      var check, wall1;
+      wall1 = new this.game.state.Wall();
+      check = false;
+      this.point.once('addtag:Wall', function() {
+        return check = true;
+      });
+      wall1.addtag('bla');
+      this.point.once('addtag:bla', function() {
+        test.equals(check, true);
+        return test.done();
+      });
+      return this.point.push(wall1);
+    },
     tag_basic: function(test) {
       var wall1;
       wall1 = new this.game.state.Wall();

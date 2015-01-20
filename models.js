@@ -140,12 +140,14 @@
     deltag: function(tag) {
       this.forktags();
       delete this.tags[tag];
-      return this.trigger('deltag', tag);
+      this.trigger('deltag', tag);
+      return this.trigger('deltag:' + tag);
     },
     addtag: function(tag) {
       this.forktags();
       this.tags[tag] = true;
-      return this.trigger('addtag', tag);
+      this.trigger('addtag', tag);
+      return this.trigger('addtag:' + tag);
     },
     msg: function(msg) {
       if (msg == null) {
@@ -252,7 +254,9 @@
     },
     _addtag: function(tag) {
       if (!this.tags[tag]) {
-        return this.tags[tag] = 1;
+        this.tags[tag] = 1;
+        this.trigger('addtag', tag);
+        return this.trigger('addtag:' + tag, this);
       } else {
         return this.tags[tag]++;
       }
@@ -260,7 +264,9 @@
     _deltag: function(tag) {
       this.tags[tag]--;
       if (this.tags[tag] === 0) {
-        return delete this.tags[tag];
+        delete this.tags[tag];
+        this.trigger('deltag', tag);
+        return this.trigger('deltag:' + tag, this);
       }
     },
     modifier: function(coords) {
@@ -501,7 +507,6 @@
     initialize: function() {
       this.controls = {};
       this.state = {};
-      this.tickspeed = 50;
       this.tick = 0;
       this.stateid = 1;
       this.ended = false;
@@ -632,6 +637,10 @@
       if (!this.x && !this.y) {
         return 'stop';
       }
+    };
+
+    Direction.prototype.flip = function() {
+      return new Direction(-this.x, -this.y);
     };
 
     Direction.prototype.stop = function() {

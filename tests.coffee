@@ -32,6 +32,17 @@ exports.Point =
         test.equals(cnt,2)
         test.done()
 
+    tag_subscription: (test) ->
+        wall1 = new @game.state.Wall()
+        check = false
+        @point.once 'addtag:Wall', -> check = true
+        wall1.addtag('bla')
+        @point.once 'addtag:bla', ->
+            test.equals check, true
+            test.done()
+        
+        @point.push wall1
+
     tag_basic: (test) ->
         wall1 = new @game.state.Wall()
         test.equals wall1.hasTag('Wall'), true, 'no name tag'
