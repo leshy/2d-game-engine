@@ -55,7 +55,7 @@ GameView = exports.GameView = View.GameView.extend4000
 # generic raphael painter, it just translates in game abstract coordinates to raphael coordinates
 RaphaelPainter = View.Painter.extend4000
     draw: (point) ->
-        if @state?.mover and @rendering then return
+        if @state?.mover and @rendering then return @rendering.toFront()
 #        console.log '>>', @name, @state?.name,' draw called', point.coords(), @gameview.translate(point.coords())
         @render @gameview.translate(point.coords()), @gameview.size
 
@@ -84,51 +84,50 @@ Image = exports.Image = RaphaelPainter.extend4000
         
 
     render: (coords, cellSize) ->
+
         if c = @state?.point?.coords() then coords = @gameview.translate(c)
-        #console.log 'coords',c
         if not coords then coords = @coords else @coords = coords
         if not cellSize then cellSize = @cellSize else @cellSize = cellSize
         
-        # is this the first time this state has been rendered?
-        #console.log 'painter render', @name, 'for state', @state?.name
-        #if @name is "Player" then console.log 'player state: ',@state
 
         if @state?.mover
             console.log 'coords',coords, @cellSize, @state.coordinates
             coords = helpers.squish coords, @state.coordinates, (coord,subCoord) -> Math.round(coord + (cellSize * (subCoord - 0.5)))
-            
-#            console.log 'coordsafter',coords
-
-        _applyOffset = (coords) =>
-            coords = helpers.squish coords, @offset, (coord,offset) ->
-                if not offset then return coord
-                coord + (offset * cellSize)
-                             
-        coords = _applyOffset(coords)
-
         
+        # apply offset modifiers
+        coords = helpers.squish coords, @offset, (coord,offset) ->
+            if not offset then return coord
+            coord + (offset * cellSize)
+        
+        # apply size modifiers
         size = helpers.squish [ cellSize, cellSize ], @size, (size, cell) -> size * cell
         
         if not @rendering
-            @rendering = @gameview.paper.image(src=@getpic(), coords[0], coords[1], size[0], size[1]); @rendering.toFront();
+            @rendering = @gameview.paper.image(src=@getpic(), coords[0], coords[1], size[0], size[1])
+            
             if @rotation then @rendering.rotate @rotation
+#            if @flip is "horizontal" then @rendering.scale(-1,1)
+#            if @flip is "vertical" then @rendering.scale(1,-1)
+            if @zindex <=0 then @rendering.toBack()
+            #@rendering.toFront();
+            
             if @state?.mover then @state.on 'movementChange', =>
-                console.log 'movementchange rerender'
                 @render()
 
             @on 'remove', =>
                 if @rendering
                     @rendering.remove()
                     delete @rendering
+                    
             return
-            
+
+        # bring us to front..
+        if @zindex > 0 then @rendering.toFront()
+                        
         if not @state then return        
         # do we need to move our rendering? 
         if @rendering.attrs.x != coords[0] or @rendering.attrs.y != coords[1] then @move(coords)
         if @state.speed and not @state.direction.stop() then @animate() else @stopAnimate()
-            
-        # bring us to front..
-        @rendering.toFront()
 
     getpic: -> '/pic/' + (@pic or @name) + '.png'
     
@@ -201,6 +200,5 @@ MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
 DirectionPainter = exports.DirectionPainter = MetaPainter.extend4000
     decideRepr: -> @reprs[(@state.direction or @state.get('direction')).string()]
     
-
 OrientationPainter = exports.OrientationPainter = MetaPainter.extend4000
     decideRepr: -> @reprs[@state.get('direction').orientation()]

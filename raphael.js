@@ -67,7 +67,7 @@
     draw: function(point) {
       var _ref;
       if (((_ref = this.state) != null ? _ref.mover : void 0) && this.rendering) {
-        return;
+        return this.rendering.toFront();
       }
       return this.render(this.gameview.translate(point.coords()), this.gameview.size);
     }
@@ -104,7 +104,7 @@
       return this.rendering.stop();
     },
     render: function(coords, cellSize) {
-      var c, size, src, _applyOffset, _ref, _ref1, _ref2, _ref3;
+      var c, size, src, _ref, _ref1, _ref2, _ref3;
       if (c = (_ref = this.state) != null ? (_ref1 = _ref.point) != null ? _ref1.coords() : void 0 : void 0) {
         coords = this.gameview.translate(c);
       }
@@ -124,30 +124,26 @@
           return Math.round(coord + (cellSize * (subCoord - 0.5)));
         });
       }
-      _applyOffset = (function(_this) {
-        return function(coords) {
-          return coords = helpers.squish(coords, _this.offset, function(coord, offset) {
-            if (!offset) {
-              return coord;
-            }
-            return coord + (offset * cellSize);
-          });
-        };
-      })(this);
-      coords = _applyOffset(coords);
+      coords = helpers.squish(coords, this.offset, function(coord, offset) {
+        if (!offset) {
+          return coord;
+        }
+        return coord + (offset * cellSize);
+      });
       size = helpers.squish([cellSize, cellSize], this.size, function(size, cell) {
         return size * cell;
       });
       if (!this.rendering) {
         this.rendering = this.gameview.paper.image(src = this.getpic(), coords[0], coords[1], size[0], size[1]);
-        this.rendering.toFront();
         if (this.rotation) {
           this.rendering.rotate(this.rotation);
+        }
+        if (this.zindex <= 0) {
+          this.rendering.toBack();
         }
         if ((_ref3 = this.state) != null ? _ref3.mover : void 0) {
           this.state.on('movementChange', (function(_this) {
             return function() {
-              console.log('movementchange rerender');
               return _this.render();
             };
           })(this));
@@ -162,6 +158,9 @@
         })(this));
         return;
       }
+      if (this.zindex > 0) {
+        this.rendering.toFront();
+      }
       if (!this.state) {
         return;
       }
@@ -169,11 +168,10 @@
         this.move(coords);
       }
       if (this.state.speed && !this.state.direction.stop()) {
-        this.animate();
+        return this.animate();
       } else {
-        this.stopAnimate();
+        return this.stopAnimate();
       }
-      return this.rendering.toFront();
     },
     getpic: function() {
       return '/pic/' + (this.pic || this.name) + '.png';

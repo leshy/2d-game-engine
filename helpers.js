@@ -214,7 +214,8 @@
           }
         });
         console.log('moved from', this.point.coords(), 'to', movePoint.coords(), this.coordinates);
-        return this.move(movePoint);
+        this.move(movePoint);
+        return console.log('did the move work?', this.point.coords(), movePoint.coords(), this.coordinates);
       }
     }
   };

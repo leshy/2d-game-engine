@@ -71,6 +71,7 @@ exports.State = State = Tagged.extend4000 ClockListener,
     initialize: ->
         @when 'point', (point) =>
             @point = point
+            @on 'change:point', (model,point) => @point = point
             @clockParent = point.game
             if not @id then @id = @get('id')
             if not @id then @set(id: @id = point.game.nextid())

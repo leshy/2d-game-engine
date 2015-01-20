@@ -110,6 +110,7 @@ exports.mover = {
             @coordinates = _.map @coordinates, (c) -> if c >= 1 then c - 1 else if c <= 0 then c + 1 else c
             console.log 'moved from', @point.coords(),'to', movePoint.coords(), @coordinates
             @move movePoint
+            console.log 'did the move work?', @point.coords(), movePoint.coords(), @coordinates
 
         #@coordinates = _.map @coordinates, (c) -> helpers.round(c)
 

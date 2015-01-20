@@ -91,6 +91,9 @@
       return this.when('point', (function(_this) {
         return function(point) {
           _this.point = point;
+          _this.on('change:point', function(model, point) {
+            return _this.point = point;
+          });
           _this.clockParent = point.game;
           if (!_this.id) {
             _this.id = _this.get('id');
