@@ -17,7 +17,8 @@ Painter = exports.Painter = Models.ClockListener.extend4000
         if not @point then @point = @get 'point'
 
         if @name is 'Player' then console.log "IM A PLAYER, STATE IS",@state,@
-                                    
+        #@on 'remove', => @stopListening()
+        
         if @state
             @gameview.pInstances[@state.id] = @
             @on 'remove', => delete @gameview.pInstances[@state.id]

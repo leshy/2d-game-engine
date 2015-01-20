@@ -97,7 +97,7 @@ Image = exports.Image = RaphaelPainter.extend4000
             @rendering.node.offsetHeight # no need to store this anywhere, the reference is enough
             @rendering.node.style.display='block'
             ), 15
-            
+                        
     stopAnimate: ->
         @animating = false
         clearInterval @ticker
@@ -132,15 +132,19 @@ Image = exports.Image = RaphaelPainter.extend4000
 
             if @zindex? then @gameview.zMarkers[@zindex].after @rendering else @rendering.toBack()
             
-            if @state?.mover then @state.on 'movementChange', =>
-                @render()
+            if @state?.mover
+                #@listenTo @state, 'movementChange', => @render()
+                @on 'remove', =>
+                    @rendering?.stop()
+                    @rendering?.remove()
+                    clearInterval @ticker
 
+                
             @on 'remove', =>
                 if @rendering
                     @rendering.remove()
                     delete @rendering
                     
-            return
                         
         if not @state then return        
         # do we need to move our rendering? 
@@ -215,8 +219,9 @@ MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
         if @repr.constructor isnt cls
             oldRepr = @repr
             @repr.remove()
-            console.log 'oldrepr frame', oldRepr.name, cls::name, oldRepr.repr.frame + 1,
-            @repr = new cls { gameview: @gameview, state: @state, frame: oldRepr.repr.frame + 1 }
+#            console.log 'oldrepr frame', oldRepr.name, cls::name, oldRepr.repr.frame + 1,
+#            @repr = new cls { gameview: @gameview, state: @state, frame: oldRepr?.repr?.frame + 1 }
+            @repr = new cls { gameview: @gameview, state: @state } 
             @render.apply @, @args
             
     inherit: -> helpers.dictFromArray [ 'frame' ], (attr) => [ attr, @[attr] ]

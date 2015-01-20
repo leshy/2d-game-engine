@@ -173,9 +173,16 @@
           this.rendering.toBack();
         }
         if ((_ref3 = this.state) != null ? _ref3.mover : void 0) {
-          this.state.on('movementChange', (function(_this) {
+          this.on('remove', (function(_this) {
             return function() {
-              return _this.render();
+              var _ref4, _ref5;
+              if ((_ref4 = _this.rendering) != null) {
+                _ref4.stop();
+              }
+              if ((_ref5 = _this.rendering) != null) {
+                _ref5.remove();
+              }
+              return clearInterval(_this.ticker);
             };
           })(this));
         }
@@ -187,7 +194,6 @@
             }
           };
         })(this));
-        return;
       }
       if (!this.state) {
         return;
@@ -320,11 +326,10 @@
       if (this.repr.constructor !== cls) {
         oldRepr = this.repr;
         this.repr.remove();
-        console.log('oldrepr frame', oldRepr.name, cls.prototype.name, oldRepr.repr.frame + 1, this.repr = new cls({
+        this.repr = new cls({
           gameview: this.gameview,
-          state: this.state,
-          frame: oldRepr.repr.frame + 1
-        }));
+          state: this.state
+        });
         return this.render.apply(this, this.args);
       }
     },
