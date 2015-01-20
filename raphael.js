@@ -56,7 +56,36 @@
           return _this.size_offsety = Math.floor((elHeight - (_this.size * gameHeight)) / 2);
         };
       })(this);
-      return calculateSizes();
+      calculateSizes();
+      this.zMarkers = {};
+      return this.on('definePainter', (function(_this) {
+        return function(painter) {
+          var forwardMarker, marker, zindex, _findForwardMarker;
+          if (painter.prototype.zindex == null) {
+            return;
+          }
+          zindex = painter.prototype.zindex;
+          _findForwardMarker = function(marker) {
+            var sorted;
+            sorted = _.sortBy(_this.zMarkers, function(sortMarker, index) {
+              return index;
+            });
+            return _.find(sorted, function(checkMarker) {
+              return checkMarker.index > marker.index;
+            });
+          };
+          if (!_this.zMarkers[zindex]) {
+            _this.zMarkers[zindex] = marker = $("<marker index='" + zindex + "'></marker>");
+            marker.index = zindex;
+            if (!(forwardMarker = _findForwardMarker(marker))) {
+              $(_this.paper.canvas).append(marker);
+            } else {
+              forwardMarker.before(marker);
+            }
+          }
+          return console.log("DEFINEPAINTER", painter.prototype.name, painter.prototype.zindex);
+        };
+      })(this));
     },
     translate: function(coords) {
       return [this.size_offsetx + (coords[0] * this.size), this.size_offsety + (coords[1] * this.size)];
@@ -138,7 +167,9 @@
         if (this.rotation) {
           this.rendering.rotate(this.rotation);
         }
-        if (this.zindex <= 0) {
+        if (this.zindex != null) {
+          this.gameview.zMarkers[this.zindex].after(this.rendering);
+        } else {
           this.rendering.toBack();
         }
         if ((_ref3 = this.state) != null ? _ref3.mover : void 0) {
@@ -157,9 +188,6 @@
           };
         })(this));
         return;
-      }
-      if (this.zindex > 0) {
-        this.rendering.toFront();
       }
       if (!this.state) {
         return;

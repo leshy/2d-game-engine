@@ -17,7 +17,6 @@ coordsDecorator = (targetf,coords) ->
 GameView = exports.GameView = View.GameView.extend4000
     initialize: ->
         el = @get('el')
-        #@paper = raphael el.get(0), el.width(), el.height() # create raphael paper
         @paper = raphael el.get(0), "100%", "100%" # create raphael paper        
         window.paper = @paper
 
@@ -38,7 +37,31 @@ GameView = exports.GameView = View.GameView.extend4000
             @size_offsety = Math.floor((elHeight - (@size * gameHeight)) / 2)
 
         calculateSizes()
+
+        @zMarkers = {}
         
+
+        @on 'definePainter', (painter) =>
+            if not painter::zindex? then return
+            zindex = painter::zindex
+
+            _findForwardMarker = (marker) =>
+                sorted = _.sortBy @zMarkers, (sortMarker,index) -> index
+                _.find sorted, (checkMarker) -> checkMarker.index > marker.index
+                
+                
+            if not @zMarkers[zindex]
+                @zMarkers[zindex] = marker = $("<marker index='#{ zindex }'></marker>")
+                marker.index = zindex
+
+                if not forwardMarker = _findForwardMarker(marker) then $(@paper.canvas).append marker
+                else
+                    forwardMarker.before marker
+                
+                
+                
+            console.log "DEFINEPAINTER",painter::name, painter::zindex
+                                
         # hook window onresize event, and trigger gameview.pan event to redraw the game
         # TODO
         
@@ -48,7 +71,7 @@ GameView = exports.GameView = View.GameView.extend4000
             
 #    rerender: ->
 #        _.map @pinstances, (painter) -> painter.render()
-        
+
     # convert abstract game coordinates to concrete raphael paper coordinates
     translate: (coords) -> [ @size_offsetx + (coords[0] * @size),  @size_offsety + (coords[1] * @size) ]
 
@@ -75,13 +98,11 @@ Image = exports.Image = RaphaelPainter.extend4000
             @rendering.node.offsetHeight # no need to store this anywhere, the reference is enough
             @rendering.node.style.display='block'
             ), 15
-        
             
     stopAnimate: ->
         @animating = false
         clearInterval @ticker
-        @rendering.stop()
-        
+        @rendering.stop()        
 
     render: (coords, cellSize) ->
 
@@ -108,8 +129,9 @@ Image = exports.Image = RaphaelPainter.extend4000
             if @rotation then @rendering.rotate @rotation
 #            if @flip is "horizontal" then @rendering.scale(-1,1)
 #            if @flip is "vertical" then @rendering.scale(1,-1)
-            if @zindex <=0 then @rendering.toBack()
-            #@rendering.toFront();
+
+
+            if @zindex? then @gameview.zMarkers[@zindex].after @rendering else @rendering.toBack()
             
             if @state?.mover then @state.on 'movementChange', =>
                 @render()
@@ -120,9 +142,6 @@ Image = exports.Image = RaphaelPainter.extend4000
                     delete @rendering
                     
             return
-
-        # bring us to front..
-        if @zindex > 0 then @rendering.toFront()
                         
         if not @state then return        
         # do we need to move our rendering? 
