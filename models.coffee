@@ -315,10 +315,12 @@ exports.Game = Game = Field.extend4000 Clock,
         if not @ended then @trigger 'end', data
         @ended = true            
         
-    start: (callback) ->
+    start: (options = {}, callback) ->
         if @ended then callback 'This game has already ended'; return
+        _.extend @, options            
         #@each (point) => point.each (state) => if state.start then state.start()
         @tickloop()
+        
         @on 'end', (data) =>
             @stop()
             helpers.cbc callback, data

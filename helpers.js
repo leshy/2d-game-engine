@@ -10,6 +10,16 @@
 
   colors = require('colors');
 
+  exports.mover_ = {
+    initialize: function(options) {
+      return _.extend(this, {
+        coordinates: [0.5, 0.5],
+        speed: 0,
+        direction: new Game.Direction(0, 0)
+      }, options);
+    }
+  };
+
   exports.mover = {
     initialize: function(options) {
       _.extend(this, {

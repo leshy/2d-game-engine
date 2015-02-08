@@ -7,7 +7,7 @@ $ = require 'jquery-browserify'
 
 # painter is made concrete by subclassing abstract painter
 View = require './views'
-raphael = require 'raphael-browserify'
+Raphael = require 'raphael-browserify'
 
 # will figure out coordinates argument for a painter method, if it didn't receive them already
 coordsDecorator = (targetf,coords) ->
@@ -17,7 +17,7 @@ coordsDecorator = (targetf,coords) ->
 GameView = exports.GameView = View.GameView.extend4000
     initialize: ->
         el = @get('el')
-        @paper = raphael el.get(0), "100%", "100%" # create raphael paper        
+        @paper = Raphael el.get(0), "100%", "100%" # create raphael paper        
         window.paper = @paper
 
         calculateSizes = =>
@@ -128,7 +128,6 @@ Image = exports.Image = RaphaelPainter.extend4000
             if @rotation then @rendering.rotate @rotation
 #            if @flip is "horizontal" then @rendering.scale(-1,1)
 #            if @flip is "vertical" then @rendering.scale(1,-1)
-
 
             if @zindex? then @gameview.zMarkers[@zindex].after @rendering else @rendering.toBack()
             

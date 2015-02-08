@@ -521,11 +521,15 @@
       }
       return this.ended = true;
     },
-    start: function(callback) {
+    start: function(options, callback) {
+      if (options == null) {
+        options = {};
+      }
       if (this.ended) {
         callback('This game has already ended');
         return;
       }
+      _.extend(this, options);
       this.tickloop();
       return this.on('end', (function(_this) {
         return function(data) {

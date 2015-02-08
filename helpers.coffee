@@ -2,6 +2,17 @@ _ = require 'underscore'
 helpers = require 'helpers'
 Game = require 'game/models'
 colors = require 'colors'
+
+exports.mover_ = {
+    initialize: (options) ->
+        _.extend @, {
+            coordinates: [ 0.5, 0.5]
+            speed: 0
+            direction: new Game.Direction(0,0)
+        }, options
+}
+
+
 exports.mover = {
     initialize: (options) ->
         _.extend @, {
