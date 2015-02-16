@@ -11,6 +11,7 @@ exports.KeyControler = Backbone.Model.extend4000 validator.ValidatedModel,
         actions = @get 'actions'
 
         $(document).keydown (event) =>
+            console.log event.keyCode
             if not key = actions[event.keyCode] then return
             if state[key] then return
             state[key] = true

@@ -66,7 +66,7 @@ StatesFromTags = (f,args...) ->
 # addtag(tags...)
 # deltag(tags...)
 # each(callback) - iterate through tags
-# 
+ 
 exports.State = State = Tagged.extend4000 ClockListener,
     initialize: ->
         @when 'point', (point) =>
@@ -123,7 +123,7 @@ exports.State = State = Tagged.extend4000 ClockListener,
 # when tags of states change or states are added
 # this could also be done each time that data is requested, or lazily (I could cache)
 # is this relevant/should I benchmark?
-#
+
 exports.Point = Point = Tagged.extend4000 ClockListener,
     initialize: ([@x,@y],@game) ->
         @clockParent = @game
@@ -242,6 +242,7 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
 # 
 # needs width and height attributes
 # holds bunch of points together
+
 exports.Field = Field = Backbone.Model.extend4000
     initialize: ->
         @points = {}
@@ -298,7 +299,8 @@ exports.Field = Field = Backbone.Model.extend4000
         data 
 #
 # used to define possible states, has tickloop controls, field width/height, and this is what main game views hook to
-# 
+#
+
 exports.Game = Game = Field.extend4000 Clock,
     initialize: ->
         @controls = {}
@@ -360,7 +362,8 @@ exports.Game = Game = Field.extend4000 Clock,
 
 #
 # as close as you can get to a 2D vector in a world of bomberman.
-# 
+#
+
 exports.Direction = Direction = class Direction
     constructor: (@x,@y) -> true
     

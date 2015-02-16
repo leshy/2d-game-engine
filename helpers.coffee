@@ -3,26 +3,19 @@ helpers = require 'helpers'
 Game = require 'game/models'
 colors = require 'colors'
 
-exports.mover_ = {
-    initialize: (options) ->
-        _.extend @, {
-            coordinates: [ 0.5, 0.5]
-            speed: 0
-            direction: new Game.Direction(0,0)
-        }, options
-}
-
-
 exports.mover = {
     initialize: (options) ->
+        console.log "mover init",options
         _.extend @, {
             coordinates: [ 0.5, 0.5]
             speed: 0
             direction: new Game.Direction(0,0)
         }, options
-        
-        console.log 'mover init', @direction, @speed
 
+
+    start: ->
+        @movementChange()
+        
     display: ->
         @movementChange()
         x = Math.round(@coordinates[0] * 40)
@@ -36,71 +29,14 @@ exports.mover = {
             ret += "       " + res.join("") + "\n"
         
         ret + "       " + colors.red(@point.coords()) + " | " + colors.yellow(@coordinates) + "\n"
-        
-    start: ->
-        @scheduleMove()
-        
-        
-    movementChange: ->
-        if @doSubMove
-            # some other movement is already scheduled, unschedule it
-            # move as much as you are supposed to until now,
-            # and schedule new movement
-            @unsub()
-            @doSubMove()
-            delete @doSubMove
-
-        else @scheduleMove()
-        
-        @set speed: @speed, direction: @direction, coordinates: @coordinates        
-        @msg { d: @direction.coords(), speed: @speed, c: @coordinates }
-
-    centeredCoord: (coord) ->
-        distance = (coord) -> Math.abs(coord - 0.5)
-        d = distance(coord)
-        if d < distance(coord + @speed) and d < distance(coord - @speed) then true else false
-            
-    centered: (direction) ->
-        not _.reject(@coordinates, (coordinate) => @centeredCoord(coordinate)).length
-
-    scheduleMove: ->
-        eta = @nextCheck(@direction, @speed)
-        console.log 'schedulemove', eta, @direction.string(), @direction.coords()
-        if eta is Infinity then return
-        if @unsub then @unsub()
-        @unsub  = @in Math.ceil(eta), @doSubMove = @makeMover()
-        if @centered() then @trigger 'centered'
-            
-    makeMover: (direction=@direction,speed=@speed) ->
-        startTime = @point.game.tick
-        =>
-            ticks = @point.game.tick - startTime
-            @subMove direction, speed, ticks
-            @scheduleMove()
-
-    nextCheck: (direction, speed) ->
-        check = undefined
-        eta = helpers.squish direction.coords(), @coordinates, (direction,coordinate) =>
-            
-            if direction is 0 then return undefined
-            
-            if direction > 0
-                if coordinate < 0.5 then return _.bind(@centerEta,@) else return _.bind(@boundaryEta,@)
-                    
-            if direction < 0
-                if coordinate > 0.5 then return _.bind(@centerEta,@) else return _.bind(@boundaryEta,@)
-
-        f = _.find eta, (x) -> x
-        
-        if not f then Infinity else f(direction,speed)
-        
+                
     # will calculate when the object will come to the point center given some speed and direction, used to decide if object is allowed to keep going
     centerEta: (direction, speed) ->
         eta = helpers.squish direction.coords(), @coordinates, (direction,coordinate) =>
-            if direction is 0 then Infinity
-            else if direction > 0 then (0.5 - coordinate) / speed
-            else (coordinate - 0.5) / speed
-        _.reduce eta, ((min,x) -> if x < min then x else min), Infinity
+            if direction is 0 then return Infinity
+            if direction > 0 then return (0.5 - coordinate) / speed
+            return (coordinate - 0.5) / speed
+        Math.ceil(_.reduce eta, ((min,x) -> if x < min and x >= 0 then x else min), Infinity)
         
     # will calculate when the object will pass the point boundary given some speed and direction
     boundaryEta: (direction, speed) ->
@@ -108,10 +44,39 @@ exports.mover = {
             if direction is 0 then Infinity
             else if direction > 0 then (1 - coordinate) / speed
             else coordinate / speed
-
         _.reduce eta, ((min,x) -> if x < min then x else min), Infinity
+        
+    movementChange: ->
+        if @doSubMove then @doSubMove()
+        @scheduleMove()
+        console.log 'MSG',@direction.string(), @coordinates
+        @msg { d: @direction.coords(), speed: @speed, c: @coordinates }
+        
+    scheduleMove: ->
+        @unsubscribeMoves()
+                
+        eta = Math.ceil(@boundaryEta(@direction, @speed))
+        if eta is Infinity then return
+        
+        @uSubMove  = @in eta, @doSubMove = @makeSubMover(@direction,@speed)
+        
+        if (centerEta = @centerEta(@direction, @speed)) < eta
+            console.log 'centereta', @point.game.tick, centerEta, @coordinates, @speed
+            @uCenterEvent = @in centerEta, => @trigger('center')
+            
+    unsubscribeMoves: ->
+        if @doSubMove then delete @doSubMove
+        if @uSubMove then @uSubMove(); delete @uSubMove
+        if @uCenterEvent then @uCenterEvent(); delete @uCenterEvent
+    
+    makeSubMover: (direction, speed) ->
+        startTime = @point.game.tick
+        =>
+            delete @doSubMove
+            ticks = @point.game.tick - startTime
+            @subMove direction, speed, ticks
+            @scheduleMove()
 
-    # will calculate position depending on direction and time
     subMove: (direction, speed, time) ->
         if not time then return
         console.log @point.game.tick + " " + colors.yellow('move'), @coordinates, colors.green(direction.string()), speed, time
@@ -121,7 +86,5 @@ exports.mover = {
             @coordinates = _.map @coordinates, (c) -> if c >= 1 then c - 1 else if c <= 0 then c + 1 else c
             console.log 'moved from', @point.coords(),'to', movePoint.coords(), @coordinates
             @move movePoint
-
-        #@coordinates = _.map @coordinates, (c) -> helpers.round(c)
-
 }
+

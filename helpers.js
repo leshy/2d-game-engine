@@ -10,24 +10,17 @@
 
   colors = require('colors');
 
-  exports.mover_ = {
+  exports.mover = {
     initialize: function(options) {
+      console.log("mover init", options);
       return _.extend(this, {
         coordinates: [0.5, 0.5],
         speed: 0,
         direction: new Game.Direction(0, 0)
       }, options);
-    }
-  };
-
-  exports.mover = {
-    initialize: function(options) {
-      _.extend(this, {
-        coordinates: [0.5, 0.5],
-        speed: 0,
-        direction: new Game.Direction(0, 0)
-      }, options);
-      return console.log('mover init', this.direction, this.speed);
+    },
+    start: function() {
+      return this.movementChange();
     },
     display: function() {
       var ret, x, y;
@@ -45,133 +38,26 @@
       });
       return ret + "       " + colors.red(this.point.coords()) + " | " + colors.yellow(this.coordinates) + "\n";
     },
-    start: function() {
-      return this.scheduleMove();
-    },
-    movementChange: function() {
-      if (this.doSubMove) {
-        this.unsub();
-        this.doSubMove();
-        delete this.doSubMove;
-      } else {
-        this.scheduleMove();
-      }
-      this.set({
-        speed: this.speed,
-        direction: this.direction,
-        coordinates: this.coordinates
-      });
-      return this.msg({
-        d: this.direction.coords(),
-        speed: this.speed,
-        c: this.coordinates
-      });
-    },
-    centeredCoord: function(coord) {
-      var d, distance;
-      distance = function(coord) {
-        return Math.abs(coord - 0.5);
-      };
-      d = distance(coord);
-      if (d < distance(coord + this.speed) && d < distance(coord - this.speed)) {
-        return true;
-      } else {
-        return false;
-      }
-    },
-    centered: function(direction) {
-      return !_.reject(this.coordinates, (function(_this) {
-        return function(coordinate) {
-          return _this.centeredCoord(coordinate);
-        };
-      })(this)).length;
-    },
-    scheduleMove: function() {
-      var eta;
-      eta = this.nextCheck(this.direction, this.speed);
-      console.log('schedulemove', eta, this.direction.string(), this.direction.coords());
-      if (eta === Infinity) {
-        return;
-      }
-      if (this.unsub) {
-        this.unsub();
-      }
-      this.unsub = this["in"](Math.ceil(eta), this.doSubMove = this.makeMover());
-      if (this.centered()) {
-        return this.trigger('centered');
-      }
-    },
-    makeMover: function(direction, speed) {
-      var startTime;
-      if (direction == null) {
-        direction = this.direction;
-      }
-      if (speed == null) {
-        speed = this.speed;
-      }
-      startTime = this.point.game.tick;
-      return (function(_this) {
-        return function() {
-          var ticks;
-          ticks = _this.point.game.tick - startTime;
-          _this.subMove(direction, speed, ticks);
-          return _this.scheduleMove();
-        };
-      })(this);
-    },
-    nextCheck: function(direction, speed) {
-      var check, eta, f;
-      check = void 0;
-      eta = helpers.squish(direction.coords(), this.coordinates, (function(_this) {
-        return function(direction, coordinate) {
-          if (direction === 0) {
-            return void 0;
-          }
-          if (direction > 0) {
-            if (coordinate < 0.5) {
-              return _.bind(_this.centerEta, _this);
-            } else {
-              return _.bind(_this.boundaryEta, _this);
-            }
-          }
-          if (direction < 0) {
-            if (coordinate > 0.5) {
-              return _.bind(_this.centerEta, _this);
-            } else {
-              return _.bind(_this.boundaryEta, _this);
-            }
-          }
-        };
-      })(this));
-      f = _.find(eta, function(x) {
-        return x;
-      });
-      if (!f) {
-        return Infinity;
-      } else {
-        return f(direction, speed);
-      }
-    },
     centerEta: function(direction, speed) {
       var eta;
       eta = helpers.squish(direction.coords(), this.coordinates, (function(_this) {
         return function(direction, coordinate) {
           if (direction === 0) {
             return Infinity;
-          } else if (direction > 0) {
-            return (0.5 - coordinate) / speed;
-          } else {
-            return (coordinate - 0.5) / speed;
           }
+          if (direction > 0) {
+            return (0.5 - coordinate) / speed;
+          }
+          return (coordinate - 0.5) / speed;
         };
       })(this));
-      return _.reduce(eta, (function(min, x) {
-        if (x < min) {
+      return Math.ceil(_.reduce(eta, (function(min, x) {
+        if (x < min && x >= 0) {
           return x;
         } else {
           return min;
         }
-      }), Infinity);
+      }), Infinity));
     },
     boundaryEta: function(direction, speed) {
       var eta;
@@ -193,6 +79,61 @@
           return min;
         }
       }), Infinity);
+    },
+    movementChange: function() {
+      if (this.doSubMove) {
+        this.doSubMove();
+      }
+      this.scheduleMove();
+      console.log('MSG', this.direction.string(), this.coordinates);
+      return this.msg({
+        d: this.direction.coords(),
+        speed: this.speed,
+        c: this.coordinates
+      });
+    },
+    scheduleMove: function() {
+      var centerEta, eta;
+      this.unsubscribeMoves();
+      eta = Math.ceil(this.boundaryEta(this.direction, this.speed));
+      if (eta === Infinity) {
+        return;
+      }
+      this.uSubMove = this["in"](eta, this.doSubMove = this.makeSubMover(this.direction, this.speed));
+      if ((centerEta = this.centerEta(this.direction, this.speed)) < eta) {
+        console.log('centereta', this.point.game.tick, centerEta, this.coordinates, this.speed);
+        return this.uCenterEvent = this["in"](centerEta, (function(_this) {
+          return function() {
+            return _this.trigger('center');
+          };
+        })(this));
+      }
+    },
+    unsubscribeMoves: function() {
+      if (this.doSubMove) {
+        delete this.doSubMove;
+      }
+      if (this.uSubMove) {
+        this.uSubMove();
+        delete this.uSubMove;
+      }
+      if (this.uCenterEvent) {
+        this.uCenterEvent();
+        return delete this.uCenterEvent;
+      }
+    },
+    makeSubMover: function(direction, speed) {
+      var startTime;
+      startTime = this.point.game.tick;
+      return (function(_this) {
+        return function() {
+          var ticks;
+          delete _this.doSubMove;
+          ticks = _this.point.game.tick - startTime;
+          _this.subMove(direction, speed, ticks);
+          return _this.scheduleMove();
+        };
+      })(this);
     },
     subMove: function(direction, speed, time) {
       var movePoint;
