@@ -105,7 +105,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
                 if eliminates = helpers.objorclass painter, 'eliminates'
                     helpers.maybeiterate eliminates, (name) ->
                         painter = dict[name]
-                        if typeof(painter) is 'object' then painter.remove()                        
+                        if typeof(painter) is 'object' then painter.remove()
                         delete dict[name]
 
             helpers.makelist dict
