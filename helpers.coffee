@@ -12,7 +12,6 @@ exports.mover = {
             direction: new Game.Direction(0,0)
         }, options
 
-
     start: ->
         @movementChange()
         

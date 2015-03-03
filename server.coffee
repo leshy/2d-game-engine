@@ -18,6 +18,9 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
         @delHook = @delHook.bind @
         @moveHook = @moveHook.bind @
 
+    start: ->
+        @startNetworkTicker()
+
     stopNetworkTicker: ->
         clearTimeout(@timeout)
         delete @log
@@ -69,5 +72,4 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
         @log = []
         @send { tick: @tick, changes: log }
         
-    send: (msg) ->
-        console.warn "game server trying to send, but no send method is implemented"
+    send: (msg) -> @trigger 'msg', msg
