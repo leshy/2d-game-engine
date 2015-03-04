@@ -16,7 +16,7 @@ Painter = exports.Painter = Models.ClockListener.extend4000
         if not @state then @state = @get 'state'
         if not @point then @point = @get 'point'
 
-        if @name is 'Player' then console.log "IM A PLAYER, STATE IS",@state,@
+        #if @name is 'Player' then console.log "IM A PLAYER, STATE IS",@state,@
         #@on 'remove', => @stopListening()
         
         if @state

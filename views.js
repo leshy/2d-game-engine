@@ -29,9 +29,6 @@
       if (!this.point) {
         this.point = this.get('point');
       }
-      if (this.name === 'Player') {
-        console.log("IM A PLAYER, STATE IS", this.state, this);
-      }
       if (this.state) {
         this.gameview.pInstances[this.state.id] = this;
         this.on('remove', (function(_this) {
