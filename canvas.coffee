@@ -7,7 +7,6 @@ $ = require 'jquery-browserify'
 
 # painter is made concrete by subclassing abstract painter
 View = require './views'
-Raphael = require 'raphael-browserify'
 
 # will figure out coordinates argument for a painter method, if it didn't receive them already
 coordsDecorator = (targetf,coords) ->
@@ -18,12 +17,13 @@ GameView = exports.GameView = View.GameView.extend4000
     initialize: ->
         el = @get('el')
         @paper = Raphael el.get(0), "100%", "100%" # create raphael paper        
-        window.paper = @paper
+        paper = window.paper = $('<canvas></canvas>')
+        ctx = paper.getContext("2d")
 
         calculateSizes = =>
             # calculate size for points
-            elHeight = $(@paper.canvas).height()
-            elWidth = $(@paper.canvas).width()
+            elHeight = $(@paper).height()
+            elWidth = $(@paper).width()
             gameHeight = @game.get('height')
             gameWidth = @game.get('width')
 
@@ -49,13 +49,13 @@ GameView = exports.GameView = View.GameView.extend4000
                 _.find sorted, (checkMarker) -> checkMarker.index > marker.index
                 
                 
-            if not @zMarkers[zindex]
-                @zMarkers[zindex] = marker = $("<marker index='#{ zindex }'></marker>")
-                marker.index = zindex
+            #if not @zMarkers[zindex]
+            #    @zMarkers[zindex] = marker = $("<marker index='#{ zindex }'></marker>")
+            #    marker.index = zindex
 
-                if not forwardMarker = _findForwardMarker(marker) then $(@paper.canvas).append marker
-                else
-                    forwardMarker.before marker
+            #    if not forwardMarker = _findForwardMarker(marker) then $(@paper.canvas).append marker
+            #    else
+            #        forwardMarker.before marker
                 
                 
                 
@@ -95,8 +95,7 @@ Image = exports.Image = RaphaelPainter.extend4000
         @ticker = setInterval (=>
             @rendering.node.style.display='none'
             @rendering.node.offsetHeight # no need to store this anywhere, the reference is enough
-            @rendering.node.style.display='block'
-            ), 15
+            @rendering.node.style.display='block'), 15
                         
     stopAnimate: ->
         @animating = false
@@ -104,12 +103,10 @@ Image = exports.Image = RaphaelPainter.extend4000
         @rendering.stop()        
 
     render: (coords, cellSize) ->
-
         if c = @state?.point?.coords() then coords = @gameview.translate(c)
         if not coords then coords = @coords else @coords = coords
         if not cellSize then cellSize = @cellSize else @cellSize = cellSize
         
-
         if @state?.mover
             #console.log 'coords',coords, @cellSize, @state.coordinates
             coords = helpers.squish coords, @state.coordinates, (coord,subCoord) -> Math.round(coord + (cellSize * (subCoord - 0.5)))
@@ -124,7 +121,6 @@ Image = exports.Image = RaphaelPainter.extend4000
         
         if not @rendering
             @rendering = @gameview.paper.image(src=@getpic(), coords[0], coords[1], size[0], size[1])
-            
             if @rotation then @rendering.rotate @rotation
 #            if @flip is "horizontal" then @rendering.scale(-1,1)
 #            if @flip is "vertical" then @rendering.scale(1,-1)
