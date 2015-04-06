@@ -15,23 +15,22 @@ exports.preloaderMixin = validator.ValidatedModel.extend4000
 
     initialize: ->
         @preloadQueue = new preloadjs.LoadQueue useXHR: true, loadNow: false # init preload queue
-    
+
+        
         handleFileLoad = (event) ->
             #event.result.style.visibility = 'hidden'
             if event.item.type is preloadjs.LoadQueue.IMAGE
-                @$(document.body).append(event.result)
-        @preloadQueue.addEventListener "fileload", handleFileLoad
-
+                $("#preload").append event.result
+        @preloadQueue.on "fileload", handleFileLoad
+        
         _.map @painters, (painterclass) => @preloadPainter(painterclass) # preload existing painters
         @on 'definePainter', (painterclass) => @preloadPainter(painterclass) # hook on definepainter
 
-        if @get 'autopreload'
-            console.log '+++++++++ autopreload true!'
-            @preload()
+        if @get 'autopreload' then @preload()
             
     preload: (callback) ->
         @preloadQueue.load()
-        @preloadQueue.addEventListener "complete", -> helpers.cbc callback
+        @preloadQueue.on "complete", -> helpers.cbc callback
         
     preloadPainter: (painterclass) ->
         painter = new painterclass()

@@ -29,10 +29,10 @@
       });
       handleFileLoad = function(event) {
         if (event.item.type === preloadjs.LoadQueue.IMAGE) {
-          return this.$(document.body).append(event.result);
+          return $("#preload").append(event.result);
         }
       };
-      this.preloadQueue.addEventListener("fileload", handleFileLoad);
+      this.preloadQueue.on("fileload", handleFileLoad);
       _.map(this.painters, (function(_this) {
         return function(painterclass) {
           return _this.preloadPainter(painterclass);
@@ -44,13 +44,12 @@
         };
       })(this));
       if (this.get('autopreload')) {
-        console.log('+++++++++ autopreload true!');
         return this.preload();
       }
     },
     preload: function(callback) {
       this.preloadQueue.load();
-      return this.preloadQueue.addEventListener("complete", function() {
+      return this.preloadQueue.on("complete", function() {
         return helpers.cbc(callback);
       });
     },
