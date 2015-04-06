@@ -37,4 +37,3 @@ exports.preloaderMixin = validator.ValidatedModel.extend4000
         images = painter.images()
         _.map images, (image) => @preloadQueue.loadFile image
 
-
