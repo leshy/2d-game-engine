@@ -3,6 +3,7 @@ Backbone = require 'backbone4000'
 preloadjs = require 'PreloadJS-browserify'
 validator = require 'validator2-extras'; v = validator.v
 views = require './views'
+helpers = require 'helpers'
 
 exports.preloaderMixin = validator.ValidatedModel.extend4000
 #    superValidator: v().Constructor(views.GameView)
@@ -13,18 +14,25 @@ exports.preloaderMixin = validator.ValidatedModel.extend4000
         lazypreload: v().Default(false).Boolean() 
 
     initialize: ->
-        @preloadQueue = new preloadjs.LoadQueue useXHR: true # init preload queue
+        @preloadQueue = new preloadjs.LoadQueue useXHR: true, loadNow: false # init preload queue
     
         handleFileLoad = (event) ->
-            event.result.style.visibility = 'hidden'
-            if event.item.type is preloadjs.LoadQueue.IMAGE then $(document.body).append(event.result)
-                
-        @preloadQueue.addEventListener("fileload", handleFileLoad);
+            #event.result.style.visibility = 'hidden'
+            if event.item.type is preloadjs.LoadQueue.IMAGE
+                @$(document.body).append(event.result)
+        @preloadQueue.addEventListener "fileload", handleFileLoad
 
-        @on 'definePainter', (painterclass) => @preloadPainter(painterclass) # hook on definepainter
-        
         _.map @painters, (painterclass) => @preloadPainter(painterclass) # preload existing painters
+        @on 'definePainter', (painterclass) => @preloadPainter(painterclass) # hook on definepainter
 
+        if @get 'autopreload'
+            console.log '+++++++++ autopreload true!'
+            @preload()
+            
+    preload: (callback) ->
+        @preloadQueue.load()
+        @preloadQueue.addEventListener "complete", -> helpers.cbc callback
+        
     preloadPainter: (painterclass) ->
         painter = new painterclass()
         images = painter.images()

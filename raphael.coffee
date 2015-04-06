@@ -15,49 +15,52 @@ coordsDecorator = (targetf,coords) ->
     targetf.call(@,coords)
 
 GameView = exports.GameView = View.GameView.extend4000
-    initialize: ->
+    render: ->
+        console.log "RAPHAEL RENDER"
         el = @get('el')
         @paper = Raphael el.get(0), "100%", "100%" # create raphael paper        
         window.paper = @paper
+        @calculateSizes()
+        @parseZindexes()
+        
 
-        calculateSizes = =>
-            # calculate size for points
-            elHeight = $(@paper.canvas).height()
-            elWidth = $(@paper.canvas).width()
-            gameHeight = @game.get('height')
-            gameWidth = @game.get('width')
+    calculateSizes: ->
+        # calculate size for points
+        elHeight = $(@paper.canvas).height()
+        elWidth = $(@paper.canvas).width()
+        gameHeight = @game.get('height')
+        gameWidth = @game.get('width')
 
-            sizey = Math.floor(elHeight / gameHeight)
-            sizex = Math.floor(elWidth / gameWidth)
-            if sizex > sizey then @size = sizey else @size = sizex
+        sizey = Math.floor(elHeight / gameHeight)
+        sizex = Math.floor(elWidth / gameWidth)
+        if sizex > sizey then @size = sizey else @size = sizex
 
-            console.log "elHeight: ", elHeight, gameHeight, @size
-            console.log "elWidth: ", elWidth, gameWidth, @size
-            @size_offsetx = Math.floor((elWidth - (@size * gameWidth)) / 2)
-            @size_offsety = Math.floor((elHeight - (@size * gameHeight)) / 2)
+        console.log "elHeight: ", elHeight, gameHeight, @size
+        console.log "elWidth: ", elWidth, gameWidth, @size
+        @size_offsetx = Math.floor((elWidth - (@size * gameWidth)) / 2)
+        @size_offsety = Math.floor((elHeight - (@size * gameHeight)) / 2)
 
-        calculateSizes()
-
+    parseZindexes: ->
         @zMarkers = {}
+        _.map @painters, @parseZindex.bind @
+        @on 'definePainter', @parseZindex.bind @
+                
+    parseZindex: (painter) ->
+        if not painter::zindex? then return
+        zindex = painter::zindex
 
-        @on 'definePainter', (painter) =>
-            if not painter::zindex? then return
-            zindex = painter::zindex
+        _findForwardMarker = (marker) =>
+            sorted = _.sortBy @zMarkers, (sortMarker,index) -> index
+            _.find sorted, (checkMarker) -> checkMarker.index > marker.index
 
-            _findForwardMarker = (marker) =>
-                sorted = _.sortBy @zMarkers, (sortMarker,index) -> index
-                _.find sorted, (checkMarker) -> checkMarker.index > marker.index
-                
-                
-            if not @zMarkers[zindex]
-                @zMarkers[zindex] = marker = $("<marker index='#{ zindex }'></marker>")
-                marker.index = zindex
+        if not @zMarkers[zindex]
+            @zMarkers[zindex] = marker = $("<marker index='#{ zindex }'></marker>")
+            marker.index = zindex
 
-                if not forwardMarker = _findForwardMarker(marker) then $(@paper.canvas).append marker
-                else
-                    forwardMarker.before marker
-                
-                
+            if not forwardMarker = _findForwardMarker(marker) then $(@paper.canvas).append marker
+            else
+                forwardMarker.before marker
+        
                 
             #console.log "DEFINEPAINTER",painter::name, painter::zindex
                                 

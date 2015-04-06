@@ -31,60 +31,64 @@
   };
 
   GameView = exports.GameView = View.GameView.extend4000({
-    initialize: function() {
-      var calculateSizes, el;
+    render: function() {
+      var el;
+      console.log("RAPHAEL RENDER");
       el = this.get('el');
       this.paper = Raphael(el.get(0), "100%", "100%");
       window.paper = this.paper;
-      calculateSizes = (function(_this) {
-        return function() {
-          var elHeight, elWidth, gameHeight, gameWidth, sizex, sizey;
-          elHeight = $(_this.paper.canvas).height();
-          elWidth = $(_this.paper.canvas).width();
-          gameHeight = _this.game.get('height');
-          gameWidth = _this.game.get('width');
-          sizey = Math.floor(elHeight / gameHeight);
-          sizex = Math.floor(elWidth / gameWidth);
-          if (sizex > sizey) {
-            _this.size = sizey;
-          } else {
-            _this.size = sizex;
-          }
-          console.log("elHeight: ", elHeight, gameHeight, _this.size);
-          console.log("elWidth: ", elWidth, gameWidth, _this.size);
-          _this.size_offsetx = Math.floor((elWidth - (_this.size * gameWidth)) / 2);
-          return _this.size_offsety = Math.floor((elHeight - (_this.size * gameHeight)) / 2);
+      this.calculateSizes();
+      return this.parseZindexes();
+    },
+    calculateSizes: function() {
+      var elHeight, elWidth, gameHeight, gameWidth, sizex, sizey;
+      elHeight = $(this.paper.canvas).height();
+      elWidth = $(this.paper.canvas).width();
+      gameHeight = this.game.get('height');
+      gameWidth = this.game.get('width');
+      sizey = Math.floor(elHeight / gameHeight);
+      sizex = Math.floor(elWidth / gameWidth);
+      if (sizex > sizey) {
+        this.size = sizey;
+      } else {
+        this.size = sizex;
+      }
+      console.log("elHeight: ", elHeight, gameHeight, this.size);
+      console.log("elWidth: ", elWidth, gameWidth, this.size);
+      this.size_offsetx = Math.floor((elWidth - (this.size * gameWidth)) / 2);
+      return this.size_offsety = Math.floor((elHeight - (this.size * gameHeight)) / 2);
+    },
+    parseZindexes: function() {
+      this.zMarkers = {};
+      _.map(this.painters, this.parseZindex.bind(this));
+      return this.on('definePainter', this.parseZindex.bind(this));
+    },
+    parseZindex: function(painter) {
+      var _findForwardMarker, forwardMarker, marker, zindex;
+      if (painter.prototype.zindex == null) {
+        return;
+      }
+      zindex = painter.prototype.zindex;
+      _findForwardMarker = (function(_this) {
+        return function(marker) {
+          var sorted;
+          sorted = _.sortBy(_this.zMarkers, function(sortMarker, index) {
+            return index;
+          });
+          return _.find(sorted, function(checkMarker) {
+            return checkMarker.index > marker.index;
+          });
         };
       })(this);
-      calculateSizes();
-      this.zMarkers = {};
-      return this.on('definePainter', (function(_this) {
-        return function(painter) {
-          var _findForwardMarker, forwardMarker, marker, zindex;
-          if (painter.prototype.zindex == null) {
-            return;
-          }
-          zindex = painter.prototype.zindex;
-          _findForwardMarker = function(marker) {
-            var sorted;
-            sorted = _.sortBy(_this.zMarkers, function(sortMarker, index) {
-              return index;
-            });
-            return _.find(sorted, function(checkMarker) {
-              return checkMarker.index > marker.index;
-            });
-          };
-          if (!_this.zMarkers[zindex]) {
-            _this.zMarkers[zindex] = marker = $("<marker index='" + zindex + "'></marker>");
-            marker.index = zindex;
-            if (!(forwardMarker = _findForwardMarker(marker))) {
-              return $(_this.paper.canvas).append(marker);
-            } else {
-              return forwardMarker.before(marker);
-            }
-          }
-        };
-      })(this));
+      if (!this.zMarkers[zindex]) {
+        this.zMarkers[zindex] = marker = $("<marker index='" + zindex + "'></marker>");
+        marker.index = zindex;
+        if (!(forwardMarker = _findForwardMarker(marker))) {
+          return $(this.paper.canvas).append(marker);
+        } else {
+          return forwardMarker.before(marker);
+        }
+      }
     },
     translate: function(coords) {
       return [this.size_offsetx + (coords[0] * this.size), this.size_offsety + (coords[1] * this.size)];

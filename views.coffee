@@ -53,25 +53,25 @@ Painter = exports.Painter = Models.ClockListener.extend4000
 # very simmilar to game model, maybe should share the superclass with it
 GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Clock,
     initialize: ->
-        @game = @get 'game'
         @painters = {} # name -> painter class map
         
         @pInstances = {} # per stateview instance dict
         @spInstances = {} # per point special painter instance dict
 
-        _start = =>
-            # game should hook only on create to create new point view
-            # and point views should deal with their own state changes and deletions/garbage collection
-            @game.on 'set', (state,point) => @drawPoint point
-            @game.on 'del', (state,point) => @drawPoint point
-            @game.on 'move', (state,point,from) => @drawPoint point
+        @when 'game', (game) =>
+            console.log "GAME VIEW GOT ENGINE"
+            @game = game
+            # stupid trick to give priority to subclasses
+            # need some kind of better extend4000 function that takes those things into account.. 
+            _.defer =>
+                # game should hook only on create to create new point view
+                # and point views should deal with their own state changes and deletions/garbage collectio
+                game.on 'set', (state,point) => @drawPoint point
+                game.on 'del', (state,point) => @drawPoint point
+                game.on 'move', (state,point,from) => @drawPoint point
 
-            @game.each (point) => @drawPoint point
-            @tickloop()
-
-        # stupid trick for start to be called after initialize function for other subclasses is completed
-        # need some kind of better extend4000 function that takes those things into account.. 
-        _.defer _start
+                game.each (point) => @drawPoint point
+                @tickloop()
 
     # painters should be called like the states, that's how the view looks them up
     definePainter: (definitions...) ->
