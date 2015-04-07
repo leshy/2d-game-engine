@@ -28,6 +28,7 @@
         loadNow: false
       });
       handleFileLoad = function(event) {
+        event.result.style.visibility = 'hidden';
         if (event.item.type === preloadjs.LoadQueue.IMAGE) {
           return $("#preload").append(event.result);
         }
