@@ -18,7 +18,7 @@ exports.preloaderMixin = validator.ValidatedModel.extend4000
 
         
         handleFileLoad = (event) ->
-            event.result.style.visibility = 'hidden'
+            event.result.style.display = 'none'
             if event.item.type is preloadjs.LoadQueue.IMAGE
                 $("#preload").append event.result
         @preloadQueue.on "fileload", handleFileLoad
