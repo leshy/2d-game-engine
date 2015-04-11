@@ -15,7 +15,6 @@ exports.preloaderMixin = validator.ValidatedModel.extend4000
 
     initialize: ->
         @preloadQueue = new preloadjs.LoadQueue useXHR: true, loadNow: false # init preload queue
-
         
         handleFileLoad = (event) ->
             event.result.style.display = 'none'
@@ -28,9 +27,11 @@ exports.preloaderMixin = validator.ValidatedModel.extend4000
 
         if @get 'autopreload' then @preload()
             
-    preload: (callback) ->
+    preload: (callback, callbackProgress) ->
         @preloadQueue.load()
         @preloadQueue.on "complete", -> helpers.cbc callback
+        if callbackProgress then @preloadQueue.on "progress", (event) ->
+            callbackProgress event.progress
         
     preloadPainter: (painterclass) ->
         painter = new painterclass()

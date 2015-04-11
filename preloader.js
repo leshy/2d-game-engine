@@ -48,11 +48,16 @@
         return this.preload();
       }
     },
-    preload: function(callback) {
+    preload: function(callback, callbackProgress) {
       this.preloadQueue.load();
-      return this.preloadQueue.on("complete", function() {
+      this.preloadQueue.on("complete", function() {
         return helpers.cbc(callback);
       });
+      if (callbackProgress) {
+        return this.preloadQueue.on("progress", function(event) {
+          return callbackProgress(event.progress);
+        });
+      }
     },
     preloadPainter: function(painterclass) {
       var images, painter;

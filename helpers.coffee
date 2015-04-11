@@ -20,7 +20,7 @@ exports.mover = {
         x = Math.round(@coordinates[0] * 40)
         y = Math.round(@coordinates[1] * 20)
         ret = ""
-
+        
         _.times 20, (cy)  ->
             res = []
             _.times 40, (cx) ->
