@@ -10,16 +10,16 @@ decorators = require 'decorators'
 
 #
 # game engine, and render engine have seperate clocks
-# 
+#
 Clock = exports.Clock = Backbone.Model.extend4000
     initialize: (options) ->
-        _.extend @, { tickspeed: 50, tick: 0 }, options
-        
+        _.extend @, { tickspeed: 50, tick: 0 }, (@get('options') or {}), options
+
     dotick: ->
         @tick++
         @trigger 'tick'
         @trigger 'tick_' + @tick
-        
+
     tickloop: ->
         @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
@@ -27,7 +27,7 @@ Clock = exports.Clock = Backbone.Model.extend4000
     getTick: -> @tick
 #
 # states, points, and painters can subscribe to clocks
-# 
+#
 ClockListener = exports.ClockListener = Backbone.Model.extend4000
     in: (n, callback) ->
         if not (@clockParent.tick + n) then console.log "I HAVE NOT PARENTA!",n, @name
@@ -35,7 +35,7 @@ ClockListener = exports.ClockListener = Backbone.Model.extend4000
         @listenToOnceOff @clockParent, 'tick_' + (@clockParent.tick + n), callback
     nextTick: (callback) -> @in 1, callback
     eachTick: (callback) -> @listenTo @clockParent, 'tick', callback
-    getTick: -> @clockParent.tick    
+    getTick: -> @clockParent.tick
 #
 # states and points have tags.. here are some tag operations
 #
@@ -46,7 +46,7 @@ Tagged = Backbone.Model.extend4000
 
 #
 # decorator for point functions to be able to receive tags instead of states, and automatically translate those tags to particular states under that point
-# 
+#
 StatesFromTags = (f,args...) ->
     args = _.map args, (arg) => if arg.constructor is String then @find(arg) else arg
     args = _.flatten args
@@ -59,14 +59,14 @@ StatesFromTags = (f,args...) ->
 # move (direction or point) - move the state to some other point
 # in (x, callback) - trigger a callback after x number of ticks
 # cancel (?) - cancel a tick callback SOMEHOW
-# 
+#
 # tag operations
-# 
+#
 # hasTag(tags...)
 # addtag(tags...)
 # deltag(tags...)
 # each(callback) - iterate through tags
- 
+
 exports.State = State = Tagged.extend4000 ClockListener,
     initialize: ->
         @when 'point', (point) =>
@@ -79,46 +79,46 @@ exports.State = State = Tagged.extend4000 ClockListener,
             if @start then @start()
 
     place: (states...) -> @point.push.apply(@point,states)
-    
+
     replace: (state) -> @remove(); @point.push(state)
-    
+
     move: (where) -> @point.move @, where
-    
+
     remove: ->
         @point.remove @;
         delete @point.game.byid[@id]
-        
+
     cancel: (callback) -> @point.game.off null, callback
-    
+
     each: (callback) ->
         callback(@name)
-        
+
     # will create a new tags object for this particular state instance.
     forktags: -> if @constructor::tags is @tags then @tags = helpers.copy @tags
-    
+
     deltag: (tag) ->
         @forktags()
         delete @tags[tag]
         @trigger 'deltag', tag
         @trigger 'deltag:' + tag
-            
+
     addtag: (tag) ->
         @forktags()
         @tags[tag] = true
         @trigger 'addtag', tag
-        @trigger 'addtag:' + tag        
-    
+        @trigger 'addtag:' + tag
+
     msg: (msg = {}) ->
         @point.game.trigger 'message', @, msg
 
     show: -> @name
-        
+
     render: -> if @repr then @repr else _.first(@name)
 
 # hasTag (tags...) - check if point has all of those tags
 # hasTagOr (tags...) - check if point has any of those tags
 # direction(direction) - return another point in this direction
-# 
+#
 # right now local tags dictionary is updated automatically
 # when tags of states change or states are added
 # this could also be done each time that data is requested, or lazily (I could cache)
@@ -129,10 +129,10 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
         @clockParent = @game
         @tags = {}
         @states = new Backbone.Collection()
-        
+
         if not @id then @id = @get('id')
         if not @id then @set id: @id = @game.getIndex(@)
-        
+
         @states.on 'add', (state) => @_addstate(state); @trigger 'set', state
         @states.on 'remove', (state) => @_delstate(state); state.trigger 'del'; @trigger 'del', state
 
@@ -152,12 +152,12 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
         @game.push(@)
         state.set point: @
         _.map state.tags, (v,tag) => @_addtag tag
-        
+
     # called by @states collection automatically, or by move, manually
     _delstate: (state) ->
         if not @states.length then @game.remove(@)
         _.map state.tags, (v,tag) => @_deltag tag
-        
+
     _addtag: (tag) ->
         if not @tags[tag]
             @tags[tag] = 1
@@ -171,13 +171,13 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
             delete @tags[tag]
             @trigger 'deltag', tag
             @trigger 'deltag:' + tag, @
-            
+
     # operations for finding other points
     modifier: (coords) -> # I can take a direction or a point
         if coords.constructor isnt Array then coords = coords.coords();
         #console.log 'applying direction', coords, ' to ', @coords()
         @game.point [@x + coords[0], @y + coords[1]]
-    
+
     direction: (direction) -> @modifier direction
 
     find: (tag) -> @states.find (state) -> state.tags[tag]
@@ -192,8 +192,8 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
     upLeft: -> @modifier [-1,-1]
     downRight: -> @modifier [ 1, 1 ]
     downLeft: -> @modifier [ -1, 1 ]
-    
-    # general point operations            
+
+    # general point operations
     coords: -> [@x,@y]
 
     add: (state,options) ->
@@ -201,7 +201,7 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
         @states.add(state,options); @
 
     dir: -> @states.map (state) -> state.name
-    
+
     dirtags: -> _.keys @tags
 
     push: (state,options) -> @add(state,options)
@@ -209,25 +209,25 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
     map: (args...) -> @states.map.apply @states, args
 
     each: (args...) -> @states.each.apply @states, args
-                                    
+
     empty: -> helpers.isEmpty @models
-    
+
     tagmap: (callback) -> _.map @tags, (n,tag) -> callback(tag)
 
     remove: decorators.decorate( StatesFromTags, (states...) -> _.map states, (state) => @states.remove(state) )
 
     removeall: -> true while @states.pop()
-    
+
     move: (state,where) ->
         @states.remove(state, silent: true)
-        
+
         # where can be a direction or a point
         if where.constructor isnt Point
             if where.constructor is Direction then where = @modifier(where) # if I get a direction, I'll apply it to self
             if where.constructor is Array then where = @game.point(where) # if I get an array I'll suppose that its a point
-        
+
         where.push(state, silent: true)
-        
+
         where.trigger 'move', state, @
         state.trigger 'move', where
         @trigger 'moveaway', state, where
@@ -236,23 +236,23 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
     render: ->
         if state = @states.last() then state.render() else "."
 
-  
+
 # Field is a collection of discrete points containing objects (@points)
 # and objects with coordinates in a continuous coordinate space (@movers)
-# 
+#
 # needs width and height attributes
 # holds bunch of points together
 
 exports.Field = Field = Backbone.Model.extend4000
     initialize: ->
         @points = {}
-                
+
         pointDecorator = (fun,args...) =>
             if args[0].constructor != Point then args[0] = @point(args[0])
             fun.apply(@,args)
 
         @getIndex = decorators.decorate(pointDecorator,@getIndex)
-        
+
     # will fetch point from the field, or construct a new one if it isn't defined
     point: (point) ->
         if point.constructor is Array then point = new Point(point, @)
@@ -262,9 +262,9 @@ exports.Field = Field = Backbone.Model.extend4000
     remove: (point) -> delete @points[@getIndex(point)]
 
     push: (point) -> @points[@getIndex(point)] = point
-    
+
     getIndex: (point) -> point.x + (point.y * @get ('width'))
-        
+
     getIndexRev: (i) -> width = @get('width'); [ i % width, Math.floor(i / width) ]
 
     map: (callback) ->
@@ -277,26 +277,26 @@ exports.Field = Field = Backbone.Model.extend4000
     each: (callback) -> _.times @get('width') * @get('height'), (i) => callback @point(@getIndexRev(i))
 
     show: (callback) -> helpers.dictMap @points, (point,index) -> point.show()
-    
+
     render: ->
         colors = require 'colors'
         data = "    "
-        
+
         flip = false
         colorFlip = (text) -> if flip then flip = false; return colors.yellow text else flip= true; return colors.green text
-                
+
         _.times @get('width'), (y) =>
             data += colorFlip helpers.pad(y,2,'0')
-            
+
         data += "  x (width)\n\n"
-        
+
         _.times @get('height'), (y) =>
             row = [' ']
             _.times @get('width'), (x) => row.push @point([x,y]).render()
             data += colorFlip(helpers.pad(y,2,'0')) + " " + row.join(' ') + "\n"
-            
+
         data += "\ny (height)\n"
-        data 
+        data
 #
 # used to define possible states, has tickloop controls, field width/height, and this is what main game views hook to
 #
@@ -305,32 +305,32 @@ exports.Game = Game = Field.extend4000 Clock,
     initialize: ->
         @controls = {}
         @state = {}
-#        @tickspeed = 50        
+#        @tickspeed = 50
         @tick = 0
         @stateid = 1
         @ended = false
         @byid = {}
-        
+
     nextid: (state) -> @stateid++
-                
+
     end: (data) ->
         if not @ended then @trigger 'end', data
-        @ended = true            
-        
+        @ended = true
+
     start: (options = {}, callback) ->
         if @ended then callback 'This game has already ended'; return
-        _.extend @, options            
+        _.extend @, options
         #@each (point) => point.each (state) => if state.start then state.start()
         @tickloop()
-        
+
         @on 'end', (data) =>
             @stop()
             helpers.cbc callback, data
-        
+
     stop: -> clearTimeout(@timeout)
-        
+
     defineMover: (name, definitions...) -> defineState [ name ].concat mover, definitions
-        
+
     defineState: (definitions...) ->
         lastdef = {}
         # just a small sintax sugar, first argument is optionally a name for the painter
@@ -345,7 +345,7 @@ exports.Game = Game = Field.extend4000 Clock,
 
         start = []
         initialize = []
-        
+
         _.map definitions, (definition) ->
             if definition.start then start.push definition.start
             if definition.initialize then initialize.push definition.initialize
@@ -357,7 +357,7 @@ exports.Game = Game = Field.extend4000 Clock,
         lastdef.start = helpers.joinF.apply @, start
 
         definitions.push(lastdef)
-        
+
         @state[name] = State.extend4000.apply(State,definitions)
 
 #
@@ -366,21 +366,21 @@ exports.Game = Game = Field.extend4000 Clock,
 
 exports.Direction = Direction = class Direction
     constructor: (@x,@y) -> true
-    
+
     reverse: -> @x *= -1 or @y *= -1
-    
+
     up:    -> @set 0,-1
     down:  -> @set 0,1
     left:  -> @set -1,0
     right: -> @set 1,0
-    
+
     coords: -> [ @x, @y ]
 
     relevant: -> (coords) -> if not @x then coords[1] else coords[0]
-    
+
     set: (@x,@y) -> @
-    
-    string: -> 
+
+    string: ->
         if @y is -1 then return 'up'
         if @y is 1 then return 'down'
         if @x is -1 then return 'left'
@@ -393,15 +393,13 @@ exports.Direction = Direction = class Direction
 
     horizontal: ->  if @x then true else false
     vertical: ->  if @y then true else false
-    
+
     forward: -> if @x > 0 or @y > 0 then true else false
     backward: -> if @x < 0 or @y < 0 then true else false
-    
-    orientation: -> 
+
+    orientation: ->
         if @x is 1 then return 'vertical'
         if @x is -1 then return 'vertical'
         if @y is -1 then return 'horizontal'
         if @y is 1 then return 'horizontal'
         if not @x and not @y then return 'stop'
-    
-    

@@ -27,7 +27,6 @@ exports.KeyControler = Backbone.Model.extend4000 validator.ValidatedModel,
             delete state[key]
             @send ctrl: { k: key, s: 'u'}
 
-
     end: ->
         $(document).off('keydown')
         $(document).off('keyup')
