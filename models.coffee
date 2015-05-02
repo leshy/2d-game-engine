@@ -30,8 +30,7 @@ Clock = exports.Clock = Backbone.Model.extend4000
 #
 ClockListener = exports.ClockListener = Backbone.Model.extend4000
     in: (n, callback) ->
-        if not (@clockParent.tick + n) then console.log "I HAVE NOT PARENTA!",n, @name
-#        console.log 'subscribing to tick', 'tick_' + (@clockParent.tick + n)
+        if not (@clockParent.tick + n) then throw "clocklistener doesn't have a parent",n,@name
         @listenToOnceOff @clockParent, 'tick_' + (@clockParent.tick + n), callback
     nextTick: (callback) -> @in 1, callback
     eachTick: (callback) -> @listenTo @clockParent, 'tick', callback

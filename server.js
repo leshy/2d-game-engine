@@ -44,7 +44,22 @@
       })(this));
       return this.networkTickLoop();
     },
-    setHook: function(state) {
+    snapshot: function() {
+      var log;
+      log = [];
+      this.each((function(_this) {
+        return function(point) {
+          return point.each(function(state) {
+            var entry;
+            if (entry = _this.setData(state)) {
+              return log.push(entry);
+            }
+          });
+        };
+      })(this));
+      return log;
+    },
+    setData: function(state) {
       var entry;
       if (state.nosync || state.noset) {
         return;
@@ -60,7 +75,13 @@
           return state.get(key);
         });
       }
-      return this.log.push(entry);
+      return entry;
+    },
+    setHook: function(state) {
+      var entry;
+      if (entry = this.setData(state)) {
+        return this.log.push(entry);
+      }
     },
     delHook: function(state) {
       if (state.nosync || state.nodel) {

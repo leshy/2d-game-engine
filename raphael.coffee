@@ -18,11 +18,10 @@ GameView = exports.GameView = View.GameView.extend4000
     render: ->
         console.log "RAPHAEL RENDER"
         el = @get('el')
-        @paper = Raphael el.get(0), "100%", "100%" # create raphael paper        
+        @paper = Raphael el.get(0), "100%", "100%" # create raphael paper
         window.paper = @paper
         @calculateSizes()
         @parseZindexes()
-        
 
     calculateSizes: ->
         # calculate size for points
@@ -44,7 +43,7 @@ GameView = exports.GameView = View.GameView.extend4000
         @zMarkers = {}
         _.map @painters, @parseZindex.bind @
         @on 'definePainter', @parseZindex.bind @
-                
+
     parseZindex: (painter) ->
         if not painter::zindex? then return
         zindex = painter::zindex
@@ -60,17 +59,17 @@ GameView = exports.GameView = View.GameView.extend4000
             if not forwardMarker = _findForwardMarker(marker) then $(@paper.canvas).append marker
             else
                 forwardMarker.before marker
-        
-                
+
+
             #console.log "DEFINEPAINTER",painter::name, painter::zindex
-                                
+
         # hook window onresize event, and trigger gameview.pan event to redraw the game
         # TODO
-        
+
 #        $(window).resize =>
 #            calculateSizes()
 #            @rerender()
-            
+
 #    rerender: ->
 #        _.map @pinstances, (painter) -> painter.render()
 
@@ -100,40 +99,40 @@ Image = exports.Image = RaphaelPainter.extend4000
             @rendering.node.offsetHeight # no need to store this anywhere, the reference is enough
             @rendering.node.style.display='block'
             ), 15
-                        
+
     stopAnimate: ->
         @animating = false
         clearInterval @ticker
-        @rendering.stop()        
+        @rendering.stop()
 
     render: (coords, cellSize) ->
 
         if c = @state?.point?.coords() then coords = @gameview.translate(c)
         if not coords then coords = @coords else @coords = coords
         if not cellSize then cellSize = @cellSize else @cellSize = cellSize
-        
+
 
         if @state?.mover
             #console.log 'coords',coords, @cellSize, @state.coordinates
             coords = helpers.squish coords, @state.coordinates, (coord,subCoord) -> Math.round(coord + (cellSize * (subCoord - 0.5)))
-        
+
         # apply offset modifiers
         coords = helpers.squish coords, @offset, (coord,offset) ->
             if not offset then return coord
             coord + (offset * cellSize)
-        
+
         # apply size modifiers
         size = helpers.squish [ cellSize, cellSize ], @size, (size, cell) -> size * cell
-        
+
         if not @rendering
             @rendering = @gameview.paper.image(src=@getpic(), coords[0], coords[1], size[0], size[1])
-            
+
             if @rotation then @rendering.rotate @rotation
 #            if @flip is "horizontal" then @rendering.scale(-1,1)
 #            if @flip is "vertical" then @rendering.scale(1,-1)
 
             if @zindex? then @gameview.zMarkers[@zindex].after @rendering else @rendering.toBack()
-            
+
             if @state?.mover
                 #@listenTo @state, 'movementChange', => @render()
                 @on 'remove', =>
@@ -141,20 +140,20 @@ Image = exports.Image = RaphaelPainter.extend4000
                     @rendering?.remove()
                     clearInterval @ticker
 
-                
+
             @on 'remove', =>
                 if @rendering
                     @rendering.remove()
                     delete @rendering
-                    
-                        
-        if not @state then return        
-        # do we need to move our rendering? 
+
+
+        if not @state then return
+        # do we need to move our rendering?
         if @rendering.attrs.x != coords[0] or @rendering.attrs.y != coords[1] then @move(coords)
         if @state.speed and not @state.direction.stop() then @animate() else @stopAnimate()
 
     getpic: -> '/pic/' + (@pic or @name) + '.png'
-    
+
     move: (coords) ->
         #console.log 'need to move rendering to new coords', coords
         window.rendering = @rendering
@@ -167,42 +166,42 @@ Image = exports.Image = RaphaelPainter.extend4000
         #helpers.wait 20, => @rendering.show()
 
     images: -> [ @getpic() ]
-            
+
 Sprite = exports.Sprite = Image.extend4000
     initialize: ->
-        
+
         @frame_pics = []
-        
+
         _.times @frames, (frame) =>
             @frame_pics.push '/pic/' + (@pic or @name) + frame + ".png"
-            
+
         if @frame is undefined then @frame = 0
         if @gameview then @tick()
 
         @on 'remove',  => @stopListening()
-        
+
     getpic: -> @frame_pics[@frame]
 
     tick: ->
-        @scheduleTick()        
+        @scheduleTick()
         if not @rendering then return
         if @frame > @frame_pics.length - 1
             if @once then @stopListening(); return
             @frame = 0
         @rendering.attr src: @getpic()
         @frame++
-        
+
 
     scheduleTick: ->
         if @speed then @in Math.floor(1 / @speed), => @tick()
         else @nextTick => @tick()
-        
+
     images: -> @frame_pics
-    
+
 Color = exports.Color = RaphaelPainter.extend4000
     render: decorate coordsDecorator, (coords) ->
         @rendering = @gameview.paper.rect(coords[0], coords[1], @gameview.size, @gameview.size).attr( 'opacity': .5, 'stroke-width': 1, stroke: @color, fill: @color)
-        
+
         @on 'remove', =>
             if @rendering
                 @rendering.remove()
@@ -215,32 +214,32 @@ MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
     initialize: ->
         @on 'remove', => @repr.remove()
 
-    reprChange: -> 
+    reprChange: ->
         cls = @decideRepr()
         if @repr.constructor isnt cls
             oldRepr = @repr
             @repr.remove()
 #            console.log 'oldrepr frame', oldRepr.name, cls::name, oldRepr.repr.frame + 1,
 #            @repr = new cls { gameview: @gameview, state: @state, frame: oldRepr?.repr?.frame + 1 }
-            @repr = new cls { gameview: @gameview, state: @state } 
+            @repr = new cls { gameview: @gameview, state: @state }
             @render.apply @, @args
-            
+
     inherit: -> helpers.dictFromArray [ 'frame' ], (attr) => [ attr, @[attr] ]
 
     render: (args...) ->
         @trigger 'render'
         @args = args
-        
-        if not @repr            
+
+        if not @repr
             cls = @decideRepr()
             @repr = new cls _.extend @inherit(), { gameview: @gameview, state: @state }
-            
+
         @repr.render.apply @repr, args
-        
+
     decideRepr: -> throw 'override me'
 
-DirectionPainter = exports.DirectionPainter = MetaPainter.extend4000        
+DirectionPainter = exports.DirectionPainter = MetaPainter.extend4000
     decideRepr: -> @reprs[(@state.direction or @state.get('direction')).string()]
-    
+
 OrientationPainter = exports.OrientationPainter = MetaPainter.extend4000
     decideRepr: -> @reprs[@state.get('direction').orientation()]

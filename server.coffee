@@ -42,11 +42,22 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
         @each (point) => point.each (state) => @setHook(state)
         @networkTickLoop()
 
-    setHook: (state) -> # maybe state render should take care of syncattributes and not this f
+    snapshot: ->
+        log = []
+        @each (point) =>  point.each (state) =>
+            if entry = @setData(state) then log.push entry
+        return log
+
+    setData: (state) ->
         if state.nosync or state.noset then return
+
         entry = { a: 'set', p: state.point.coords(), id: state.id, s: state.name }
+
         if state.syncattributes then entry.o = helpers.dictMap state.syncattributes, (val,key) -> state.get(key)
-        @log.push entry
+        entry
+
+    setHook: (state) -> # maybe state render should take care of syncattributes and not this f
+        if entry = @setData(state) then @log.push entry
 
     delHook: (state) ->
         if state.nosync or state.nodel then return
