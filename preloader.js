@@ -24,7 +24,7 @@
     initialize: function() {
       var handleFileLoad;
       this.preloadQueue = new preloadjs.LoadQueue({
-        useXHR: true,
+        useXHR: false,
         loadNow: false
       });
       handleFileLoad = function(event) {

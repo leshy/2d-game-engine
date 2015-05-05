@@ -14,7 +14,7 @@ exports.preloaderMixin = validator.ValidatedModel.extend4000
         lazypreload: v().Default(false).Boolean()
 
     initialize: ->
-        @preloadQueue = new preloadjs.LoadQueue useXHR: true, loadNow: false # init preload queue
+        @preloadQueue = new preloadjs.LoadQueue useXHR: false, loadNow: false # init preload queue
 
         handleFileLoad = (event) ->
             event.result.style.display = 'none'
