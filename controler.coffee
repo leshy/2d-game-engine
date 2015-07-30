@@ -1,6 +1,6 @@
 if not window then window = {}
 Backbone = require 'backbone4000'
-$ = require 'jquery-browserify'
+$ = require 'jquery'
 validator = require 'validator2-extras'
 
 exports.KeyControler = Backbone.Model.extend4000 validator.ValidatedModel,

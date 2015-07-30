@@ -3,7 +3,7 @@ helpers = require 'helpers'
 Backbone = require 'backbone4000'
 validator = require 'validator2-extras'; v = validator.v
 decorators = require 'decorators'; decorate = decorators.decorate
-$ = require 'jquery-browserify'
+$ = require 'jquery'
 
 # painter is made concrete by subclassing abstract painter
 View = require './views'

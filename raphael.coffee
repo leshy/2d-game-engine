@@ -16,7 +16,6 @@ coordsDecorator = (targetf,coords) ->
 
 GameView = exports.GameView = View.GameView.extend4000
     render: ->
-        console.log "RAPHAEL RENDER"
         el = @get('el')
         @paper = Raphael el.get(0), "100%", "100%" # create raphael paper
         window.paper = @paper
@@ -131,7 +130,10 @@ Image = exports.Image = RaphaelPainter.extend4000
 #            if @flip is "horizontal" then @rendering.scale(-1,1)
 #            if @flip is "vertical" then @rendering.scale(1,-1)
 
-            if @zindex? then @gameview.zMarkers[@zindex].after @rendering else @rendering.toBack()
+            if @zindex?
+              console.log 'insert after', @zindex, @name
+              @gameview.zMarkers[@zindex].after @rendering
+            else @rendering.toBack()
 
             if @state?.mover
                 #@listenTo @state, 'movementChange', => @render()
