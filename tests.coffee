@@ -35,9 +35,9 @@ exports.Point =
     tag_subscription: (test) ->
         wall1 = new @game.state.Wall()
         check = false
-        @point.once 'addtag:Wall', -> check = true
-        wall1.addtag('bla')
-        @point.once 'addtag:bla', ->
+        @point.once 'addTag:Wall', -> check = true
+        wall1.addTag('bla')
+        @point.once 'addTag:bla', ->
             test.equals check, true
             test.done()
         
@@ -54,7 +54,7 @@ exports.Point =
         @point.push wall2 = new @game.state.Wall()
         @point.push wall3 = new @game.state.Wall()
 
-        wall1.addtag('testtag')
+        wall1.addTag('testtag')
         test.equals wall1.hasTag('testtag'), true, 'testtag not found on state'
         test.equals @point.hasTag('testtag'), true, 'no testtag'
         test.equals @point.hasTag('testtag2'), false, 'testtag2 found???'
@@ -68,7 +68,7 @@ exports.Point =
         @point.push wall2 = new @game.state.Wall()
         @point.push wall3 = new @game.state.Wall()
 
-        wall1.addtag('testtag')
+        wall1.addTag('testtag')
         
         test.equals wall2.tags is wall3.tags, true
         test.equals wall1.tags isnt wall2.tags, true

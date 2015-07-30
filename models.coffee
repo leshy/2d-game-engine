@@ -1,4 +1,4 @@
-Backbone = require 'backbone4000'
+Backbone = require 'backbone4000/extras'
 _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
@@ -30,18 +30,11 @@ Clock = exports.Clock = Backbone.Model.extend4000
 #
 ClockListener = exports.ClockListener = Backbone.Model.extend4000
     in: (n, callback) ->
-        if not (@clockParent.tick + n) then throw "clocklistener doesn't have a parent",n,@name
+        if not (@clockParent.tick + n) then throw new Error "clocklistener doesn't have a parent", n, @name
         @listenToOnceOff @clockParent, 'tick_' + (@clockParent.tick + n), callback
     nextTick: (callback) -> @in 1, callback
     eachTick: (callback) -> @listenTo @clockParent, 'tick', callback
     getTick: -> @clockParent.tick
-#
-# states and points have tags.. here are some tag operations
-#
-Tagged = Backbone.Model.extend4000
-    hasTag: (tags...) ->
-        not _.find(tags, (tag) => not @tags[tag])
-    hasTagOr: (tags...) -> _.find _.keys(@tags), (tag) -> tag in tags
 
 #
 # decorator for point functions to be able to receive tags instead of states, and automatically translate those tags to particular states under that point
@@ -51,22 +44,16 @@ StatesFromTags = (f,args...) ->
     args = _.flatten args
     f.apply @, args
 
-
+#
+# State - represents states with tags within some point
+#
 # place - create a new state in current point
 # replace - replace the state with some other state
 # remove - remove the state
 # move (direction or point) - move the state to some other point
 # in (x, callback) - trigger a callback after x number of ticks
 # cancel (?) - cancel a tick callback SOMEHOW
-#
-# tag operations
-#
-# hasTag(tags...)
-# addtag(tags...)
-# deltag(tags...)
-# each(callback) - iterate through tags
-
-exports.State = State = Tagged.extend4000 ClockListener,
+exports.State = State = Backbone.Tagged.extend4000 ClockListener,
     initialize: ->
         @when 'point', (point) =>
             @point = point
@@ -92,21 +79,6 @@ exports.State = State = Tagged.extend4000 ClockListener,
     each: (callback) ->
         callback(@name)
 
-    # will create a new tags object for this particular state instance.
-    forktags: -> if @constructor::tags is @tags then @tags = helpers.copy @tags
-
-    deltag: (tag) ->
-        @forktags()
-        delete @tags[tag]
-        @trigger 'deltag', tag
-        @trigger 'deltag:' + tag
-
-    addtag: (tag) ->
-        @forktags()
-        @tags[tag] = true
-        @trigger 'addtag', tag
-        @trigger 'addtag:' + tag
-
     msg: (msg = {}) ->
         @point.game.trigger 'message', @, msg
 
@@ -114,8 +86,8 @@ exports.State = State = Tagged.extend4000 ClockListener,
 
     render: -> if @repr then @repr else _.first(@name)
 
-# hasTag (tags...) - check if point has all of those tags
-# hasTagOr (tags...) - check if point has any of those tags
+# Point - holds states, hosted within a field
+#
 # direction(direction) - return another point in this direction
 #
 # right now local tags dictionary is updated automatically
@@ -123,7 +95,7 @@ exports.State = State = Tagged.extend4000 ClockListener,
 # this could also be done each time that data is requested, or lazily (I could cache)
 # is this relevant/should I benchmark?
 
-exports.Point = Point = Tagged.extend4000 ClockListener,
+exports.Point = Point = Backbone.Tagged.extend4000 ClockListener,
     initialize: ([@x,@y],@game) ->
         @clockParent = @game
         @tags = {}
@@ -139,8 +111,8 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
         @on 'moveaway', (state) => @_delstate(state)
 
         # states can dinamically change their tags
-        @states.on 'addtag', (tag) => @_addtag tag
-        @states.on 'deltag', (tag) => @_deltag tag
+        @states.on 'addTag', (tag) => @_addTag tag
+        @states.on 'delTag', (tag) => @_delTag tag
 
         @on 'del', (state) => @game.trigger 'del', state, @
         @on 'set', (state) => @game.trigger 'set', state, @
@@ -150,26 +122,26 @@ exports.Point = Point = Tagged.extend4000 ClockListener,
     _addstate: (state) ->
         @game.push(@)
         state.set point: @
-        _.map state.tags, (v,tag) => @_addtag tag
+        _.map state.tags, (v,tag) => @_addTag tag
 
     # called by @states collection automatically, or by move, manually
     _delstate: (state) ->
         if not @states.length then @game.remove(@)
-        _.map state.tags, (v,tag) => @_deltag tag
+        _.map state.tags, (v,tag) => @_delTag tag
 
-    _addtag: (tag) ->
+    _addTag: (tag) ->
         if not @tags[tag]
             @tags[tag] = 1
-            @trigger 'addtag', tag
-            @trigger 'addtag:' + tag, @
+            @trigger 'addTag', tag
+            @trigger 'addTag:' + tag, @
         else @tags[tag]++
 
-    _deltag: (tag) ->
+    _delTag: (tag) ->
         @tags[tag]--
         if @tags[tag] is 0
             delete @tags[tag]
-            @trigger 'deltag', tag
-            @trigger 'deltag:' + tag, @
+            @trigger 'delTag', tag
+            @trigger 'delTag:' + tag, @
 
     # operations for finding other points
     modifier: (coords) -> # I can take a direction or a point
