@@ -11,8 +11,30 @@
 
   decorators = require('decorators');
 
-  Clock = exports.Clock = Backbone.Model.extend4000({
+  ClockListener = exports.ClockListener = Backbone.Model.extend4000({
+    "in": function(n, callback) {
+      if (!(this.clockParent.tick + n)) {
+        throw new Error("clocklistener doesn't have a parent", n, this.name);
+      }
+      return this.listenToOnceOff(this.clockParent, 'tick_' + (this.clockParent.tick + n), callback);
+    },
+    onTick: function(n, callback) {
+      return this.listenToOnceOff(this.clockParent, 'tick_' + n, callback);
+    },
+    nextTick: function(callback) {
+      return this["in"](1, callback);
+    },
+    eachTick: function(callback) {
+      return this.listenTo(this.clockParent, 'tick', callback);
+    },
+    getTick: function() {
+      return this.clockParent.tick;
+    }
+  });
+
+  Clock = exports.Clock = ClockListener.extend4000({
     initialize: function(options) {
+      this.clockParent = this;
       return _.extend(this, {
         tickspeed: 50,
         tick: 0
@@ -29,24 +51,6 @@
     },
     getTick: function() {
       return this.tick;
-    }
-  });
-
-  ClockListener = exports.ClockListener = Backbone.Model.extend4000({
-    "in": function(n, callback) {
-      if (!(this.clockParent.tick + n)) {
-        throw new Error("clocklistener doesn't have a parent", n, this.name);
-      }
-      return this.listenToOnceOff(this.clockParent, 'tick_' + (this.clockParent.tick + n), callback);
-    },
-    nextTick: function(callback) {
-      return this["in"](1, callback);
-    },
-    eachTick: function(callback) {
-      return this.listenTo(this.clockParent, 'tick', callback);
-    },
-    getTick: function() {
-      return this.clockParent.tick;
     }
   });
 
@@ -566,6 +570,14 @@
 
     Direction.prototype.right = function() {
       return this.set(1, 0);
+    };
+
+    Direction.prototype.turnLeft = function() {
+      return new Direction(this.y, -this.x);
+    };
+
+    Direction.prototype.turnRight = function() {
+      return new Direction(-this.y, this.x);
     };
 
     Direction.prototype.coords = function() {

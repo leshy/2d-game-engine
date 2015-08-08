@@ -169,7 +169,6 @@
           this.rendering.rotate(this.rotation);
         }
         if (this.zindex != null) {
-          console.log('insert after', this.zindex, this.name);
           this.gameview.zMarkers[this.zindex].after(this.rendering);
         } else {
           this.rendering.toBack();

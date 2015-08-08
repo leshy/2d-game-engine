@@ -7,12 +7,28 @@ decorators = require 'decorators'
 # there is a problem with state being added to a collection before its ID is set
 # as collection.get looks up the model by model.id first, and it will fail
 # fixed it by changing the priority of backbone collections to look at cid first
+#
+# states, points, and painters can subscribe to clocks
+#
+ClockListener = exports.ClockListener = Backbone.Model.extend4000
+    in: (n, callback) ->
+        if not (@clockParent.tick + n) then throw new Error "clocklistener doesn't have a parent", n, @name
+        @listenToOnceOff @clockParent, 'tick_' + (@clockParent.tick + n), callback
+
+    onTick: (n, callback) ->
+        @listenToOnceOff @clockParent, 'tick_' + (n), callback
+
+    nextTick: (callback) -> @in 1, callback
+    eachTick: (callback) -> @listenTo @clockParent, 'tick', callback
+    getTick: -> @clockParent.tick
+
 
 #
 # game engine, and render engine have seperate clocks
 #
-Clock = exports.Clock = Backbone.Model.extend4000
+Clock = exports.Clock = ClockListener.extend4000
     initialize: (options) ->
+        @clockParent = @
         _.extend @, { tickspeed: 50, tick: 0 }, (@get('options') or {}), options
 
     dotick: ->
@@ -25,16 +41,7 @@ Clock = exports.Clock = Backbone.Model.extend4000
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
     getTick: -> @tick
-#
-# states, points, and painters can subscribe to clocks
-#
-ClockListener = exports.ClockListener = Backbone.Model.extend4000
-    in: (n, callback) ->
-        if not (@clockParent.tick + n) then throw new Error "clocklistener doesn't have a parent", n, @name
-        @listenToOnceOff @clockParent, 'tick_' + (@clockParent.tick + n), callback
-    nextTick: (callback) -> @in 1, callback
-    eachTick: (callback) -> @listenTo @clockParent, 'tick', callback
-    getTick: -> @clockParent.tick
+
 
 #
 # decorator for point functions to be able to receive tags instead of states, and automatically translate those tags to particular states under that point
@@ -167,9 +174,9 @@ exports.Point = Point = Backbone.Tagged.extend4000 ClockListener,
     # general point operations
     coords: -> [@x,@y]
 
-    add: (state,options) ->
+    add: (state, options) ->
         if state.constructor == String then state = new @game.state[state]
-        @states.add(state,options); @
+        @states.add(state, options); @
 
     dir: -> @states.map (state) -> state.name
 
@@ -291,7 +298,7 @@ exports.Game = Game = Field.extend4000 Clock,
     start: (options = {}, callback) ->
         if @ended then callback 'This game has already ended'; return
         _.extend @, options
-        #@each (point) => point.each (state) => if state.start then state.start()
+
         @tickloop()
 
         @on 'end', (data) =>
@@ -344,6 +351,9 @@ exports.Direction = Direction = class Direction
     down:  -> @set 0,1
     left:  -> @set -1,0
     right: -> @set 1,0
+
+    turnLeft: -> new Direction @y, -@x
+    turnRight: -> new Direction -@y, @x
 
     coords: -> [ @x, @y ]
 

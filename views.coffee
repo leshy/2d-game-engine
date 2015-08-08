@@ -59,7 +59,6 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
         @spInstances = {} # per point special painter instance dict
 
         @when 'game', (game) =>
-            console.log "GAME VIEW GOT ENGINE"
             @game = game
             # stupid trick to give priority to subclasses
             # need some kind of better extend4000 function that takes those things into account..
@@ -89,18 +88,14 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
     getPainter: (state) ->
         if painter = @pInstances[state.id] then return painter
         painterclass = @painters[state.name]
-        if not painterclass then painterclass = @painters['unknown']
+        if not painterclass then painterclass = @painters.Unknown
         return painterclass.extend4000 state: state
-
-    getExistingSpecialPainters: (point) ->
-        @spInstances[point.id]
 
     specialPainters: (painters) -> painters
 
     drawPoint: (point) ->
         _applyEliminations = (painters) ->
             dict = helpers.makedict painters, (painter) -> helpers.objorclass painter, 'name'
-
             _.map painters, (painter) ->
                 if eliminates = helpers.objorclass painter, 'eliminates'
                     helpers.maybeiterate eliminates, (name) ->
@@ -121,10 +116,8 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
 
         _specialPainters = (painters,point) =>
             existingPainters = @spInstances[String(point.coords())] or []
-
             newPainters = @specialPainters(painters,point)
             [ existingKeep, existingRemove, newAdd ] = helpers.difference existingPainters, newPainters, ((x) -> x.name), ((x) -> x::name)
-
             _.each existingRemove, (painter) -> painter.remove()
             return painters.concat existingKeep, newAdd
 

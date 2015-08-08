@@ -105,11 +105,9 @@ Image = exports.Image = RaphaelPainter.extend4000
         @rendering.stop()
 
     render: (coords, cellSize) ->
-
         if c = @state?.point?.coords() then coords = @gameview.translate(c)
         if not coords then coords = @coords else @coords = coords
         if not cellSize then cellSize = @cellSize else @cellSize = cellSize
-
 
         if @state?.mover
             #console.log 'coords',coords, @cellSize, @state.coordinates
@@ -131,7 +129,7 @@ Image = exports.Image = RaphaelPainter.extend4000
 #            if @flip is "vertical" then @rendering.scale(1,-1)
 
             if @zindex?
-              console.log 'insert after', @zindex, @name
+              #console.log 'insert after', @zindex, @name
               @gameview.zMarkers[@zindex].after @rendering
             else @rendering.toBack()
 
