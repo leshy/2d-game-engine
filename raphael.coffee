@@ -3,7 +3,7 @@ helpers = require 'helpers'
 Backbone = require 'backbone4000'
 validator = require 'validator2-extras'; v = validator.v
 decorators = require 'decorators'; decorate = decorators.decorate
-$ = require 'jquery-browserify'
+$ = require 'jquery'
 
 # painter is made concrete by subclassing abstract painter
 View = require './views'
@@ -56,11 +56,7 @@ GameView = exports.GameView = View.GameView.extend4000
             marker.index = zindex
 
             if not forwardMarker = _findForwardMarker(marker) then $(@paper.canvas).append marker
-            else
-                forwardMarker.before marker
-
-
-            #console.log "DEFINEPAINTER",painter::name, painter::zindex
+            else forwardMarker.before marker
 
         # hook window onresize event, and trigger gameview.pan event to redraw the game
         # TODO
@@ -129,8 +125,7 @@ Image = exports.Image = RaphaelPainter.extend4000
 #            if @flip is "vertical" then @rendering.scale(1,-1)
 
             if @zindex?
-              #console.log 'insert after', @zindex, @name
-              @gameview.zMarkers[@zindex].after @rendering
+              @gameview.zMarkers[@zindex].after @rendering.node
             else @rendering.toBack()
 
             if @state?.mover

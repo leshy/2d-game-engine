@@ -17,7 +17,7 @@
 
   decorate = decorators.decorate;
 
-  $ = require('jquery-browserify');
+  $ = require('jquery');
 
   View = require('./views');
 
@@ -169,7 +169,7 @@
           this.rendering.rotate(this.rotation);
         }
         if (this.zindex != null) {
-          this.gameview.zMarkers[this.zindex].after(this.rendering);
+          this.gameview.zMarkers[this.zindex].after(this.rendering.node);
         } else {
           this.rendering.toBack();
         }
