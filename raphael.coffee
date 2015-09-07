@@ -19,8 +19,8 @@ GameView = exports.GameView = View.GameView.extend4000
         el = @get('el')
         @paper = Raphael el.get(0), "100%", "100%" # create raphael paper
         window.paper = @paper
-        @calculateSizes()
         @parseZindexes()
+        @calculateSizes()
 
     calculateSizes: ->
         # calculate size for points

@@ -90,6 +90,10 @@
             game.each(function(point) {
               return _this.drawPoint(point);
             });
+            game.once('end', function() {
+              _this.stopListening(game);
+              return _this.stopTickloop();
+            });
             return _this.tickloop();
           });
         };

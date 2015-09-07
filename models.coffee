@@ -33,12 +33,15 @@ Clock = exports.Clock = ClockListener.extend4000
 
     dotick: ->
         @tick++
-        @trigger 'tick'
+        @trigger 'tick', @tick
         @trigger 'tick_' + @tick
 
     tickloop: ->
         @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
+
+    stopTickloop: ->
+        clearTimeout @timeout
 
     getTick: -> @tick
 
@@ -171,6 +174,8 @@ exports.Point = Point = Backbone.Tagged.extend4000 ClockListener,
     downRight: -> @modifier [ 1, 1 ]
     downLeft: -> @modifier [ -1, 1 ]
 
+    randomWalk: -> @modifier [ h.random([-1,0,1]), h.random([-1,0,1]) ]
+
     # general point operations
     coords: -> [@x,@y]
 
@@ -291,7 +296,10 @@ exports.Game = Game = Field.extend4000 Clock,
 
     nextid: (state) -> @stateid++
 
+    stop: -> @end()
+
     end: (data) ->
+        @stopTickloop()
         if not @ended then @trigger 'end', data
         @ended = true
 
@@ -301,11 +309,8 @@ exports.Game = Game = Field.extend4000 Clock,
 
         @tickloop()
 
-        @on 'end', (data) =>
-            @stop()
-            helpers.cbc callback, data
+        @on 'end', (data) => helpers.cbc callback, data
 
-    stop: -> clearTimeout(@timeout)
 
     defineMover: (name, definitions...) -> defineState [ name ].concat mover, definitions
 

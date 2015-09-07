@@ -36,8 +36,8 @@
       el = this.get('el');
       this.paper = Raphael(el.get(0), "100%", "100%");
       window.paper = this.paper;
-      this.calculateSizes();
-      return this.parseZindexes();
+      this.parseZindexes();
+      return this.calculateSizes();
     },
     calculateSizes: function() {
       var elHeight, elWidth, gameHeight, gameWidth, sizex, sizey;

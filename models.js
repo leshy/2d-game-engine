@@ -42,12 +42,15 @@
     },
     dotick: function() {
       this.tick++;
-      this.trigger('tick');
+      this.trigger('tick', this.tick);
       return this.trigger('tick_' + this.tick);
     },
     tickloop: function() {
       this.dotick();
       return this.timeout = setTimeout(this.tickloop.bind(this), this.tickspeed);
+    },
+    stopTickloop: function() {
+      return clearTimeout(this.timeout);
     },
     getTick: function() {
       return this.tick;
@@ -279,6 +282,9 @@
     downLeft: function() {
       return this.modifier([-1, 1]);
     },
+    randomWalk: function() {
+      return this.modifier([h.random([-1, 0, 1]), h.random([-1, 0, 1])]);
+    },
     coords: function() {
       return [this.x, this.y];
     },
@@ -482,7 +488,11 @@
     nextid: function(state) {
       return this.stateid++;
     },
+    stop: function() {
+      return this.end();
+    },
     end: function(data) {
+      this.stopTickloop();
       if (!this.ended) {
         this.trigger('end', data);
       }
@@ -500,13 +510,9 @@
       this.tickloop();
       return this.on('end', (function(_this) {
         return function(data) {
-          _this.stop();
           return helpers.cbc(callback, data);
         };
       })(this));
-    },
-    stop: function() {
-      return clearTimeout(this.timeout);
     },
     defineMover: function() {
       var definitions, name;
