@@ -285,6 +285,15 @@
     randomWalk: function() {
       return this.modifier([h.random([-1, 0, 1]), h.random([-1, 0, 1])]);
     },
+    outside: function() {
+      if ((this.x < 0) || (this.y < 0)) {
+        return false;
+      }
+      if ((this.x > this.game.get('height')) || (this.y > this.game.get('width'))) {
+        return false;
+      }
+      return true;
+    },
     coords: function() {
       return [this.x, this.y];
     },

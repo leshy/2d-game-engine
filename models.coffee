@@ -176,6 +176,11 @@ exports.Point = Point = Backbone.Tagged.extend4000 ClockListener,
 
     randomWalk: -> @modifier [ h.random([-1,0,1]), h.random([-1,0,1]) ]
 
+    outside: ->
+      if (@x < 0) or (@y < 0) then return false
+      if (@x > @game.get('height')) or (@y > @game.get('width')) then return false
+      return true
+
     # general point operations
     coords: -> [@x,@y]
 
