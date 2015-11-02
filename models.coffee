@@ -3,10 +3,6 @@ _ = require 'underscore'
 helpers = require 'helpers'
 decorators = require 'decorators'
 
-# !!! IMPORTANT !!!
-# there is a problem with state being added to a collection before its ID is set
-# as collection.get looks up the model by model.id first, and it will fail
-# fixed it by changing the priority of backbone collections to look at cid first
 #
 # states, points, and painters can subscribe to clocks
 #
@@ -41,7 +37,7 @@ Clock = exports.Clock = ClockListener.extend4000
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
     stopTickloop: ->
-        clearTimeout @timeout
+      clearTimeout @timeout
 
     getTick: -> @tick
 

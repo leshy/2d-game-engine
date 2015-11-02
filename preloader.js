@@ -49,6 +49,7 @@
       }
     },
     preload: function(callback, callbackProgress) {
+      $('body').append("<div style='display: none;' id='#preload' />");
       this.preloadQueue.load();
       this.preloadQueue.on("complete", function() {
         return helpers.cbc(callback);

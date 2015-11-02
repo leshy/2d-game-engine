@@ -28,7 +28,8 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
         @off 'del', @delHook
         @off 'move', @moveHook
         @off 'message', @msgHook
-        @on 'attr', @attrHook
+        @off 'attr', @attrHook
+        @off 'end', @endHook
 
     startNetworkTicker: ->
         @log = []
@@ -38,13 +39,14 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
         @on 'move', @moveHook
         @on 'message', @msgHook
         @on 'attr', @attrHook
+        @on 'end', @endHook
 
         @each (point) => point.each (state) => @setHook(state)
         @networkTickLoop()
 
     snapshot: ->
         log = []
-        @each (point) =>  point.each (state) =>
+        @each (point) => point.each (state) =>
             if entry = @setData(state) then log.push entry
         return log
 
@@ -72,6 +74,9 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
 
     attrHook: (state,change) ->
         @log.push { a: 'attr', id: state.id, c: change }
+
+    endHook: (winner) ->
+        @log.push { a: 'end', winner: winner }
 
     networkTickLoop: ->
         @networkTick()

@@ -29,6 +29,7 @@ exports.preloaderMixin = validator.ValidatedModel.extend4000
         if @get 'autopreload' then @preload()
 
     preload: (callback, callbackProgress) ->
+        $('body').append("<div style='display: none;' id='#preload' />")
         @preloadQueue.load()
         @preloadQueue.on "complete", -> helpers.cbc callback
         if callbackProgress then @preloadQueue.on "progress", (event) ->
