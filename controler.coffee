@@ -15,12 +15,14 @@ exports.KeyControler = Backbone.Model.extend4000 validator.ValidatedModel,
 
         $(document).keydown (event) =>
             #console.log event.keyCode
-            if not key = actions[event.keyCode] then return
+            event.preventDefault()
+            if not key = actions[event.keyCode] then return 
             if state[key] then return
             state[key] = true
             @send ctrl: { k: key, s: 'd'}
             
         $(document).keyup (event) =>
+            event.preventDefault()
             key = event.keyCode
             if not key = actions[event.keyCode] then return
             if not state[key]? then return

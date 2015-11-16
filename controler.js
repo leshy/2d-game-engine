@@ -26,6 +26,7 @@
       $(document).keydown((function(_this) {
         return function(event) {
           var key;
+          event.preventDefault();
           if (!(key = actions[event.keyCode])) {
             return;
           }
@@ -44,6 +45,7 @@
       return $(document).keyup((function(_this) {
         return function(event) {
           var key;
+          event.preventDefault();
           key = event.keyCode;
           if (!(key = actions[event.keyCode])) {
             return;
