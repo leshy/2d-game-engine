@@ -13,16 +13,19 @@ HowlerSounds = exports.HowlerSounds = Backbone.Model.extend4000 do
       if player = state?point?game?player
         distance = state.point.distance(player.point)
         console.log 'distance is', distance
-        volume = (@maxDistance - distance) / distance
+        volume = (1 / (distance + 5)) * 5
         if volume < 0 then volume = 0
         if volume > 1 then volume = 1
         console.log 'volime is', volume
       else
         volume = 1
         
+      id = Math.random()
+      
       sound = h.random(sounds)
-      sound.volume(volume)
-      sound.play()
+      sound.play ~>
+        console.log it
+        sound.volume(volume, it)
     
   initialize: (options) ->
     @set options

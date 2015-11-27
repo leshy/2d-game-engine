@@ -9,12 +9,12 @@
     rootUrl: 'sounds',
     maxDistance: 15,
     event: function(event, state){
-      var sounds, ref$, player, ref1$, ref2$, distance, volume, sound;
+      var sounds, ref$, player, ref1$, ref2$, distance, volume, id, sound, this$ = this;
       if (sounds = (ref$ = this.sounds[state.name]) != null ? ref$[event] : void 8) {
         if (player = state != null ? (ref1$ = state.point) != null ? (ref2$ = ref1$.game) != null ? ref2$.player : void 8 : void 8 : void 8) {
           distance = state.point.distance(player.point);
           console.log('distance is', distance);
-          volume = (this.maxDistance - distance) / distance;
+          volume = (1 / (distance + 5)) * 5;
           if (volume < 0) {
             volume = 0;
           }
@@ -25,9 +25,12 @@
         } else {
           volume = 1;
         }
+        id = Math.random();
         sound = h.random(sounds);
-        sound.volume(volume);
-        return sound.play();
+        return sound.play(function(it){
+          console.log(it);
+          return sound.volume(volume, it);
+        });
       }
     },
     initialize: function(options){
