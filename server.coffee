@@ -1,5 +1,5 @@
 Backbone = require 'backbone4000'
-Game = require('game/models').Game
+Game = require('./models').Game
 _ = require 'underscore'
 helpers = require 'helpers'
 

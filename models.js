@@ -97,6 +97,9 @@
         };
       })(this));
     },
+    sound: function(name) {
+      return this.point.game.sound(this, name);
+    },
     place: function() {
       var states;
       states = 1 <= arguments.length ? slice.call(arguments, 0) : [];
@@ -493,6 +496,9 @@
       this.stateid = 1;
       this.ended = false;
       return this.byid = {};
+    },
+    sound: function(state, name) {
+      return this.trigger('sound', state, name);
     },
     nextid: function(state) {
       return this.stateid++;

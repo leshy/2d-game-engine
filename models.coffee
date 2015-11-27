@@ -70,6 +70,8 @@ exports.State = State = Backbone.Tagged.extend4000 ClockListener,
             point.game.byid[@id] = @
             if @start then @start()
 
+    sound: (name) -> @point.game.sound(@,name)
+
     place: (states...) -> @point.push.apply(@point,states)
 
     replace: (state) -> @remove(); @point.push(state)
@@ -294,6 +296,9 @@ exports.Game = Game = Field.extend4000 Clock,
         @stateid = 1
         @ended = false
         @byid = {}
+
+    sound: (state,name) ->
+      @trigger 'sound', state, name
 
     nextid: (state) -> @stateid++
 

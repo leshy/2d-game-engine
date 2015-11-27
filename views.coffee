@@ -4,7 +4,6 @@ validator = require 'validator2-extras'; v = validator.v
 Models = require './models'
 _ = require 'underscore'
 
-
 # painter subclass should implement Draw(coords) Move(coords) and Remove() methods
 Painter = exports.Painter = Models.ClockListener.extend4000
     initialize: (options) ->
@@ -65,9 +64,9 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
             _.defer =>
                 # game should hook only on create to create new point view
                 # and point views should deal with their own state changes and deletions/garbage collectio
-                game.on 'set', (state,point) => @drawPoint point
-                game.on 'del', (state,point) => @drawPoint point
-                game.on 'move', (state,point,from) => @drawPoint point
+                game.on 'set', (state, point) => @drawPoint point
+                game.on 'del', (state, point) => @drawPoint point
+                game.on 'move', (state, point, from) => @drawPoint point
 
                 game.each (point) => @drawPoint point
 

@@ -1,6 +1,6 @@
 _ = require 'underscore'
 helpers = require 'helpers'
-Game = require 'game/models'
+Game = require './models'
 colors = require 'colors'
 
 exports.mover = {
