@@ -285,6 +285,12 @@
     downLeft: function() {
       return this.modifier([-1, 1]);
     },
+    distance: function(point) {
+      if (!point) {
+        return Infinity;
+      }
+      return Math.abs(point.x - this.x) + Math.abs(point.y - this.y);
+    },
     randomWalk: function() {
       return this.modifier([h.random([-1, 0, 1]), h.random([-1, 0, 1])]);
     },

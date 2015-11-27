@@ -7,6 +7,23 @@ require! {
 
 HowlerSounds = exports.HowlerSounds = Backbone.Model.extend4000 do
   rootUrl: 'sounds'
+  maxDistance: 15
+  event: (event, state) ->
+    if sounds = @sounds[state.name]?[event]
+      if player = state?point?game?player
+        distance = state.point.distance(player.point)
+        console.log 'distance is', distance
+        volume = (@maxDistance - distance) / distance
+        if volume < 0 then volume = 0
+        if volume > 1 then volume = 1
+        console.log 'volime is', volume
+      else
+        volume = 1
+        
+      sound = h.random(sounds)
+      sound.volume(volume)
+      sound.play()
+    
   initialize: (options) ->
     @set options
     _.extend @, options
@@ -28,22 +45,8 @@ HowlerSounds = exports.HowlerSounds = Backbone.Model.extend4000 do
       @game = game
       _.defer ~>
         
-        game.on 'set', (state, point) ~>
-          if sounds = @sounds[state.name]?set
-            sound = h.random(sounds)
-            sound.play()
-            
-        game.on 'del', (state, point) ~>
-          if sounds = @sounds[state.name]?del
-            sound = h.random(sounds)
-            sound.play()
+        game.on 'set', (state, point) ~> @event 'set', state
+        game.on 'del', (state, point) ~> @event 'del', state
 
-        game.on 'sound', (state, sound) ->
-          if sound = @sounds[state.name]?[sound] then sound.play()
-            
-        @music = new howler.Howl urls: ['/sounds/music.mp3']
-        game.once 'tick', ~>
-          @music.play!
-          game.once 'end', ~> @music.fadeOut 0, 1000, ~> @music.stop!
-
+  
 

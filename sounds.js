@@ -7,6 +7,29 @@
   Backbone = require('backbone4000');
   HowlerSounds = exports.HowlerSounds = Backbone.Model.extend4000({
     rootUrl: 'sounds',
+    maxDistance: 15,
+    event: function(event, state){
+      var sounds, ref$, player, ref1$, ref2$, distance, volume, sound;
+      if (sounds = (ref$ = this.sounds[state.name]) != null ? ref$[event] : void 8) {
+        if (player = state != null ? (ref1$ = state.point) != null ? (ref2$ = ref1$.game) != null ? ref2$.player : void 8 : void 8 : void 8) {
+          distance = state.point.distance(player.point);
+          console.log('distance is', distance);
+          volume = (this.maxDistance - distance) / distance;
+          if (volume < 0) {
+            volume = 0;
+          }
+          if (volume > 1) {
+            volume = 1;
+          }
+          console.log('volime is', volume);
+        } else {
+          volume = 1;
+        }
+        sound = h.random(sounds);
+        sound.volume(volume);
+        return sound.play();
+      }
+    },
     initialize: function(options){
       var this$ = this;
       this.set(options);
@@ -43,35 +66,10 @@
         this$.game = game;
         return _.defer(function(){
           game.on('set', function(state, point){
-            var sounds, ref$, sound;
-            if (sounds = (ref$ = this$.sounds[state.name]) != null ? ref$.set : void 8) {
-              sound = h.random(sounds);
-              return sound.play();
-            }
+            return this$.event('set', state);
           });
-          game.on('del', function(state, point){
-            var sounds, ref$, sound;
-            if (sounds = (ref$ = this$.sounds[state.name]) != null ? ref$.del : void 8) {
-              sound = h.random(sounds);
-              return sound.play();
-            }
-          });
-          game.on('sound', function(state, sound){
-            var ref$;
-            if (sound = (ref$ = this.sounds[state.name]) != null ? ref$[sound] : void 8) {
-              return sound.play();
-            }
-          });
-          this$.music = new howler.Howl({
-            urls: ['/sounds/music.mp3']
-          });
-          return game.once('tick', function(){
-            this$.music.play();
-            return game.once('end', function(){
-              return this$.music.fadeOut(0, 1000, function(){
-                return this$.music.stop();
-              });
-            });
+          return game.on('del', function(state, point){
+            return this$.event('del', state);
           });
         });
       });

@@ -36,11 +36,9 @@ Clock = exports.Clock = ClockListener.extend4000
         @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
-    stopTickloop: ->
-      clearTimeout @timeout
+    stopTickloop: -> clearTimeout @timeout
 
     getTick: -> @tick
-
 
 #
 # decorator for point functions to be able to receive tags instead of states, and automatically translate those tags to particular states under that point
@@ -171,6 +169,10 @@ exports.Point = Point = Backbone.Tagged.extend4000 ClockListener,
     upLeft: -> @modifier [-1,-1]
     downRight: -> @modifier [ 1, 1 ]
     downLeft: -> @modifier [ -1, 1 ]
+
+    distance: (point) ->
+      if not point then return Infinity
+      return Math.abs(point.x - @x) + Math.abs(point.y - @y)
 
     randomWalk: -> @modifier [ h.random([-1,0,1]), h.random([-1,0,1]) ]
 
