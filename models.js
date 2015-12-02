@@ -423,7 +423,9 @@
       }
     },
     remove: function(point) {
-      return delete this.points[this.getIndex(point)];
+      if (point) {
+        return delete this.points[this.getIndex(point)];
+      }
     },
     push: function(point) {
       return this.points[this.getIndex(point)] = point;

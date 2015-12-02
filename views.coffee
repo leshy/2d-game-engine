@@ -51,6 +51,10 @@ Painter = exports.Painter = Models.ClockListener.extend4000
 
 # very simmilar to game model, maybe should share the superclass with it
 GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Clock,
+    end: ->
+      @stopListening game
+      @stopTickloop()
+
     initialize: ->
         @painters = {} # name -> painter class map
 
@@ -70,9 +74,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
 
                 game.each (point) => @drawPoint point
 
-                game.once 'end', =>
-                  @stopListening game
-                  @stopTickloop()
+                game.once 'end', => @end()
 
                 @tickloop()
 

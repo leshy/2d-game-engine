@@ -247,7 +247,7 @@ exports.Field = Field = Backbone.Model.extend4000
         if ret = @points[ point.id ] then ret
         else if point.game is @ then point else new Point(point.coords(), @)
 
-    remove: (point) -> delete @points[@getIndex(point)]
+    remove: (point) -> if point then delete @points[@getIndex(point)]
 
     push: (point) -> @points[@getIndex(point)] = point
 

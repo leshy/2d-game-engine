@@ -70,6 +70,10 @@
   });
 
   GameView = exports.GameView = exports.View = Backbone.Model.extend4000(Models.Clock, {
+    end: function() {
+      this.stopListening(game);
+      return this.stopTickloop();
+    },
     initialize: function() {
       this.painters = {};
       this.pInstances = {};
@@ -91,8 +95,7 @@
               return _this.drawPoint(point);
             });
             game.once('end', function() {
-              _this.stopListening(game);
-              return _this.stopTickloop();
+              return _this.end();
             });
             return _this.tickloop();
           });
