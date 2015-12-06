@@ -73,11 +73,9 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
                 game.on 'move', (state, point, from) => @drawPoint point
 
                 game.each (point) => @drawPoint point
-
                 game.once 'end', => @end()
 
                 @tickloop()
-
 
     # painters should be called like the states, that's how the view looks them up
     definePainter: (definitions...) ->

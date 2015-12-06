@@ -33,10 +33,11 @@ Clock = exports.Clock = ClockListener.extend4000
         @trigger 'tick_' + @tick
 
     tickloop: ->
-        @dotick()
         @timeout = setTimeout @tickloop.bind(@), @tickspeed
+        @dotick()
 
-    stopTickloop: -> clearTimeout @timeout
+    stopTickloop: ->
+      clearTimeout @timeout
 
     getTick: -> @tick
 
@@ -293,7 +294,6 @@ exports.Game = Game = Field.extend4000 Clock,
     initialize: ->
         @controls = {}
         @state = {}
-#        @tickspeed = 50
         @tick = 0
         @stateid = 1
         @ended = false
