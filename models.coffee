@@ -4,7 +4,7 @@ helpers = require 'helpers'
 decorators = require 'decorators'
 
 #
-# states, points, and painters can subscribe to clocks
+# states, points, and painters subscribe to clocks
 #
 ClockListener = exports.ClockListener = Backbone.Model.extend4000
     in: (n, callback) ->
@@ -227,7 +227,6 @@ exports.Point = Point = Backbone.Tagged.extend4000 ClockListener,
 
 
 # Field is a collection of discrete points containing objects (@points)
-# and objects with coordinates in a continuous coordinate space (@movers)
 #
 # needs width and height attributes
 # holds bunch of points together
@@ -267,6 +266,8 @@ exports.Field = Field = Backbone.Model.extend4000
 
     show: (callback) -> helpers.dictMap @points, (point,index) -> point.show()
 
+    # this was used for debugging, will return a string repr of the field,
+    # I know, a proper game view with ASCII output might have been better.
     render: ->
         colors = require 'colors'
         data = "    "
@@ -286,10 +287,11 @@ exports.Field = Field = Backbone.Model.extend4000
 
         data += "\ny (height)\n"
         data
-#
-# used to define possible states, has tickloop controls, field width/height, and this is what main game views hook to
-#
 
+#
+# brings everything together, acts as a field and a clock, (tickloop controls, field width/height)
+# used to define possible states, and this is what main game views hook to.
+#
 exports.Game = Game = Field.extend4000 Clock,
     initialize: ->
         @controls = {}
@@ -354,7 +356,6 @@ exports.Game = Game = Field.extend4000 Clock,
 #
 # as close as you can get to a 2D vector in a world of bomberman.
 #
-
 exports.Direction = Direction = class Direction
     constructor: (@x,@y) -> true
 
