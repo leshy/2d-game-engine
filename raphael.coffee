@@ -135,12 +135,10 @@ Image = exports.Image = RaphaelPainter.extend4000
                     @rendering?.remove()
                     clearInterval @ticker
 
-
             @on 'remove', =>
                 if @rendering
                     @rendering.remove()
                     delete @rendering
-
 
         if not @state then return
         # do we need to move our rendering?

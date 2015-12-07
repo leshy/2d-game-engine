@@ -5,8 +5,8 @@ require! {
   three: THREE
   backbone4000: Backbone  
 }
-OrbitControls = require('three-orbit-controls')(THREE)
 
+OrbitControls = require('three-orbit-controls')(THREE)
 View = require './views'
 
 GameView = exports.GameView = View.GameView.extend4000 do
@@ -62,8 +62,6 @@ GameView = exports.GameView = View.GameView.extend4000 do
       @scene.add spotLight
 
     #addSL!
-
-
         
 #    light = @light = new THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 1 );
 #    light.position.set( 10, -10, 4 );
