@@ -62,7 +62,7 @@
     },
     preloadPainter: function(painterclass) {
       var images, painter;
-      painter = new painterclass();
+      painter = new painterclass(false);
       images = painter.images();
       return _.map(images, (function(_this) {
         return function(image) {

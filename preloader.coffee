@@ -36,6 +36,6 @@ exports.preloaderMixin = validator.ValidatedModel.extend4000
             callbackProgress event.progress
 
     preloadPainter: (painterclass) ->
-        painter = new painterclass()
+        painter = new painterclass false
         images = painter.images()
         _.map images, (image) => @preloadQueue.loadFile image

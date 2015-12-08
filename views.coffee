@@ -6,40 +6,38 @@ _ = require 'underscore'
 
 # painter subclass should implement Draw(coords) Move(coords) and Remove() methods
 Painter = exports.Painter = Models.ClockListener.extend4000
+    id: ->
+      if @state then @state.id # I'm a state painter ( wait what about metapainters and multiple painters per state?)
+      else @point.coords() + '/' + @name  # I'm a special painter
+
     initialize: (options) ->
+        # preloader uses this to tell the painter to avoid normal init,
+        # (preloader needs to call painter.images() - maybe this should be a class function?
+        if options is false then return
+
         @set options
         _.extend @, options
-        if not @gameview then @gameview = @get 'gameview'
 
+        if not @gameview then @gameview = @get 'gameview'
         @clockParent = @gameview
+
         if not @state then @state = @get 'state'
         if not @point then @point = @get 'point'
 
-        #if @name is 'Player' then console.log "IM A PLAYER, STATE IS",@state,@
-        #@on 'remove', => @stopListening()
-
+        # am I a state painter or a special painter?
         if @state
-            @gameview.pInstances[@state.id] = @
-            @on 'remove', => delete @gameview.pInstances[@state.id]
+            @listenToOnce @state, 'del', =>
+                @remove()
+                @gameview.drawPoint @state.point
 
-        else if @point
-            helpers.dictpush(@gameview.spInstances, String(@point.coords()), @) # I guess I'm a specialpainter?
-            @on 'remove', => helpers.dictpop(@gameview.spInstances, String(@point.coords()), @)
+        # I guess I'm a specialpainter
+        else if @point then true
 
-        if not @gameview or not @state then return # painter needs to be able to be instantiated without models (preloader needs to be able to call images() on it) .. this init function sucks.. fix it..
+        else throw "I didn't get a point or a state, wtf. my name is #{@name}"
 
-        @state.on 'del', =>
-            @remove()
-            delete @gameview.pInstances[@state.id]
-            @gameview.drawPoint(@state.point)
-
-        # 'when' somehow doesn't work.. figure it out..
-        #@when 'gameview', (gameview) =>
-        #    @gameview = gameview
-        #    @gameview.pinstances[@state.id] = @
-        #@when 'state', (state) =>
-        #    @state = state
-        #    state.on 'del', => @remove()
+        id = @id()
+        helpers.dictpush(@gameview.pInstances, String(id), @)
+        @on 'remove', => delete @gameview.pInstances[id]
 
     draw: (coords,size) -> console.log "draw", @state.point.coords(), @state.name
 
@@ -59,7 +57,6 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
         @painters = {} # name -> painter class map
 
         @pInstances = {} # per stateview instance dict
-        @spInstances = {} # per point special painter instance dict
 
         @when 'game', (game) =>
             @game = game
@@ -120,7 +117,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
             else painter
 
         _specialPainters = (painters,point) =>
-            existingPainters = @spInstances[String(point.coords())] or []
+            existingPainters = @pInstances[String(point.coords())] or []
             newPainters = @specialPainters(painters,point)
             [ existingKeep, existingRemove, newAdd ] = helpers.difference existingPainters, newPainters, ((x) -> x.name), ((x) -> x::name)
             _.each existingRemove, (painter) -> painter.remove()

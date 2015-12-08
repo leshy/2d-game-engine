@@ -16,7 +16,18 @@
   _ = require('underscore');
 
   Painter = exports.Painter = Models.ClockListener.extend4000({
+    id: function() {
+      if (this.state) {
+        return this.state.id;
+      } else {
+        return this.point.coords() + '/' + this.name;
+      }
+    },
     initialize: function(options) {
+      var id;
+      if (options === false) {
+        return;
+      }
       this.set(options);
       _.extend(this, options);
       if (!this.gameview) {
@@ -30,28 +41,22 @@
         this.point = this.get('point');
       }
       if (this.state) {
-        this.gameview.pInstances[this.state.id] = this;
-        this.on('remove', (function(_this) {
+        this.listenToOnce(this.state, 'del', (function(_this) {
           return function() {
-            return delete _this.gameview.pInstances[_this.state.id];
+            _this.remove();
+            return _this.gameview.drawPoint(_this.state.point);
           };
         })(this));
       } else if (this.point) {
-        helpers.dictpush(this.gameview.spInstances, String(this.point.coords()), this);
-        this.on('remove', (function(_this) {
-          return function() {
-            return helpers.dictpop(_this.gameview.spInstances, String(_this.point.coords()), _this);
-          };
-        })(this));
+        true;
+      } else {
+        throw "I didn't get a point or a state, wtf. my name is " + this.name;
       }
-      if (!this.gameview || !this.state) {
-        return;
-      }
-      return this.state.on('del', (function(_this) {
+      id = this.id();
+      helpers.dictpush(this.gameview.pInstances, String(id), this);
+      return this.on('remove', (function(_this) {
         return function() {
-          _this.remove();
-          delete _this.gameview.pInstances[_this.state.id];
-          return _this.gameview.drawPoint(_this.state.point);
+          return delete _this.gameview.pInstances[id];
         };
       })(this));
     },
@@ -77,7 +82,6 @@
     initialize: function() {
       this.painters = {};
       this.pInstances = {};
-      this.spInstances = {};
       return this.when('game', (function(_this) {
         return function(game) {
           _this.game = game;
@@ -181,7 +185,7 @@
       _specialPainters = (function(_this) {
         return function(painters, point) {
           var existingKeep, existingPainters, existingRemove, newAdd, newPainters, ref;
-          existingPainters = _this.spInstances[String(point.coords())] || [];
+          existingPainters = _this.pInstances[String(point.coords())] || [];
           newPainters = _this.specialPainters(painters, point);
           ref = helpers.difference(existingPainters, newPainters, (function(x) {
             return x.name;
