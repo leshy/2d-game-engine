@@ -1,4 +1,4 @@
-helpers = require 'helpers'
+h = require 'helpers'
 Backbone = require 'backbone4000'
 validator = require 'validator2-extras'; v = validator.v
 Models = require './models'
@@ -36,16 +36,18 @@ Painter = exports.Painter = Models.ClockListener.extend4000
         else throw "I didn't get a point or a state, wtf. my name is #{@name}"
 
         id = @id()
-        helpers.dictpush(@gameview.pInstances, String(id), @)
+        h.dictpush(@gameview.pInstances, String(id), @)
         @on 'remove', => delete @gameview.pInstances[id]
 
-    draw: (coords,size) -> console.log "draw", @state.point.coords(), @state.name
+    draw: (coords,size) -> throw 'not implemented'
 
     remove: -> @trigger 'remove'
 
     move: -> throw 'not implemented'
 
-    images: -> [] # painters can dump the images they use.. preloader uses this
+    # painters can dump the images they use..
+    # preloader uses this // this should be called 'files' and moved to specific view implementation?
+    images: -> []
 
 # very simmilar to game model, maybe should share the superclass with it
 GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Clock,
@@ -97,17 +99,17 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
 
     drawPoint: (point) ->
         _applyEliminations = (painters) ->
-            dict = helpers.makedict painters, (painter) -> helpers.objorclass painter, 'name'
+            dict = h.makedict painters, (painter) -> h.objorclass painter, 'name'
             _.map painters, (painter) ->
-                if eliminates = helpers.objorclass painter, 'eliminates'
-                    helpers.maybeiterate eliminates, (name) ->
+                if eliminates = h.objorclass painter, 'eliminates'
+                    h.maybeiterate eliminates, (name) ->
                         painter = dict[name]
                         if typeof(painter) is 'object' then painter.remove()
                         delete dict[name]
 
-            helpers.makelist dict
+            h.makelist dict
 
-        _sortf = (painter) -> helpers.objorclass painter, 'zindex'
+        _sortf = (painter) -> h.objorclass painter, 'zindex'
 
         _applyOrder = (painters) -> _.sortBy painters, _sortf
 
@@ -119,7 +121,7 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
         _specialPainters = (painters,point) =>
             existingPainters = @pInstances[String(point.coords())] or []
             newPainters = @specialPainters(painters,point)
-            [ existingKeep, existingRemove, newAdd ] = helpers.difference existingPainters, newPainters, ((x) -> x.name), ((x) -> x::name)
+            [ existingKeep, existingRemove, newAdd ] = h.difference existingPainters, newPainters, ((x) -> x.name), ((x) -> x::name)
             _.each existingRemove, (painter) -> painter.remove()
             return painters.concat existingKeep, newAdd
 
