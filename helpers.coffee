@@ -5,7 +5,7 @@ colors = require 'colors'
 
 exports.mover = {
     initialize: (options) ->
-        console.log "mover init", options
+#        console.log "mover init", options
         _.extend @, {
             coordinates: [ 0.5, 0.5]
             speed: 0
@@ -33,7 +33,7 @@ exports.mover = {
             if direction is 0 then return Infinity
             if direction > 0 then return (0.5 - coordinate) / speed
             return (coordinate - 0.5) / speed
-        console.log @point.game.tick, 'centereta ::', eta
+#        console.log @point.game.tick, 'centereta ::', eta
         Math.ceil(_.reduce eta, ((min,x) -> if x < min and x >= 0 then x else min), Infinity)
 
     # will calculate when the object will pass the point boundary given some speed and direction
@@ -42,13 +42,13 @@ exports.mover = {
             if direction is 0 then Infinity
             else if direction > 0 then (1 - coordinate) / speed
             else coordinate / speed
-        console.log @point.game.tick, 'boundaryeta ::', eta
+#        console.log @point.game.tick, 'boundaryeta ::', eta
         res = _.reduce eta, ((min,x) -> if x < min then x else min), Infinity
 
     movementChange: ->
         if @doSubMove then @doSubMove()
         @scheduleMove()
-        console.log @point.game.tick, colors.green('MSG'),@direction.string(), { d: @direction.coords(), speed: @speed, c: @coordinates }
+#        console.log @point.game.tick, colors.green('MSG'),@direction.string(), { d: @direction.coords(), speed: @speed, c: @coordinates }
         @msg { d: @direction.coords(), speed: @speed, c: @coordinates }
 
     scheduleMove: ->
@@ -60,7 +60,7 @@ exports.mover = {
         @uSubMove  = @in eta, @doSubMove = @makeSubMover(@direction,@speed)
 
         if (centerEta = @centerEta(@direction, @speed)) < eta
-            console.log @point.game.tick, @point.game.tick, 'centereta', centerEta, @coordinates, @speed
+#            console.log @point.game.tick, @point.game.tick, 'centereta', centerEta, @coordinates, @speed
             @uCenterEvent = @in centerEta, => @trigger('center')
 
     unsubscribeMoves: ->
@@ -78,11 +78,11 @@ exports.mover = {
 
     subMove: (direction, speed, time) ->
         if not time then return
-        console.log @point.game.tick + " " + colors.yellow('move'), @coordinates, @point.coords(), colors.green(direction.string()), speed, time
+#        console.log @point.game.tick + " " + colors.yellow('move'), @coordinates, @point.coords(), colors.green(direction.string()), speed, time
         @coordinates = helpers.squish direction.coords(), @coordinates, (direction,coordinate) => coordinate += direction * speed * time
 
         if (movePoint = @point.direction( _.map @coordinates, (c) -> if c >= 1 then 1 else if c <= 0 then -1 else 0 )) isnt @point
             @coordinates = _.map @coordinates, (c) -> if c >= 1 then c - 1 else if c <= 0 then c + 1 else c
-            console.log @point.game.tick, 'moved from', @point.coords(),'to', movePoint.coords(), @coordinates
+#            console.log @point.game.tick, 'moved from', @point.coords(),'to', movePoint.coords(), @coordinates
             @move movePoint
 }
