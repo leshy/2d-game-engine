@@ -33,8 +33,8 @@ Clock = exports.Clock = ClockListener.extend4000
         @trigger 'tick_' + @tick
 
     tickloop: ->
-        @timeout = setTimeout @tickloop.bind(@), @tickspeed
         @dotick()
+        @timeout = setTimeout @tickloop.bind(@), @tickspeed
 
     stopTickloop: ->
       clearTimeout @timeout

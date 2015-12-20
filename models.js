@@ -46,8 +46,8 @@
       return this.trigger('tick_' + this.tick);
     },
     tickloop: function() {
-      this.timeout = setTimeout(this.tickloop.bind(this), this.tickspeed);
-      return this.dotick();
+      this.dotick();
+      return this.timeout = setTimeout(this.tickloop.bind(this), this.tickspeed);
     },
     stopTickloop: function() {
       return clearTimeout(this.timeout);

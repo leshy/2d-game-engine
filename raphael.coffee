@@ -184,7 +184,6 @@ Sprite = exports.Sprite = Image.extend4000
         @rendering.attr src: @getpic()
         @frame++
 
-
     scheduleTick: ->
         if @speed then @in Math.floor(1 / @speed), => @tick()
         else @nextTick => @tick()
