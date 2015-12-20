@@ -12,7 +12,6 @@
 
   exports.mover = {
     initialize: function(options) {
-      console.log("mover init", options);
       return _.extend(this, {
         coordinates: [0.5, 0.5],
         speed: 0,
@@ -51,7 +50,6 @@
           return (coordinate - 0.5) / speed;
         };
       })(this));
-      console.log(this.point.game.tick, 'centereta ::', eta);
       return Math.ceil(_.reduce(eta, (function(min, x) {
         if (x < min && x >= 0) {
           return x;
@@ -73,7 +71,6 @@
           }
         };
       })(this));
-      console.log(this.point.game.tick, 'boundaryeta ::', eta);
       return res = _.reduce(eta, (function(min, x) {
         if (x < min) {
           return x;
@@ -87,11 +84,6 @@
         this.doSubMove();
       }
       this.scheduleMove();
-      console.log(this.point.game.tick, colors.green('MSG'), this.direction.string(), {
-        d: this.direction.coords(),
-        speed: this.speed,
-        c: this.coordinates
-      });
       return this.msg({
         d: this.direction.coords(),
         speed: this.speed,
@@ -107,7 +99,6 @@
       }
       this.uSubMove = this["in"](eta, this.doSubMove = this.makeSubMover(this.direction, this.speed));
       if ((centerEta = this.centerEta(this.direction, this.speed)) < eta) {
-        console.log(this.point.game.tick, this.point.game.tick, 'centereta', centerEta, this.coordinates, this.speed);
         return this.uCenterEvent = this["in"](centerEta, (function(_this) {
           return function() {
             return _this.trigger('center');
@@ -146,7 +137,6 @@
       if (!time) {
         return;
       }
-      console.log(this.point.game.tick + " " + colors.yellow('move'), this.coordinates, this.point.coords(), colors.green(direction.string()), speed, time);
       this.coordinates = helpers.squish(direction.coords(), this.coordinates, (function(_this) {
         return function(direction, coordinate) {
           return coordinate += direction * speed * time;
@@ -170,7 +160,6 @@
             return c;
           }
         });
-        console.log(this.point.game.tick, 'moved from', this.point.coords(), 'to', movePoint.coords(), this.coordinates);
         return this.move(movePoint);
       }
     }

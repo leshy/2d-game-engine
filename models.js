@@ -296,12 +296,12 @@
     },
     outside: function() {
       if ((this.x < 0) || (this.y < 0)) {
-        return false;
+        return true;
       }
-      if ((this.x > this.game.get('height')) || (this.y > this.game.get('width'))) {
-        return false;
+      if ((this.y > this.game.get('height')) || (this.x > this.game.get('width'))) {
+        return true;
       }
-      return true;
+      return false;
     },
     coords: function() {
       return [this.x, this.y];
