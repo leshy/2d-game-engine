@@ -8,7 +8,7 @@ _ = require 'underscore'
 Painter = exports.Painter = Models.ClockListener.extend4000 do
     id: ->
       if @state then @state.id # I'm a state painter ( wait what about metapainters and multiple painters per state?)
-      else @point.coords() + '/' + @name  # I'm a special painter
+      else String(@point.coords())# I'm a special painter
 
     initialize: (options) ->
 
@@ -119,13 +119,13 @@ GameView = exports.GameView = exports.View = Backbone.Model.extend4000 Models.Cl
 
         _specialPainters = (painters,point) ~>
             existingPainters = @pInstances[String(point.coords())] or []
-            newPainters = @specialPainters(painters,point)
+            newPainters = @specialPainters(painters, point)
             [ existingKeep, existingRemove, newAdd ] = h.difference existingPainters, newPainters, ((x) -> x.name), ((x) -> x::name)
             _.each existingRemove, (painter) -> painter.remove()
             return painters.concat existingKeep, newAdd
 
         painters = point.map (state) ~> @getPainter(state)
-        painters = _specialPainters(painters,point)
+        painters = _specialPainters(painters, point)
         painters = _applyEliminations(painters)
         painters = _applyOrder(painters)
         painters = _instantiate(painters)
@@ -160,6 +160,7 @@ MetaPainter = exports.MetaPainter = Painter.extend4000 do
       if not @repr
         cls = @decideRepr()
         @repr = new cls _.extend @inherit(), { gameview: @gameview, state: @state }
+        
       console.log @name, "DRAW", @repr.name, @point.coords()
       @repr.draw.call @repr, @point
 

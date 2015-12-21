@@ -179,7 +179,7 @@ exports.Point = Point = Backbone.Tagged.extend4000 ClockListener,
 
     outside: ->
       if (@x < 0) or (@y < 0) then return true
-      if (@y > @game.get('height')) or (@x > @game.get('width')) then return true
+      if (@y > @game.get('height') - 1) or (@x > @game.get('width') - 1) then return true
       return false
 
     # general point operations

@@ -298,7 +298,7 @@
       if ((this.x < 0) || (this.y < 0)) {
         return true;
       }
-      if ((this.y > this.game.get('height')) || (this.x > this.game.get('width'))) {
+      if ((this.y > this.game.get('height') - 1) || (this.x > this.game.get('width') - 1)) {
         return true;
       }
       return false;

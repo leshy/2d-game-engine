@@ -12,7 +12,7 @@
       if (this.state) {
         return this.state.id;
       } else {
-        return this.point.coords() + '/' + this.name;
+        return String(this.point.coords());
       }
     },
     initialize: function(options){
