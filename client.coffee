@@ -20,9 +20,9 @@ GameClient = exports.GameClient = Backbone.Model.extend4000
             point = @point(change.p)
             point.push state = new @state[change.s](attrs)
 
-        if change.a is 'del'  then @byid[change.id].remove()
-        if change.a is 'move' then @byid[change.id].move @point(change.p)
-        if change.a is 'msg'  then @byid[change.id].trigger 'message', change.m
+        if change.a is 'del'  then @byid[change.id]?.remove()
+        if change.a is 'move' then @byid[change.id]?.move @point(change.p)
+        if change.a is 'msg'  then @byid[change.id]?.trigger 'message', change.m
         if change.a is 'end'  then h.wait 50, => @end change.winner
 
     nextid: (state) -> "c" + @stateid++

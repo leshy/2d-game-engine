@@ -28,7 +28,7 @@
       })(this));
     },
     applyChange: function(change) {
-      var attrs, point, state;
+      var attrs, point, ref, ref1, ref2, state;
       if (change.a === 'set') {
         attrs = {
           id: change.id
@@ -40,13 +40,19 @@
         point.push(state = new this.state[change.s](attrs));
       }
       if (change.a === 'del') {
-        this.byid[change.id].remove();
+        if ((ref = this.byid[change.id]) != null) {
+          ref.remove();
+        }
       }
       if (change.a === 'move') {
-        this.byid[change.id].move(this.point(change.p));
+        if ((ref1 = this.byid[change.id]) != null) {
+          ref1.move(this.point(change.p));
+        }
       }
       if (change.a === 'msg') {
-        this.byid[change.id].trigger('message', change.m);
+        if ((ref2 = this.byid[change.id]) != null) {
+          ref2.trigger('message', change.m);
+        }
       }
       if (change.a === 'end') {
         return h.wait(50, (function(_this) {
