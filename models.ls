@@ -322,7 +322,7 @@ exports.Game = Game = Field.extend4000 Clock, do
     @tickloop()
 
     @on 'end', (data) ~> helpers.cbc callback, data
-
+  
   defineState: (...definitions) ->
     lastdef = {}
     # just a small sintax sugar, first argument is optionally a name for the painter
@@ -356,7 +356,7 @@ exports.Game = Game = Field.extend4000 Clock, do
 # as close as you can get to a 2D vector in a world of bomberman.
 #
 exports.Direction = Direction = class Direction
-  constructor: (@x,@y) -> true
+  (@x,@y) -> true
 
   reverse: -> @x *= -1 or @y *= -1
 

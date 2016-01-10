@@ -525,11 +525,11 @@
   exports.Direction = Direction = Direction = (function(){
     Direction.displayName = 'Direction';
     var prototype = Direction.prototype, constructor = Direction;
-    prototype.constructor = function(x, y){
+    function Direction(x, y){
+      true;
       this.x = x;
       this.y = y;
-      return true;
-    };
+    }
     prototype.reverse = function(){
       return this.x *= -1 || (this.y *= -1);
     };
@@ -640,7 +640,6 @@
         return 'stop';
       }
     };
-    function Direction(){}
     return Direction;
   }());
 }).call(this);
