@@ -24,6 +24,7 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
     stopNetworkTicker: ->
         clearTimeout(@timeout)
         delete @log
+
         @off 'set', @setHook
         @off 'del', @delHook
         @off 'move', @moveHook
