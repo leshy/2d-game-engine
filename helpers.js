@@ -19,6 +19,15 @@
       }, options);
     },
     start: function() {
+      this.on('message', (function(_this) {
+        return function(msg) {
+          return _this.set({
+            speed: _this.speed = msg.speed,
+            direction: _this.direction = new Game.Direction(msg.d[0], msg.d[1]),
+            coordinates: _this.coordinates = msg.c
+          });
+        };
+      })(this));
       return this.movementChange();
     },
     display: function() {
@@ -84,11 +93,12 @@
         this.doSubMove();
       }
       this.scheduleMove();
-      return this.msg({
+      this.msg({
         d: this.direction.coords(),
         speed: this.speed,
         c: this.coordinates
       });
+      return this.trigger('movementChange');
     },
     scheduleMove: function() {
       var centerEta, eta;

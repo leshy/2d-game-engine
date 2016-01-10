@@ -75,7 +75,7 @@ GameView = exports.GameView = View.GameView.extend4000
 RaphaelPainter = View.Painter.extend4000
     draw: (point) ->
         if @state?.mover and @rendering then return @rendering.toFront()
-#        console.log '>>', @name, @state?.name,' draw called', point.coords(), @gameview.translate(point.coords())
+        console.log '>>', @name, @state?.name,' draw called', point.coords(), @gameview.translate(point.coords())
         @render @gameview.translate(point.coords()), @gameview.size
 
 
@@ -129,7 +129,6 @@ Image = exports.Image = RaphaelPainter.extend4000
             else @rendering.toBack()
 
             if @state?.mover
-                #@listenTo @state, 'movementChange', => @render()
                 @on 'remove', =>
                     @rendering?.stop()
                     @rendering?.remove()
@@ -209,10 +208,7 @@ MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
     reprChange: ->
         cls = @decideRepr()
         if @repr.constructor isnt cls
-            oldRepr = @repr
             @repr.remove()
-#            console.log 'oldrepr frame', oldRepr.name, cls::name, oldRepr.repr.frame + 1,
-#            @repr = new cls { gameview: @gameview, state: @state, frame: oldRepr?.repr?.frame + 1 }
             @repr = new cls { gameview: @gameview, state: @state }
             @render.apply @, @args
 
@@ -231,7 +227,8 @@ MetaPainter = exports.MetaPainter = RaphaelPainter.extend4000
     decideRepr: -> throw 'override me'
 
 DirectionPainter = exports.DirectionPainter = MetaPainter.extend4000
-    decideRepr: -> @reprs[(@state.direction or @state.get('direction')).string()]
+    decideRepr: ->
+      @reprs[(@state.direction or @state.get('direction')).string()]
 
 OrientationPainter = exports.OrientationPainter = MetaPainter.extend4000
     decideRepr: -> @reprs[@state.get('direction').orientation()]

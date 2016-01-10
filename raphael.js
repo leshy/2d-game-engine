@@ -96,10 +96,11 @@
 
   RaphaelPainter = View.Painter.extend4000({
     draw: function(point) {
-      var ref;
+      var ref, ref1;
       if (((ref = this.state) != null ? ref.mover : void 0) && this.rendering) {
         return this.rendering.toFront();
       }
+      console.log('>>', this.name, (ref1 = this.state) != null ? ref1.name : void 0, ' draw called', point.coords(), this.gameview.translate(point.coords()));
       return this.render(this.gameview.translate(point.coords()), this.gameview.size);
     }
   });
@@ -320,10 +321,9 @@
       })(this));
     },
     reprChange: function() {
-      var cls, oldRepr;
+      var cls;
       cls = this.decideRepr();
       if (this.repr.constructor !== cls) {
-        oldRepr = this.repr;
         this.repr.remove();
         this.repr = new cls({
           gameview: this.gameview,

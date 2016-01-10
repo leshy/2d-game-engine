@@ -11,13 +11,18 @@
     validator: {
       actions: 'Object'
     },
-    send: function(){
-      return console.warn("controler trying to send, but no send method is implemented");
+    send: function(it){
+      if (this.game) {
+        return this.game.trigger('ctrl', it);
+      }
     },
     initialize: function(){
       var state, actions, this$ = this;
       state = {};
       actions = this.get('actions');
+      this.when('game', function(it){
+        return this$.game = it;
+      });
       $(document).keydown(function(event){
         var key;
         event.preventDefault();
@@ -29,10 +34,8 @@
         }
         state[key] = true;
         return this$.send({
-          ctrl: {
-            k: key,
-            s: 'd'
-          }
+          k: key,
+          s: 'd'
         });
       });
       return $(document).keyup(function(event){
@@ -47,10 +50,8 @@
         }
         delete state[key];
         return this$.send({
-          ctrl: {
-            k: key,
-            s: 'u'
-          }
+          k: key,
+          s: 'u'
         });
       });
     },

@@ -356,7 +356,7 @@ exports.Game = Game = Field.extend4000 Clock, do
 # as close as you can get to a 2D vector in a world of bomberman.
 #
 exports.Direction = Direction = class Direction
-  (@x,@y) -> true
+  (@x, @y) ->
 
   reverse: -> @x *= -1 or @y *= -1
 

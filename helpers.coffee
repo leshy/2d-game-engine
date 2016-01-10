@@ -12,7 +12,11 @@ exports.mover = {
             direction: new Game.Direction(0,0)
         }, options
 
-    start: -> @movementChange()
+    start: ->
+      @on 'message', (msg) =>
+          @set speed: @speed = msg.speed, direction: @direction = new Game.Direction(msg.d[0], msg.d[1]), coordinates: @coordinates = msg.c
+
+      @movementChange()
 
     display: ->
         @movementChange()
@@ -38,6 +42,7 @@ exports.mover = {
 
     # will calculate when the object will pass the point boundary given some speed and direction
     boundaryEta: (direction, speed) ->
+#        console.log "DIR", direction.coords(), speed
         eta = helpers.squish direction.coords(), @coordinates, (direction,coordinate) =>
             if direction is 0 then Infinity
             else if direction > 0 then (1 - coordinate) / speed
@@ -50,6 +55,7 @@ exports.mover = {
         @scheduleMove()
 #        console.log @point.game.tick, colors.green('MSG'),@direction.string(), { d: @direction.coords(), speed: @speed, c: @coordinates }
         @msg { d: @direction.coords(), speed: @speed, c: @coordinates }
+        @trigger 'movementChange'
 
     scheduleMove: ->
         @unsubscribeMoves()

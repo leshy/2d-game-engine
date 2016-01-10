@@ -526,7 +526,6 @@
     Direction.displayName = 'Direction';
     var prototype = Direction.prototype, constructor = Direction;
     function Direction(x, y){
-      true;
       this.x = x;
       this.y = y;
     }
