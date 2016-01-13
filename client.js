@@ -8,11 +8,19 @@
   GameClient = exports.GameClient = Backbone.Model.extend4000({
     initialize: function(){
       var this$ = this;
-      return this.subscribe({
-        changes: Array
-      }, function(msg){
-        return this$.applyChanges(msg.changes);
+      return this.on('message', function(state, msg){
+        return this$.send({
+          a: 'msg',
+          m: msg,
+          id: state.id
+        });
       });
+    },
+    send: function(msg){
+      return this.trigger('send', msg);
+    },
+    receive: function(data){
+      return this.applyChanges(data.changes);
     },
     applyChanges: function(changes){
       var this$ = this;

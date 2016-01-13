@@ -89,4 +89,11 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
         @log = []
         @send { tick: @tick, changes: log }
 
-    send: (msg) -> @trigger 'msg', msg
+    # these two are overrriden or events bound to when implementing a concrete transport protocol
+    send: (msg) -> @trigger 'send', msg
+
+    receive: (msg, player) ->
+      if msg.id
+        @byid[msg.id]?.trigger 'message', msg.m, player
+
+      @trigger 'receive', msg, player

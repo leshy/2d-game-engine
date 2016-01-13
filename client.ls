@@ -6,8 +6,14 @@ _ = require 'underscore'
 # mixin for a game model - will receive state changes
 GameClient = exports.GameClient = Backbone.Model.extend4000 do
     initialize: ->
-        @subscribe { changes: Array }, (msg) ~> @applyChanges msg.changes
-
+      @on 'message', (state, msg) ~>
+        @send { a: 'msg', m: msg, id: state.id }
+    
+    # this should be overrriden or event bound when implementing a concrete transport protocol
+    send: (msg) -> @trigger 'send', msg
+    
+    receive: (data) -> @applyChanges data.changes
+      
     applyChanges: (changes) ->
         _.map changes, (change) ~> @applyChange change
 
@@ -15,8 +21,7 @@ GameClient = exports.GameClient = Backbone.Model.extend4000 do
         if change.a is 'set'
             attrs = { id: change.id }
             if change.o then attrs = _.extend attrs, change.o
-
-            point = @point(change.p)
+            point = @point change.p
             point.push state = new @state[change.s](attrs)
 
         switch change.a
@@ -26,3 +31,4 @@ GameClient = exports.GameClient = Backbone.Model.extend4000 do
           | 'end'  => h.wait 50, => @end change.winner
 
     nextid: (state) -> "c" + @stateid++
+

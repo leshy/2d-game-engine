@@ -141,7 +141,16 @@
       });
     },
     send: function(msg) {
-      return this.trigger('msg', msg);
+      return this.trigger('send', msg);
+    },
+    receive: function(msg, player) {
+      var ref;
+      if (msg.id) {
+        if ((ref = this.byid[msg.id]) != null) {
+          ref.trigger('message', msg.m, player);
+        }
+      }
+      return this.trigger('receive', msg, player);
     }
   });
 

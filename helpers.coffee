@@ -14,7 +14,10 @@ exports.mover = {
 
     start: ->
       @on 'message', (msg) =>
+          if not msg.mover then return
+          msg = msg.mover
           @set speed: @speed = msg.speed, direction: @direction = new Game.Direction(msg.d[0], msg.d[1]), coordinates: @coordinates = msg.c
+          @movementChange()
 
       @movementChange()
 
@@ -54,7 +57,7 @@ exports.mover = {
         if @doSubMove then @doSubMove()
         @scheduleMove()
 #        console.log @point.game.tick, colors.green('MSG'),@direction.string(), { d: @direction.coords(), speed: @speed, c: @coordinates }
-        @msg { d: @direction.coords(), speed: @speed, c: @coordinates }
+        @msg mover: { d: @direction.coords(), speed: @speed, c: @coordinates }
         @trigger 'movementChange'
 
     scheduleMove: ->

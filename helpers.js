@@ -21,11 +21,16 @@
     start: function() {
       this.on('message', (function(_this) {
         return function(msg) {
-          return _this.set({
+          if (!msg.mover) {
+            return;
+          }
+          msg = msg.mover;
+          _this.set({
             speed: _this.speed = msg.speed,
             direction: _this.direction = new Game.Direction(msg.d[0], msg.d[1]),
             coordinates: _this.coordinates = msg.c
           });
+          return _this.movementChange();
         };
       })(this));
       return this.movementChange();
@@ -94,9 +99,11 @@
       }
       this.scheduleMove();
       this.msg({
-        d: this.direction.coords(),
-        speed: this.speed,
-        c: this.coordinates
+        mover: {
+          d: this.direction.coords(),
+          speed: this.speed,
+          c: this.coordinates
+        }
       });
       return this.trigger('movementChange');
     },
