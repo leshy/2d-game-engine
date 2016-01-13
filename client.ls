@@ -15,7 +15,7 @@ GameClient = exports.GameClient = Backbone.Model.extend4000 do
     receive: (data) -> @applyChanges data.changes
       
     applyChanges: (changes) ->
-        _.map changes, (change) ~> @applyChange change
+      _.map changes, (change) ~> @applyChange change
 
     applyChange: (change) ->
         if change.a is 'set'
@@ -26,7 +26,11 @@ GameClient = exports.GameClient = Backbone.Model.extend4000 do
 
         switch change.a
           | 'del'  => @byid[change.id]?.remove()
-          | 'move' => @byid[change.id]?.move @point(change.p)
+          | 'move' => # small ugly hack, parsing/generating of these messages should be moved to individual states
+            state = @byid[change.id]
+            if state?nomove then return
+            else state?move @point(change.p)
+            
           | 'msg'  => @byid[change.id]?.trigger 'message', change.m
           | 'end'  => h.wait 50, => @end change.winner
 

@@ -20,8 +20,11 @@
     },
     start: function() {
       this.on('message', (function(_this) {
-        return function(msg) {
+        return function(msg, player) {
           if (!msg.mover) {
+            return;
+          }
+          if (player === _this.num) {
             return;
           }
           msg = msg.mover;

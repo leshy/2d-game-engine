@@ -13,8 +13,9 @@ exports.mover = {
         }, options
 
     start: ->
-      @on 'message', (msg) =>
+      @on 'message', (msg, player) =>
           if not msg.mover then return
+          if player is @num then return
           msg = msg.mover
           @set speed: @speed = msg.speed, direction: @direction = new Game.Direction(msg.d[0], msg.d[1]), coordinates: @coordinates = msg.c
           @movementChange()

@@ -53,7 +53,6 @@ GameServer = exports.GameServer = Backbone.Model.extend4000
 
     setData: (state) ->
         if state.nosync or state.noset then return
-
         entry = { a: 'set', p: state.point.coords(), id: state.id, s: state.name }
 
         if state.syncattributes then entry.o = helpers.dictMap state.syncattributes, (val,key) -> state.get(key)
