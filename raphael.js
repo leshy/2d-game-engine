@@ -96,11 +96,10 @@
 
   RaphaelPainter = View.Painter.extend4000({
     draw: function(point) {
-      var ref, ref1;
+      var ref;
       if (((ref = this.state) != null ? ref.mover : void 0) && this.rendering) {
         return this.rendering.toFront();
       }
-      console.log('>>', this.name, (ref1 = this.state) != null ? ref1.name : void 0, ' draw called', point.coords(), this.gameview.translate(point.coords()));
       return this.render(this.gameview.translate(point.coords()), this.gameview.size);
     }
   });

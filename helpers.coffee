@@ -13,10 +13,16 @@ exports.mover = {
         }, options
 
     start: ->
-      @on 'message', (msg, player) =>
+      @on 'message', (msg) =>
+          if msg.speedChange
+            console.log "SPEEDCHANGE!", msg.speedChange
+            @speed = msg.speedChange
+            @movementChange()
+
+          if @self then return
           if not msg.mover then return
-          if player is @num then return
           msg = msg.mover
+#          console.log "MOVER", @num, msg
           @set speed: @speed = msg.speed, direction: @direction = new Game.Direction(msg.d[0], msg.d[1]), coordinates: @coordinates = msg.c
           @movementChange()
 
@@ -58,7 +64,7 @@ exports.mover = {
         if @doSubMove then @doSubMove()
         @scheduleMove()
 #        console.log @point.game.tick, colors.green('MSG'),@direction.string(), { d: @direction.coords(), speed: @speed, c: @coordinates }
-        @msg mover: { d: @direction.coords(), speed: @speed, c: @coordinates }
+        if @self then @msg mover: { d: @direction.coords(), speed: @speed, c: @coordinates }
         @trigger 'movementChange'
 
     scheduleMove: ->
@@ -94,5 +100,5 @@ exports.mover = {
         if (movePoint = @point.direction( _.map @coordinates, (c) -> if c >= 1 then 1 else if c <= 0 then -1 else 0 )) isnt @point
             @coordinates = _.map @coordinates, (c) -> if c >= 1 then c - 1 else if c <= 0 then c + 1 else c
 #            console.log @point.game.tick, 'moved from', @point.coords(),'to', movePoint.coords(), @coordinates
-            @move movePoint
+            if @self then @move movePoint
 }

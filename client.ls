@@ -10,9 +10,13 @@ GameClient = exports.GameClient = Backbone.Model.extend4000 do
         @send { a: 'msg', m: msg, id: state.id }
     
     # this should be overrriden or event bound when implementing a concrete transport protocol
-    send: (msg) -> @trigger 'send', msg
+    send: (msg) ->
+      console.log "SEND",msg
+      @trigger 'send', msg
     
-    receive: (data) -> @applyChanges data.changes
+    receive: (data) ->
+      console.log "RECV",data
+      @applyChanges data.changes
       
     applyChanges: (changes) ->
       _.map changes, (change) ~> @applyChange change
@@ -26,11 +30,7 @@ GameClient = exports.GameClient = Backbone.Model.extend4000 do
 
         switch change.a
           | 'del'  => @byid[change.id]?.remove()
-          | 'move' => # small ugly hack, parsing/generating of these messages should be moved to individual states
-            state = @byid[change.id]
-            if state?nomove then return
-            else state?move @point(change.p)
-            
+          | 'move' => @byid[change.id]?move @point(change.p)
           | 'msg'  => @byid[change.id]?.trigger 'message', change.m
           | 'end'  => h.wait 50, => @end change.winner
 

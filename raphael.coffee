@@ -75,7 +75,7 @@ GameView = exports.GameView = View.GameView.extend4000
 RaphaelPainter = View.Painter.extend4000
     draw: (point) ->
         if @state?.mover and @rendering then return @rendering.toFront()
-        console.log '>>', @name, @state?.name,' draw called', point.coords(), @gameview.translate(point.coords())
+#        console.log '>>', @name, @state?.name,' draw called', point.coords(), @gameview.translate(point.coords())
         @render @gameview.translate(point.coords()), @gameview.size
 
 

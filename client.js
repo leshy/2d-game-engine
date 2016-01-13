@@ -17,9 +17,11 @@
       });
     },
     send: function(msg){
+      console.log("SEND", msg);
       return this.trigger('send', msg);
     },
     receive: function(data){
+      console.log("RECV", data);
       return this.applyChanges(data.changes);
     },
     applyChanges: function(changes){
@@ -29,7 +31,7 @@
       });
     },
     applyChange: function(change){
-      var attrs, point, state, ref$, ref1$;
+      var attrs, point, state, ref$, ref1$, ref2$;
       if (change.a === 'set') {
         attrs = {
           id: change.id
@@ -44,13 +46,9 @@
       case 'del':
         return (ref$ = this.byid[change.id]) != null ? ref$.remove() : void 8;
       case 'move':
-        state = this.byid[change.id];
-        if (state != null && state.nomove) {} else {
-          return state != null ? state.move(this.point(change.p)) : void 8;
-        }
-        break;
+        return (ref1$ = this.byid[change.id]) != null ? ref1$.move(this.point(change.p)) : void 8;
       case 'msg':
-        return (ref1$ = this.byid[change.id]) != null ? ref1$.trigger('message', change.m) : void 8;
+        return (ref2$ = this.byid[change.id]) != null ? ref2$.trigger('message', change.m) : void 8;
       case 'end':
         return h.wait(50, this.end(change.winner));
       }

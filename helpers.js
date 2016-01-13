@@ -20,11 +20,16 @@
     },
     start: function() {
       this.on('message', (function(_this) {
-        return function(msg, player) {
-          if (!msg.mover) {
+        return function(msg) {
+          if (msg.speedChange) {
+            console.log("SPEEDCHANGE!", msg.speedChange);
+            _this.speed = msg.speedChange;
+            _this.movementChange();
+          }
+          if (_this.self) {
             return;
           }
-          if (player === _this.num) {
+          if (!msg.mover) {
             return;
           }
           msg = msg.mover;
@@ -101,13 +106,15 @@
         this.doSubMove();
       }
       this.scheduleMove();
-      this.msg({
-        mover: {
-          d: this.direction.coords(),
-          speed: this.speed,
-          c: this.coordinates
-        }
-      });
+      if (this.self) {
+        this.msg({
+          mover: {
+            d: this.direction.coords(),
+            speed: this.speed,
+            c: this.coordinates
+          }
+        });
+      }
       return this.trigger('movementChange');
     },
     scheduleMove: function() {
@@ -180,7 +187,9 @@
             return c;
           }
         });
-        return this.move(movePoint);
+        if (this.self) {
+          return this.move(movePoint);
+        }
       }
     }
   };
